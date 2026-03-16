@@ -1,0 +1,55 @@
+<!--
+  - Copyright (c) 2025. Adler Marmol & Camila Molina.
+  - Unauthorized copying or redistribution of this file in source and binary forms via any medium is strictly prohibited.
+  - Contact:
+  -  adler.marmol@gmail.com
+  -  mariacmolinav@gmail.com
+  -->
+
+<svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="120 95 100 100"
+        height="100" width="100" version="1.1"
+>
+    <style>
+        .cg-logo-color-base {
+        fill: #fcfcfc;
+        stroke: #fcfcfc;
+        stroke-width: 0;
+        stroke-linejoin: miter;
+        stroke-miterlimit: 2;
+        }
+        .cg-logo-color-emphasis {
+        fill: #00a76f;
+        stroke: #00a76f;
+        stroke-width: 0;
+        stroke-linejoin: miter;
+        stroke-miterlimit: 2;
+        }
+    </style>
+    <g id="logo-group" transform="translate(0 0) scale(1.5)">
+        <g id="pathI1" transform="translate(0 0)">
+            <path
+                    class="cg-logo-color-emphasis"
+                    d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
+            />
+            <path
+                    class="cg-logo-color-base"
+                    d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
+            />
+        </g>
+        +
+
+        <g id="pathT" transform="translate(25 0)">
+            <!--            +25-->
+            <path
+                    class="cg-logo-color-base"
+                    d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
+            />
+            <path
+                    class="cg-logo-color-emphasis"
+                    d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
+            />
+        </g>
+    </g>
+</svg>

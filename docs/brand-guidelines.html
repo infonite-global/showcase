@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INFONITE Brand Guidelines</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon/favicon-16x16.png">
+    <link rel="manifest" href="../assets/favicon/site.webmanifest">
+    <style>
+        :root {
+            --primary: #00a76f;
+            --primary-container: #00a76f20;
+            --on-primary: #ffffff;
+            --on-primary-container: #00a76f;
+            --shape-corner-xs: 4px;
+            --shape-corner-sm: 8px;
+            --shape-corner-md: 12px;
+            --shape-corner-lg: 16px;
+            --shape-corner-xl: 28px;
+            --shape-corner-full: 9999px;
+            --motion-duration-short: 150ms;
+            --motion-duration-medium: 300ms;
+            --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        [data-theme="dark"] {
+            --surface: #1C252E;
+            --surface-dim: #151c23;
+            --surface-container: #232d38;
+            --surface-container-high: #2a3642;
+            --on-surface: #fcfcfc;
+            --on-surface-variant: #9ca3af;
+            --outline: #4b5563;
+            --outline-variant: #374151;
+            --elevation-1: 0 1px 3px 1px rgba(0,0,0,0.3), 0 1px 2px 0 rgba(0,0,0,0.4);
+            --elevation-2: 0 2px 6px 2px rgba(0,0,0,0.3), 0 1px 2px 0 rgba(0,0,0,0.4);
+            --elevation-3: 0 4px 8px 3px rgba(0,0,0,0.3), 0 1px 3px 0 rgba(0,0,0,0.4);
+        }
+
+        [data-theme="light"] {
+            --surface: #fcfcfc;
+            --surface-dim: #f0f0f0;
+            --surface-container: #f5f5f5;
+            --surface-container-high: #ebebeb;
+            --on-surface: #1C252E;
+            --on-surface-variant: #6b7280;
+            --outline: #c0c0c0;
+            --outline-variant: #e5e5e5;
+            --elevation-1: 0 1px 3px 1px rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.1);
+            --elevation-2: 0 2px 6px 2px rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.1);
+            --elevation-3: 0 4px 8px 3px rgba(0,0,0,0.08), 0 1px 3px 0 rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            line-height: 1.6;
+            transition: background-color var(--motion-duration-medium), color var(--motion-duration-medium);
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: #1C252E;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 24px;
+        }
+        nav .logo img { height: 28px; }
+        nav .nav-links {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        nav .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 16px;
+            border-radius: var(--shape-corner-full);
+            transition: all var(--motion-duration-short);
+        }
+        nav .nav-links a:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--shape-corner-full);
+            cursor: pointer;
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+            transition: all var(--motion-duration-short);
+        }
+        .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+        .theme-toggle .material-symbols-outlined { font-size: 20px; }
+
+        /* Sections */
+        section {
+            padding: 80px 5vw 60px;
+        }
+        .section-header {
+            max-width: 800px;
+            margin-bottom: 32px;
+        }
+        .section-header .overline {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .section-header h2 {
+            font-size: clamp(1.8rem, 3vw, 2.5rem);
+            color: var(--on-surface);
+            margin-bottom: 12px;
+        }
+        .section-header p {
+            font-size: 15px;
+            color: var(--on-surface-variant);
+            max-width: 600px;
+        }
+
+        /* Cover Section */
+        #cover {
+            background: #1C252E;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            padding-top: 64px;
+        }
+        #cover::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--primary-container) 0%, transparent 60%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.5;
+        }
+        #cover .wordmark-container {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 16px;
+        }
+        #cover .wordmark-container img {
+            height: clamp(50px, 8vw, 80px);
+            filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));
+        }
+        #cover .tagline {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: 48px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Brand Cards */
+        .brand-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 900px;
+            width: 100%;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .brand-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: var(--shape-corner-md);
+            padding: 20px 16px;
+            text-align: center;
+            transition: all var(--motion-duration-short);
+        }
+        .brand-card:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-4px);
+        }
+        .brand-card .icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: var(--shape-corner-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            color: white;
+        }
+        .brand-card .icon .material-symbols-outlined { font-size: 22px; }
+        .brand-card h4 {
+            font-size: 13px;
+            color: white;
+            margin-bottom: 6px;
+        }
+        .brand-card p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.4;
+        }
+
+        #cover .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: var(--shape-corner-full);
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+            position: relative;
+            z-index: 1;
+            margin-top: 32px;
+        }
+        #cover .company-info {
+            position: absolute;
+            bottom: 30px;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 0.05em;
+        }
+
+        /* Logo Section */
+        #logo {
+            background: var(--surface);
+        }
+
+        /* Logo Grid */
+        .logo-grid {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            align-items: stretch;
+        }
+
+        .logo-showcase {
+            border-radius: var(--shape-corner-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: var(--elevation-1);
+            height: 120px;
+        }
+        .logo-showcase.wordmark {
+            flex: 2;
+        }
+        .logo-showcase.icon {
+            flex: 1;
+            aspect-ratio: 1;
+        }
+        .logo-showcase.dark { background: #1C252E; }
+        .logo-showcase.light {
+            background: #fcfcfc;
+            border: 1px solid var(--outline-variant);
+        }
+        .logo-showcase img {
+            height: 36px;
+            width: auto;
+        }
+        .logo-showcase.icon img {
+            height: 40px;
+        }
+        .logo-showcase .label {
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--on-surface-variant);
+        }
+        .logo-showcase.dark .label {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .info-card {
+            background: var(--primary-container);
+            border-radius: var(--shape-corner-lg);
+            padding: 20px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+        .info-card .icon { color: var(--primary); }
+        .info-card h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+        .info-card p {
+            font-size: 13px;
+            color: var(--on-surface);
+            line-height: 1.5;
+        }
+
+        /* Assets Download Table */
+        .assets-section {
+            margin-top: 32px;
+        }
+        .assets-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--on-surface);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .assets-section h3 .material-symbols-outlined {
+            font-size: 18px;
+            color: var(--primary);
+        }
+        .assets-section .repo-link {
+            font-size: 12px;
+            color: var(--primary);
+            margin-bottom: 16px;
+            display: block;
+        }
+        .assets-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: var(--shape-corner-lg);
+            overflow: hidden;
+            box-shadow: var(--elevation-1);
+        }
+        .assets-table th {
+            background: var(--surface-container);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--on-surface-variant);
+        }
+        .assets-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-top: 1px solid var(--outline-variant);
+        }
+        .assets-table tr {
+            cursor: pointer;
+            transition: background var(--motion-duration-short);
+        }
+        .assets-table tbody tr:hover {
+            background: var(--surface-container);
+        }
+        .assets-table .asset-name {
+            font-weight: 500;
+            color: var(--on-surface);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .assets-table .asset-preview {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            border-radius: var(--shape-corner-sm);
+            background: var(--surface-container);
+            padding: 4px;
+        }
+        .assets-table .asset-url {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+            color: var(--on-surface-variant);
+            word-break: break-all;
+        }
+        .assets-table .copied-indicator {
+            display: none;
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .assets-table tr.copied .copied-indicator {
+            display: inline;
+        }
+        .assets-table tr.copied .asset-url-text {
+            display: none;
+        }
+        .assets-table tr.copied td {
+            background: rgba(0, 167, 111, 0.15);
+        }
+
+        /* Colors Section */
+        #colors {
+            background: var(--surface-container);
+        }
+        .colors-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .color-card {
+            background: var(--surface);
+            border-radius: var(--shape-corner-lg);
+            overflow: hidden;
+            box-shadow: var(--elevation-1);
+            transition: all var(--motion-duration-short);
+            cursor: pointer;
+            position: relative;
+        }
+        .color-card:hover {
+            box-shadow: var(--elevation-3);
+            transform: translateY(-2px);
+        }
+        .color-card.copied::after {
+            content: 'Copied!';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: var(--shape-corner-full);
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 10;
+        }
+        .color-preview {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .color-preview.green { background: var(--primary); }
+        .color-preview.dark { background: #1C252E; }
+        .color-preview.white { 
+            background: #fcfcfc; 
+            border-bottom: 1px solid var(--outline-variant);
+        }
+        .color-preview .swatch-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 2rem;
+            color: white;
+        }
+        .color-preview.white .swatch-text { color: #1C252E; }
+        .color-info { padding: 16px; }
+        .color-info h4 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .color-values {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .color-value {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .color-value .label { color: var(--on-surface-variant); }
+        .color-value .value {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+            background: var(--surface-container);
+            padding: 2px 6px;
+            border-radius: var(--shape-corner-xs);
+        }
+
+        /* Typography Section */
+        #typography {
+            background: var(--surface);
+        }
+        .type-showcase {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .type-family {
+            background: var(--surface-container);
+            border-radius: var(--shape-corner-lg);
+            padding: 24px;
+        }
+        .type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .type-header h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--primary);
+        }
+        .type-header .fallback {
+            font-size: 11px;
+            color: var(--on-surface-variant);
+            background: var(--surface);
+            padding: 4px 10px;
+            border-radius: var(--shape-corner-full);
+        }
+        .type-specimen {
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin-bottom: 14px;
+            color: var(--on-surface);
+        }
+        .type-family.outfit .type-specimen { font-family: 'Outfit', sans-serif; font-weight: 700; }
+        .type-family.inter .type-specimen { font-family: 'Inter', sans-serif; font-weight: 400; }
+        .type-alphabet {
+            font-size: 12px;
+            color: var(--on-surface-variant);
+            margin-bottom: 4px;
+            letter-spacing: 0.02em;
+        }
+        .type-family.outfit .type-alphabet { font-family: 'Outfit', sans-serif; }
+        .type-family.inter .type-alphabet { font-family: 'Inter', sans-serif; }
+        .font-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--primary);
+            text-decoration: none;
+            transition: opacity var(--motion-duration-short);
+        }
+        .font-link:hover { opacity: 0.8; }
+        .font-link .material-symbols-outlined { font-size: 16px; }
+
+        /* Email Signature Section */
+        #signature {
+            background: var(--surface-container);
+        }
+        .signature-editor {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .signature-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .field-group label {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--on-surface-variant);
+        }
+        .field-group input {
+            padding: 10px 14px;
+            border: 1px solid var(--outline);
+            border-radius: var(--shape-corner-sm);
+            font-size: 13px;
+            background: var(--surface);
+            color: var(--on-surface);
+            transition: border-color var(--motion-duration-short);
+        }
+        .field-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .signature-output {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .signature-preview {
+            background: #f8f8f8;
+            border-radius: var(--shape-corner-lg);
+            padding: 20px;
+            box-shadow: var(--elevation-2);
+        }
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--shape-corner-full);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--motion-duration-short);
+            align-self: flex-start;
+        }
+        .copy-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+        .copy-btn.copied { background: #22c55e; }
+
+        /* Slides Section */
+        #slides {
+            background: var(--surface);
+        }
+        .slides-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .slide-example {
+            border-radius: var(--shape-corner-lg);
+            overflow: hidden;
+            box-shadow: var(--elevation-2);
+            aspect-ratio: 16/9;
+            position: relative;
+            transition: all var(--motion-duration-short);
+        }
+        .slide-example:hover {
+            box-shadow: var(--elevation-3);
+            transform: scale(1.02);
+        }
+        .slide-example .slide-content {
+            position: absolute;
+            inset: 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+        .slide-example.title-dark { background: #1C252E; }
+        .slide-example.title-dark .slide-content {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .slide-example.title-dark .slide-wordmark {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 16px;
+        }
+        .slide-example.title-dark h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 6px;
+        }
+        .slide-example.title-dark p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+        }
+        .slide-example.content-light {
+            background: #fcfcfc;
+            border: 1px solid #e5e5e5;
+        }
+        .slide-example.content-light .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary);
+        }
+        .slide-example.content-light .slide-header h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            color: #1C252E;
+        }
+        .slide-example.content-light .slide-header img {
+            height: 20px;
+            width: auto;
+            object-fit: contain;
+        }
+        .slide-example.content-light .slide-body {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+        }
+        .slide-example.content-light .content-block {
+            flex: 1;
+            background: #f5f5f5;
+            border-radius: var(--shape-corner-sm);
+            padding: 12px;
+        }
+        .slide-example.content-light .content-block h4 {
+            font-size: 10px;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+        .slide-example.content-light .content-block p {
+            font-size: 9px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        .slide-example.accent { background: var(--primary); }
+        .slide-example.accent .slide-content {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .slide-example.accent h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .slide-example.accent p {
+            font-size: 12px;
+            color: rgba(255,255,255,0.9);
+            max-width: 250px;
+        }
+        .slide-example.stats-dark { background: #1C252E; }
+        .slide-example.stats-dark .slide-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .slide-example.stats-dark .slide-header img {
+            height: 20px;
+            width: auto;
+            object-fit: contain;
+        }
+        .slide-example.stats-dark .slide-header span {
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .slide-example.stats-dark .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            flex: 1;
+            align-content: center;
+        }
+        .slide-example.stats-dark .stat-item { text-align: center; }
+        .slide-example.stats-dark .stat-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .slide-example.stats-dark .stat-label {
+            font-size: 9px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .slide-label {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 9px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 3px 8px;
+            border-radius: var(--shape-corner-full);
+            background: rgba(0,0,0,0.3);
+            color: rgba(255,255,255,0.8);
+        }
+        .slide-example.content-light .slide-label {
+            background: #ebebeb;
+            color: #6b7280;
+        }
+
+        /* Phone Mockup Slide */
+        .slide-example.phone-mockup { background: linear-gradient(135deg, #1C252E 0%, #2a3642 100%); }
+        .slide-example.phone-mockup .slide-content {
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+        }
+        .slide-example.phone-mockup .phone-frame {
+            width: 70px;
+            height: 130px;
+            background: #fcfcfc;
+            border-radius: 12px;
+            border: 3px solid #3d4a58;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .slide-example.phone-mockup .phone-notch {
+            width: 30px;
+            height: 6px;
+            background: #3d4a58;
+            border-radius: 0 0 4px 4px;
+            margin: 0 auto;
+        }
+        .slide-example.phone-mockup .phone-screen {
+            flex: 1;
+            background: linear-gradient(180deg, #00a76f 0%, #00c483 100%);
+            margin: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slide-example.phone-mockup .phone-screen img {
+            height: 24px;
+            width: auto;
+        }
+        .slide-example.phone-mockup .mockup-text {
+            flex: 1;
+        }
+        .slide-example.phone-mockup .mockup-text h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+        }
+        .slide-example.phone-mockup .mockup-text p {
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.5;
+        }
+
+        /* Text-heavy Slide */
+        .slide-example.text-heavy {
+            background: #fcfcfc;
+            border: 1px solid #e5e5e5;
+        }
+        .slide-example.text-heavy .slide-content {
+            gap: 12px;
+        }
+        .slide-example.text-heavy .text-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .slide-example.text-heavy .text-header img {
+            height: 16px;
+            width: auto;
+        }
+        .slide-example.text-heavy .text-header h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1C252E;
+        }
+        .slide-example.text-heavy .text-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .slide-example.text-heavy .text-body p {
+            font-size: 9px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        .slide-example.text-heavy .text-body p.highlight {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            background: #1C252E;
+            color: rgba(255,255,255,0.6);
+            padding: 40px 5vw;
+            text-align: center;
+        }
+        footer .company {
+            font-size: 11px;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+        footer .tagline {
+            color: var(--primary);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .type-showcase, .signature-editor, .colors-grid { grid-template-columns: 1fr; }
+            .logo-grid { flex-wrap: wrap; }
+            .logo-showcase.wordmark, .logo-showcase.icon { flex: 1 1 45%; }
+            .brand-cards { grid-template-columns: repeat(2, 1fr); }
+            .assets-table { font-size: 12px; }
+            .assets-table th, .assets-table td { padding: 10px 12px; }
+            .assets-table .asset-preview { width: 24px; height: 24px; }
+        }
+        @media (max-width: 768px) {
+            nav .nav-links { display: none; }
+            section { padding: 60px 20px 40px; }
+            .logo-grid { flex-direction: column; }
+            .logo-showcase.wordmark, .logo-showcase.icon { flex: 1 1 100%; }
+            .logo-showcase.icon { aspect-ratio: auto; height: 100px; }
+            .assets-table .asset-url-text { display: none; }
+            .assets-table th:last-child { display: none; }
+            .assets-table td:last-child { display: none; }
+            .brand-cards { grid-template-columns: 1fr; }
+            .brand-cards { grid-template-columns: 1fr 1fr; }
+        }
+        @media print {
+            nav { display: none; }
+            section { page-break-after: always; min-height: auto; padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            <img src="../assets/logo/logo-dark.png" alt="Infonite">
+        </div>
+        <div class="nav-links">
+            <a href="#logo">Logo</a>
+            <a href="#colors">Colors</a>
+            <a href="#typography">Typography</a>
+            <a href="#signature">Signature</a>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <span class="material-symbols-outlined" id="theme-icon">light_mode</span>
+        </button>
+    </nav>
+
+    <!-- Cover -->
+    <section id="cover">
+        <div class="wordmark-container">
+            <img src="../assets/logo/text-logo-dark.png" alt="Infonite">
+        </div>
+        <p class="tagline">Data Extraction & Process Automation Solutions.</p>
+
+        <div class="brand-cards">
+            <div class="brand-card">
+                <div class="icon"><span class="material-symbols-outlined">info</span></div>
+                <h4>The Name</h4>
+                <p>Information + Infinite = Infonite</p>
+            </div>
+            <div class="brand-card">
+                <div class="icon"><span class="material-symbols-outlined">rocket_launch</span></div>
+                <h4>Mission</h4>
+                <p>Automate reading & action on any digital source</p>
+            </div>
+            <div class="brand-card">
+                <div class="icon"><span class="material-symbols-outlined">memory</span></div>
+                <h4>Platform</h4>
+                <p>Data orchestration & process automation</p>
+            </div>
+            <div class="brand-card">
+                <div class="icon"><span class="material-symbols-outlined">bolt</span></div>
+                <h4>Power</h4>
+                <p>Banking, TGSS, DGT, Degrees & more</p>
+            </div>
+        </div>
+
+        <div class="chip">
+            <span class="material-symbols-outlined" style="font-size: 16px;">auto_awesome</span>
+            Brand Guidelines v2026.2.2000
+        </div>
+        <p class="company-info">© 2026 INFONITE TECHNOLOGIES SL</p>
+    </section>
+
+    <!-- Logo -->
+    <section id="logo">
+        <div class="section-header">
+            <p class="overline">Visual Identity</p>
+            <h2>Logo</h2>
+        </div>
+
+        <div class="logo-grid">
+            <!-- Wordmark on Dark Background -->
+            <div class="logo-showcase dark wordmark">
+                <img src="../assets/logo/text-logo-light.svg" alt="Wordmark">
+                <span class="label">Wordmark</span>
+            </div>
+            <!-- Icon on Dark Background -->
+            <div class="logo-showcase dark icon">
+                <img src="../assets/logo/logo-light.svg" alt="Icon">
+                <span class="label">Icon</span>
+            </div>
+            <!-- Wordmark on Light Background -->
+            <div class="logo-showcase light wordmark">
+                <img src="../assets/logo/text-logo-dark.svg" alt="Wordmark">
+                <span class="label">Wordmark</span>
+            </div>
+            <!-- Icon on Light Background -->
+            <div class="logo-showcase light icon">
+                <img src="../assets/logo/logo-dark.svg" alt="Icon">
+                <span class="label">Icon</span>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <span class="material-symbols-outlined icon">lightbulb</span>
+            <div>
+                <h4>The Icon</h4>
+                <p>Simplified from the wordmark's <strong>"it"</strong> — two connected data points symbolizing infinite information flow.</p>
+            </div>
+        </div>
+
+        <div class="assets-section">
+            <h3><span class="material-symbols-outlined">download</span> Assets Download</h3>
+            <a href="https://github.com/adler-marmol/infonite-brand/" target="_blank" class="repo-link">github.com/adler-marmol/infonite-brand</a>
+            <table class="assets-table">
+                <thead>
+                    <tr>
+                        <th>Preview</th>
+                        <th>Resource</th>
+                        <th>URL (click to copy)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr onclick="copyAssetUrl(this)" data-url="https://raw.githubusercontent.com/adler-marmol/infonite-brand/refs/heads/main/assets/logo/logo-dark.png">
+                        <td><img class="asset-preview" src="../assets/logo/logo-dark.svg" alt="Preview" style="background: #1C252E;"></td>
+                        <td class="asset-name">Icon for dark backgrounds</td>
+                        <td class="asset-url"><span class="asset-url-text">...infonite-brand/.../logo-dark.png</span><span class="copied-indicator">✓ Copied!</span></td>
+                    </tr>
+                    <tr onclick="copyAssetUrl(this)" data-url="https://raw.githubusercontent.com/adler-marmol/infonite-brand/refs/heads/main/assets/logo/logo-light.png">
+                        <td><img class="asset-preview" src="../assets/logo/logo-light.svg" alt="Preview"></td>
+                        <td class="asset-name">Icon for light backgrounds</td>
+                        <td class="asset-url"><span class="asset-url-text">...infonite-brand/.../logo-light.png</span><span class="copied-indicator">✓ Copied!</span></td>
+                    </tr>
+                    <tr onclick="copyAssetUrl(this)" data-url="https://raw.githubusercontent.com/adler-marmol/infonite-brand/refs/heads/main/assets/logo/text-logo-dark.png">
+                        <td><img class="asset-preview" src="../assets/logo/text-logo-dark.svg" alt="Preview" style="background: #1C252E;"></td>
+                        <td class="asset-name">Wordmark for dark backgrounds</td>
+                        <td class="asset-url"><span class="asset-url-text">...infonite-brand/.../text-logo-dark.png</span><span class="copied-indicator">✓ Copied!</span></td>
+                    </tr>
+                    <tr onclick="copyAssetUrl(this)" data-url="https://raw.githubusercontent.com/adler-marmol/infonite-brand/refs/heads/main/assets/logo/text-logo-light.png">
+                        <td><img class="asset-preview" src="../assets/logo/text-logo-light.svg" alt="Preview"></td>
+                        <td class="asset-name">Wordmark for light backgrounds</td>
+                        <td class="asset-url"><span class="asset-url-text">...infonite-brand/.../text-logo-light.png</span><span class="copied-indicator">✓ Copied!</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Colors -->
+    <section id="colors">
+        <div class="section-header">
+            <p class="overline">Color System</p>
+            <h2>Color Universe</h2>
+            <p>Trust, technology, and success.</p>
+        </div>
+
+        <div class="colors-grid">
+            <div class="color-card" onclick="copyColor(this)" data-hex="#00a76f">
+                <div class="color-preview green"><span class="swatch-text">Aa</span></div>
+                <div class="color-info">
+                    <h4>Primary Green</h4>
+                    <div class="color-values">
+                        <div class="color-value"><span class="label">HEX</span><span class="value">#00a76f</span></div>
+                        <div class="color-value"><span class="label">RGB</span><span class="value">0, 167, 111</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="color-card" onclick="copyColor(this)" data-hex="#1C252E">
+                <div class="color-preview dark"><span class="swatch-text">Aa</span></div>
+                <div class="color-info">
+                    <h4>Dark Brand</h4>
+                    <div class="color-values">
+                        <div class="color-value"><span class="label">HEX</span><span class="value">#1C252E</span></div>
+                        <div class="color-value"><span class="label">RGB</span><span class="value">28, 37, 46</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="color-card" onclick="copyColor(this)" data-hex="#fcfcfc">
+                <div class="color-preview white"><span class="swatch-text">Aa</span></div>
+                <div class="color-info">
+                    <h4>Pure White</h4>
+                    <div class="color-values">
+                        <div class="color-value"><span class="label">HEX</span><span class="value">#fcfcfc</span></div>
+                        <div class="color-value"><span class="label">RGB</span><span class="value">252, 252, 252</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Typography -->
+    <section id="typography">
+        <div class="section-header">
+            <p class="overline">Type System</p>
+            <h2>Typography</h2>
+            <p>Clarity and digital excellence.</p>
+        </div>
+
+        <div class="type-showcase">
+            <div class="type-family outfit">
+                <div class="type-header">
+                    <h3>Headings</h3>
+                    <span class="fallback">Helvetica Bold</span>
+                </div>
+                <p class="type-specimen">Outfit</p>
+                <p class="type-alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+                <p class="type-alphabet">abcdefghijklmnopqrstuvwxyz 0123456789</p>
+                <a href="https://fonts.google.com/specimen/Outfit" target="_blank" class="font-link"><span class="material-symbols-outlined">open_in_new</span> Google Fonts</a>
+            </div>
+            <div class="type-family inter">
+                <div class="type-header">
+                    <h3>Body</h3>
+                    <span class="fallback">Helvetica Regular</span>
+                </div>
+                <p class="type-specimen">Inter</p>
+                <p class="type-alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+                <p class="type-alphabet">abcdefghijklmnopqrstuvwxyz 0123456789</p>
+                <a href="https://fonts.google.com/specimen/Inter" target="_blank" class="font-link"><span class="material-symbols-outlined">open_in_new</span> Google Fonts</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Email Signature -->
+    <section id="signature">
+        <div class="section-header">
+            <p class="overline">Email Identity</p>
+            <h2>Email Signature</h2>
+            <p>Fill in your details and copy.</p>
+        </div>
+
+        <div class="signature-editor">
+            <div class="signature-fields">
+                <div class="field-group">
+                    <label>Name</label>
+                    <input type="text" id="sig-name" value="Technical Support" oninput="updateSignature()">
+                </div>
+                <div class="field-group">
+                    <label>Team / Position</label>
+                    <input type="text" id="sig-team" value="Customer Success Team" oninput="updateSignature()">
+                </div>
+                <div class="field-group">
+                    <label>Email</label>
+                    <input type="email" id="sig-email" value="support@infonite.tech" oninput="updateSignature()">
+                </div>
+                <div class="field-group">
+                    <label>Phone (optional)</label>
+                    <input type="tel" id="sig-phone" value="" placeholder="+34 600 000 000" oninput="updateSignature()">
+                </div>
+            </div>
+
+            <div class="signature-output">
+                <div class="signature-preview">
+                    <div id="email-signature">
+                        <table cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, Helvetica, sans-serif; background-color: #f8f8f8; padding: 16px; border-radius: 8px;">
+                            <tr>
+                                <td style="padding-bottom: 10px;">
+                                    <img src="https://raw.githubusercontent.com/adler-marmol/infonite-brand/refs/heads/main/assets/logo/text-logo-light.png" alt="INFONITE" style="height: 28px; display: block;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="border-top: 2px solid #00a76f; padding-top: 10px;">
+                                    <p style="margin: 0 0 2px 0; font-weight: 700; font-size: 14px; color: #1C252E;" id="sig-name-display">Technical Support</p>
+                                    <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;" id="sig-team-display">Customer Success Team</p>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size: 12px; color: #1C252E; line-height: 1.4;">
+                                    <span id="sig-contact-display"><span style="font-weight: 600;">support@infonite.tech</span> | <a href="https://infonite.tech" style="color: #00a76f; text-decoration: none;">infonite.tech</a></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-top: 8px; font-size: 11px; color: #00a76f; font-style: italic;">
+                                    Data Extraction & Process Automation Solutions.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-top: 14px; font-size: 9px; color: #9ca3af; line-height: 1.3; max-width: 400px;">
+                                    <strong>CONFIDENTIALITY:</strong> The information contained in this message and its attachments is confidential and intended exclusively for the recipient. If you are not the intended recipient or have received this message in error, please notify the sender and delete it from your system.
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <button class="copy-btn" onclick="copySignature()">
+                    <span class="material-symbols-outlined">content_copy</span>
+                    <span id="copy-text">Copy to Clipboard</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <footer>
+        <p class="company">© 2026 INFONITE TECHNOLOGIES SL</p>
+        <p class="tagline">Data Extraction & Process Automation Solutions.</p>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                icon.textContent = 'dark_mode';
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                icon.textContent = 'light_mode';
+            }
+        }
+
+        // Email Signature
+        function updateSignature() {
+            const name = document.getElementById('sig-name').value || 'Name';
+            const team = document.getElementById('sig-team').value || 'Department';
+            const email = document.getElementById('sig-email').value || 'email@infonite.tech';
+            const phone = document.getElementById('sig-phone').value;
+
+            document.getElementById('sig-name-display').textContent = name;
+            document.getElementById('sig-team-display').textContent = team;
+
+            let contactHtml = `<span style="font-weight: 600;">${email}</span>`;
+            if (phone) contactHtml += ` | ${phone}`;
+            contactHtml += ` | <a href="https://infonite.tech" style="color: #00a76f; text-decoration: none;">infonite.tech</a>`;
+            document.getElementById('sig-contact-display').innerHTML = contactHtml;
+        }
+
+        function copySignature() {
+            const signature = document.getElementById('email-signature');
+            const range = document.createRange();
+            range.selectNode(signature);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            try {
+                document.execCommand('copy');
+                const btn = document.querySelector('.copy-btn');
+                const text = document.getElementById('copy-text');
+                btn.classList.add('copied');
+                text.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    text.textContent = 'Copy to Clipboard';
+                }, 2000);
+            } catch (err) { console.error('Failed to copy:', err); }
+            window.getSelection().removeAllRanges();
+        }
+
+        function copyColor(card) {
+            const hex = card.dataset.hex;
+            navigator.clipboard.writeText(hex).then(() => {
+                card.classList.add('copied');
+                setTimeout(() => card.classList.remove('copied'), 1500);
+            }).catch(err => console.error('Failed to copy color:', err));
+        }
+
+        function copyAssetUrl(row) {
+            const url = row.dataset.url;
+            navigator.clipboard.writeText(url).then(() => {
+                row.classList.add('copied');
+                setTimeout(() => row.classList.remove('copied'), 1500);
+            }).catch(err => console.error('Failed to copy URL:', err));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!-- CATEGORY VIEW: CUSTOMER INFORMATION -->
+<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in overflow-y-auto">
+    
+    <!-- View Header -->
+    <div class="flex items-center gap-4 mb-8">
+        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] text-[var(--primary)] flex items-center justify-center text-xl shadow-sm border border-[var(--primary)]/20">
+            <i class="fa-solid fa-user-astronaut"></i>
+        </div>
+        <div>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">Customer Information</h2>
+            <p class="text-xs font-medium text-slate-500 mt-1">Core identity and contact details retrieved from Cl@ve.</p>
+        </div>
+    </div>
+
+    <!-- Data Dashboard grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
+        
+        <!-- Personal Summary Card -->
+        <div class="col-span-1 md:col-span-2 bg-slate-50 rounded-3xl p-6 border border-slate-100 flex items-center gap-6 relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 text-9xl text-slate-200/50 pointer-events-none">
+                <i class="fa-solid fa-address-card"></i>
+            </div>
+            <!-- Main Document Badge -->
+            <div class="w-32 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex flex-col overflow-hidden shadow-sm shrink-0 z-10" id="mainDocBadge">
+                <div class="bg-indigo-100/50 p-2 text-center border-b border-indigo-100/50">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-indigo-800" id="mainDocType">UNVERIFIED</span>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center p-3 gap-1 relative">
+                    <i class="fa-regular fa-id-badge text-3xl text-indigo-300 mb-1" id="mainDocIcon"></i>
+                    <span class="text-[11px] font-bold font-mono text-slate-800 tracking-tight text-center break-all" id="mainDocValue">--</span>
+                    <div id="mainDocValidationBadge" class="hidden text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded mt-1 flex items-center"></div>
+                </div>
+            </div>
+            
+            <div class="flex-1 min-w-0 z-10">
+                <div class="flex items-center gap-2 mb-2">
+                    <span id="lblTypeBadge" class="hidden px-2 py-0.5 rounded border border-slate-700 bg-slate-800 text-[9px] font-bold uppercase tracking-widest text-white"></span>
+                    <span id="lblGenderBadge" class="hidden px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-widest bg-white"></span>
+                </div>
+                <div class="flex flex-col">
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight leading-none" id="lblCustomerName">--</h3>
+                    <p class="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-wider leading-none mt-1.5" id="lblCustomerNameExtra">--</p>
+                </div>
+                
+                <div class="flex items-center gap-6 mt-5 flex-wrap">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Birth Date</span>
+                        <span class="text-sm font-semibold text-slate-700 mt-0.5" id="lblBirthDate">--</span>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Nationality</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-base leading-none" id="lblNationalityFlag"></span>
+                            <span class="text-sm font-semibold text-slate-700" id="lblNationality">--</span>
+                        </div>
+                    </div>
+                    <div class="h-8 w-px bg-slate-200"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Residence</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-base leading-none" id="lblResidenceFlag"></span>
+                            <span class="text-sm font-semibold text-slate-700" id="lblResidence">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider Line and Flat Section Container -->
+        <div class="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 mt-2 pt-8 border-t border-slate-100">
+
+            <!-- Identification Numbers Section -->
+            <div class="flex flex-col gap-4">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-fingerprint text-[var(--primary)] text-sm"></i> Other Official Identifiers
+                </h4>
+                <div class="flex flex-col gap-3" id="listIds">
+                    <!-- Data injected via JS -->
+                    <p class="text-sm text-slate-400 font-medium italic">No identifier data available.</p>
+                </div>
+            </div>
+
+            <!-- Contact Information Section -->
+            <div class="flex flex-col gap-4">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-address-book text-[var(--primary)] text-sm"></i> Contact Methods
+                </h4>
+                
+                <div class="flex flex-col gap-2">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Emails</span>
+                    <div id="listEmails" class="flex flex-col gap-1.5 min-h-[1.5rem]">
+                        <span class="text-sm text-slate-400 italic">None registered</span>
+                    </div>
+                </div>
+                
+                <div class="h-px w-full bg-slate-100 my-1"></div>
+                
+                <div class="flex flex-col gap-2">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Phone Numbers</span>
+                    <div id="listPhones" class="flex flex-col gap-1.5 min-h-[1.5rem]">
+                        <span class="text-sm text-slate-400 italic">None registered</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Addresses Section (Full Width inside new container) -->
+            <div class="col-span-1 md:col-span-2 flex flex-col gap-4 pt-4 border-t border-slate-100">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-map-location-dot text-[var(--primary)] text-sm"></i> Registered Addresses
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="listAddresses">
+                    <!-- Addresses injected via JS -->
+                    <p class="text-sm text-slate-400 font-medium italic col-span-2">No address data available.</p>
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+</div>

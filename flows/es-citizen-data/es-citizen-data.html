@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html data-theme="light" lang="en">
+<head>
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Demo Generator - Infonite</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="../../assets/favicon/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
+<link href="../../assets/favicon/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png"/>
+<link href="../../assets/favicon/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png"/>
+<link href="../../assets/favicon/site.webmanifest" rel="manifest"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+      /* Material 3 Design Tokens */
+      :root {
+        --primary: #00a76f;
+        --primary-container: #00a76f20;
+        --on-primary: #ffffff;
+        --on-primary-container: #00a76f;
+        --shape-corner-xs: 4px;
+        --shape-corner-sm: 8px;
+        --shape-corner-md: 12px;
+        --shape-corner-lg: 16px;
+        --shape-corner-xl: 28px;
+        --shape-corner-full: 9999px;
+        --motion-duration-short: 150ms;
+        --motion-duration-medium: 300ms;
+        --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+      }
+
+      [data-theme="light"] {
+        --surface: #fcfcfc;
+        --surface-dim: #f0f0f0;
+        --surface-container: #f5f5f5;
+        --surface-container-high: #ebebeb;
+        --on-surface: #1C252E;
+        --on-surface-variant: #6b7280;
+        --outline: #c0c0c0;
+        --outline-variant: #e5e5e5;
+        --elevation-1: 0 1px 3px 1px rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.1);
+        --elevation-2: 0 2px 6px 2px rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.1);
+        --elevation-3: 0 4px 8px 3px rgba(0,0,0,0.08), 0 1px 3px 0 rgba(0,0,0,0.1);
+      }
+
+      @media screen {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+      }
+      html { scroll-behavior: smooth; }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--brand-bg);
+        color: var(--brand-dark);
+        -webkit-font-smoothing: antialiased;
+        transition: background-color var(--motion-duration-medium), color var(--motion-duration-medium);
+      }
+
+      .animated-gradient-bg {
+        animation: pulseBg 6s infinite alternate ease-in-out;
+      }
+      @keyframes pulseBg {
+        0% { transform: scale(1); opacity: 0.05; }
+        100% { transform: scale(1.5); opacity: 0.15; }
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .fade-in {
+        animation: fadeIn 0.8s var(--motion-easing-standard);
+      }
+
+      /* Navigation Banner Transitions */
+      .slide-fade-enter-active {
+        transition: all 0.3s ease-out;
+      }
+      .slide-fade-leave-active {
+        transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
+      }
+      .slide-fade-enter-from,
+      .slide-fade-leave-to {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--outline-variant);
+        box-shadow: var(--elevation-1);
+      }
+
+      .pulse-ring {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: var(--shape-corner-full);
+        background: var(--primary);
+        box-shadow: 0 0 0 0 var(--primary-container);
+        animation: pulse-brand 2s infinite;
+      }
+
+      @keyframes pulse-brand {
+        0% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(var(--brand-dark-rgb), 0.3);
+        }
+        70% {
+          transform: scale(1);
+          box-shadow: 0 0 0 10px rgba(var(--brand-dark-rgb), 0);
+        }
+        100% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(var(--brand-dark-rgb), 0);
+        }
+      }
+
+      .feature-checkbox:checked + div {
+        border-color: var(--primary);
+        background-color: var(--primary-container);
+        box-shadow: 0 0 15px var(--primary-container);
+      }
+      .feature-checkbox:checked + div .check-icon {
+        opacity: 1;
+        transform: scale(1);
+        color: var(--primary);
+      }
+      .check-icon {
+        transform: scale(0.5);
+        transition: all var(--motion-duration-short) cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .btn-brand {
+        background: var(--primary);
+        color: var(--primary-contrast);
+        border-radius: var(--shape-corner-md);
+        transition: all var(--motion-duration-medium) var(--motion-easing-standard);
+      }
+      .btn-brand:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--elevation-3);
+        filter: brightness(1.1);
+      }
+      .btn-brand:active {
+        transform: translateY(0);
+      }
+
+      /* Result Cards Styling */
+      .result-card {
+        background: var(--surface);
+        border: 1px solid var(--outline-variant);
+      }
+
+      .status-badge {
+        background: var(--primary-container);
+        color: var(--primary);
+        border: 1px solid var(--primary-container);
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      @media print {
+          @page {
+              margin: 0;
+              size: auto;
+          }
+          body {
+              background: white !important;
+              padding: 0 !important;
+              margin: 0 !important;
+          }
+          /* Hide non-print elements */
+          .no-print,
+          nav,
+          #mobileMenu,
+          .lg\:col-span-4,
+          #homeView,
+          #placeholderState,
+          #activeSessionState > div:not(#resultsDashboard),
+          #monitoringSection,
+          #settingsModal, 
+          #pdfModal, 
+          #debugModal,
+          .fixed:not(#printHeader) {
+              display: none !important;
+          }
+          
+          /* Ensure the report container and its path are visible */
+          /* Ensure the report container and its path are visible */
+          .max-w-6xl, 
+          .grid, 
+          #sessionMainView, 
+          #sessionMainView > div:not(.no-print),
+          #activeSessionState, 
+          #resultsDashboard {
+              display: block !important;
+              visibility: visible !important;
+              position: static !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+          }
+          
+          #resultsDashboard {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 32px !important;
+              /* Padding top ensures first page clears the header */
+              padding-top: 35mm !important;
+              padding-left: 15mm !important;
+              padding-right: 15mm !important;
+              padding-bottom: 15mm !important;
+          }
+
+          #printHeader {
+              display: flex !important;
+              position: fixed !important;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 30mm;
+              z-index: 9999;
+          }
+
+          /* Force full width stacked layout for print - like desktop full cards */
+          #resultsDashboard > .grid {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 32px !important;
+          }
+          
+          /* Page Break Before Sections */
+          .md\:col-span-2 {
+              break-inside: avoid;
+              page-break-inside: avoid;
+              width: 100% !important;
+          }
+          /* Add page break before all major cards except the first one */
+          .md\:col-span-2:not(:first-child) {
+              break-before: page;
+              page-break-before: always;
+              /* Add margin to clear header on subsequent pages */
+              margin-top: 35mm !important;
+          }
+
+          /* Card Styling Overrides for Print - CLEAN LOOK */
+          .glass-panel {
+              background: transparent !important;
+              box-shadow: none !important;
+              border: none !important;
+              border-radius: 0 !important;
+              overflow: visible !important;
+              backdrop-filter: none !important;
+          }
+          
+          /* Headers of cards */
+          .glass-panel > div:first-child {
+              background: transparent !important;
+              border-bottom: 2px solid #000 !important;
+              padding-left: 0 !important;
+              padding-right: 0 !important;
+              margin-bottom: 12px !important;
+          }
+          
+          .glass-panel > div:first-child h4 {
+              font-size: 14px !important;
+              color: #000 !important;
+          }
+          
+          .glass-panel > div:first-child i {
+               color: #000 !important;
+          }
+          
+          /* Remove badges in headers to clean up */
+          .glass-panel > div:first-child span {
+              border: 1px solid #000 !important;
+              background: transparent !important;
+              color: #000 !important;
+          }
+
+          /* Identity Box Styling for Print */
+          .bg-black\/\[0\.02\] {
+              background: transparent !important;
+              border: 1px solid #ddd !important;
+          }
+
+          * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+          }
+          
+          /* Hide Status Banner in Print - Replace with Title */
+          #statusBanner {
+              border: none !important;
+              background: transparent !important;
+              padding: 0 !important;
+              margin-bottom: 20px !important;
+          }
+          #statusIconBox {
+              display: none !important;
+          }
+          #statusTitle {
+              font-size: 18px !important;
+              text-transform: uppercase !important;
+              letter-spacing: 0.1em !important;
+          }
+          #statusDesc {
+              font-size: 12px !important;
+              color: #666 !important;
+          }
+          
+          /* Features */
+          #featuresSection {
+              display: flex !important;
+              gap: 12px !important;
+              margin-bottom: 24px !important;
+          }
+          #featuresSection > div {
+              border: 1px solid #ddd !important;
+              background: transparent !important;
+              box-shadow: none !important;
+          }
+
+          /* Force internal grids to use 2 columns in print (e.g. Identity Profile) */
+          /* Any grid with md:grid-cols-2 should be 2 cols in print */
+          .grid.md\:grid-cols-2 {
+              display: grid !important;
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 20px !important;
+          }
+      }
+    </style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</link></link>
+</head>
+<body class="bg-slate-50 min-h-screen">
+<div class="flex flex-col min-h-screen w-full">
+<!-- Print-only Header -->
+<div class="hidden print:flex fixed top-0 left-0 right-0 p-6 items-center justify-between z-[9999] border-b-4" id="printHeader">
+<div class="flex flex-col">
+<h1 class="font-black text-xl uppercase tracking-[0.2em] leading-none">Spain Citizen Data</h1>
+<span class="text-[9px] uppercase font-bold tracking-widest mt-1" style="color: var(--c40)">Verification Report</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-[8px] font-bold uppercase tracking-widest" style="color: var(--c60)">Digital Identity Platform</p>
+<p class="text-[7px] font-mono" id="printTimestamp" style="color: var(--c40)"></p>
+</div>
+<img alt="Infonite Logo" class="max-h-8 max-w-[140px] w-auto h-auto object-contain block" id="print-logo" />
+</div>
+</div>
+<!-- Universal Navigation Header -->
+<div class="mx-auto px-0 pt-10 md:px-8 md:pt-4 w-full">
+  <div id="app-nav-container"></div>
+</div>
+
+<!-- Sticky Flow Subheader -->
+<div class="w-full border-b border-black/5 bg-white/50 backdrop-blur-md sticky top-0 z-[40] transition-colors" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
+  <div class="max-w-6xl mx-auto px-4 md:px-8 relative">
+    
+    <!-- Default Subheader (Visible on Dashboard) -->
+    <div id="nl-header-default" class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in">
+      <!-- Icon & Title -->
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center text-[var(--primary)] text-xl shadow-sm shrink-0">
+          <i class="fa-solid fa-person-shelter"></i>
+        </div>
+        <div>
+          <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Spain Citizen Data</h1>
+          <p class="text-xs md:text-sm font-medium text-slate-500">Spain citizen identity verification widget demo</p>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
+        <a href="es-citizen-data-docs.html" class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center gap-2">
+          <i class="fa-solid fa-code text-slate-400"></i> Docs
+        </a>
+        <button class="btn-brand px-5 py-2 text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2" onclick="openNewLeadModal();">
+          <i class="fa-solid fa-plus"></i> New Lead
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="max-w-6xl mx-auto p-4 md:p-8 w-full">
+<!-- Removed legacy config card -->
+<!-- Dashboard View (Table / Empty State) -->
+<div class="fade-in space-y-6 lg:col-span-12 no-print" id="dashboardView">
+  <!-- Empty State (Background How-To) -->
+  <div id="dashboardEmptyState" class="p-4 md:p-8 pt-0 fade-in">
+    <div class="flex flex-col items-start justify-between mb-8 gap-4">
+      <div>
+        <div class="w-16 h-16 bg-[var(--brand-dark)] rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+          <i class="fa-solid fa-layer-group text-2xl text-[var(--brand-dark-contrast)]"></i>
+        </div>
+        <h2 class="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-tight">Generate a Session<br/><span class="text-slate-400">to monitor data flows</span></h2>
+        <p class="text-slate-600 font-medium text-sm mt-4 max-w-lg leading-relaxed">
+          Select <strong class="text-[var(--primary)]"> + New Lead</strong> to begin. You will be able to configure the requested data modules for your customer. Once the session is generated, you will find it listed below to monitor its progress and review the extracted data.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table State -->
+  <div id="dashboardTableState" class="hidden fade-in">
+    <div class="glass-panel overflow-hidden rounded-[1.5rem] shadow-xl">
+      <div class="p-6 border-b border-black/5 flex flex-col sm:flex-row sm:justify-between sm:items-center bg-white/40">
+        <div>
+          <h2 class="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+             <i class="fa-solid fa-table-list text-[var(--primary)]"></i> Session History
+          </h2>
+          <p class="text-[9px] uppercase font-bold text-slate-400 tracking-widest mt-1">Local Browser Storage</p>
+        </div>
+        <button class="mt-4 sm:mt-0 text-[9px] font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest px-3 py-2 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-500/20" onclick="clearHistory()">
+          <i class="fa-solid fa-trash-can mr-1"></i> Clear Local DB
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+          <thead>
+            <tr class="bg-black/[0.03] uppercase text-[9px] font-black tracking-widest text-slate-400 border-b border-black/5">
+              <th class="p-4 pl-6 font-bold w-1/3">Session & Customer ID</th>
+              <th class="p-4 hidden md:table-cell font-bold">Created At</th>
+              <th class="p-4 font-bold">Live Status</th>
+              <th class="p-4 pr-6 text-right font-bold">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessionHistory" class="select-none bg-white">
+            <!-- Populated dynamically by js/citizen-data.js -> renderHistory() -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4" id="settingsModal">
+<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 fade-in flex flex-col max-h-[90vh]">
+<div class="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-white min-h-[85px]">
+<h3 class="font-black text-sm uppercase tracking-[0.2em] text-slate-900">
+            System Configuration
+          </h3>
+          
+          <!-- LIST ACTIONS -->
+          <div id="modal-header-actions-list" class="flex">
+            <button class="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 hover:bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center" onclick="closeSettings()">
+            <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          
+          <!-- EDIT ACTIONS -->
+          <div id="modal-header-actions-edit" class="hidden flex items-center gap-2">
+            <button class="bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-lg text-[9px] uppercase tracking-widest hover:bg-slate-300 transition-colors" onclick="showListView()">
+              Cancel
+            </button>
+            <button id="saveConfigBtn" class="btn-brand font-black px-5 py-2 rounded-lg shadow-lg text-[9px] uppercase tracking-widest transition-opacity" onclick="saveCurrentConfig()">
+              Save
+            </button>
+          </div>
+</div>
+<!-- VIEW: LIST -->
+<div class="p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-list-view">
+<div class="space-y-3" id="configListContainer">
+<!-- Populated by JS -->
+</div>
+<button class="w-full py-3 bg-black/5 hover:bg-black/10 border border-transparent rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all flex justify-center items-center gap-2" onclick="openEditor()">
+<i class="fa-solid fa-plus"></i> New Configuration
+          </button>
+</div>
+<!-- VIEW: EDITOR -->
+<div class="hidden p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-editor-view">
+<div class="flex items-center gap-2 mb-2">
+<button class="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 text-slate-500 transition-colors" onclick="showListView()">
+<i class="fa-solid fa-arrow-left text-[10px]"></i>
+</button>
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400" id="editor-title">Edit Configuration</span>
+</div>
+<input id="edit-config-id" type="hidden"/>
+<h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest mb-3 mt-4">Settings</h4>
+<div class="space-y-2">
+<label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">App Secret (X-APP-SECRET)</label>
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+  <input class="flex-1 bg-black/10 border border-black/5 rounded-xl px-4 py-3 text-xs text-[var(--primary)] font-mono focus:border-[rgba(var(--primary-rgb),0.40)] outline-none transition-all" id="config-secret" placeholder="Enter secret key..." oninput="document.getElementById('saveConfigBtn').disabled = true; document.getElementById('saveConfigBtn').classList.add('opacity-50', 'cursor-not-allowed');" type="password"/>
+  <button type="button" id="btn-sync-server" onclick="if(typeof handleManualSync === 'function') handleManualSync();" class="whitespace-nowrap sm:w-auto w-full text-[10px] font-bold uppercase tracking-widest text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 hover:text-slate-900 transition-colors flex items-center justify-center gap-2 px-4 py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
+    <i class="fa-solid fa-arrows-rotate"></i> Sync from server
+  </button>
+</div>
+<div class="hidden text-[10px] mb-2 text-center font-medium p-2 rounded-lg" id="test-connection-result"></div>
+</div>
+<div class="space-y-2">
+  <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Host Environment</label>
+  <input type="hidden" id="target-host-type" value="production">
+  <div id="host-pill-container" class="grid grid-cols-3 gap-2 transition-opacity">
+    <button type="button" onclick="selectHostType('production')" data-type="production" class="host-pill py-2 border border-[var(--primary)] bg-[rgba(var(--primary-rgb),0.05)] text-[var(--primary)] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-1">
+      <i class="fa-solid fa-cloud text-sm"></i>
+      Production
+    </button>
+    <button type="button" onclick="selectHostType('develop')" data-type="develop" class="host-pill py-2 border border-black/5 bg-black/5 hover:bg-black/10 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-1">
+      <i class="fa-solid fa-code text-sm"></i>
+      Develop
+    </button>
+    <button type="button" onclick="selectHostType('custom')" data-type="custom" class="host-pill py-2 border border-black/5 bg-black/5 hover:bg-black/10 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-1">
+      <i class="fa-solid fa-server text-sm"></i>
+      Custom
+    </button>
+  </div>
+</div>
+<div id="custom-url-container" class="space-y-2 hidden mt-3">
+<label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Widget Service Domain</label>
+<input class="w-full bg-black/10 border border-black/5 rounded-xl px-4 py-3 text-xs text-slate-900 focus:border-[rgba(var(--primary-rgb),0.40)] outline-none transition-all" id="config-widget-url" placeholder="https://widgets.infonite.tech" oninput="document.getElementById('saveConfigBtn').disabled = true; document.getElementById('saveConfigBtn').classList.add('opacity-50', 'cursor-not-allowed');" type="text"/>
+</div>
+<div class="hidden">
+<input id="config-client-url" type="text" value="https://clients.infonite.tech"/>
+</div>
+
+  <h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest mb-3 mt-6">Theme</h4>
+
+<div class="bg-black/5 h-px w-full my-2"></div>
+<div class="space-y-3">
+<label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Theme Colors</label>
+<div class="grid grid-cols-2 gap-3">
+<div class="space-y-1.5">
+<label class="text-[9px] text-slate-400 uppercase tracking-widest">Primary Color</label>
+<div class="flex items-center gap-2 bg-black/5 border border-black/5 rounded-xl px-3 py-2 opacity-70 cursor-not-allowed">
+<div class="w-7 h-7 rounded-lg border border-black/10 shadow-sm" id="swatch-primary-color" style="background-color: #00a76f;"></div>
+<div class="flex-1 bg-transparent text-[11px] text-slate-700 font-mono" id="swatch-primary-color-text">#00a76f</div>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[9px] text-slate-400 uppercase tracking-widest">Accent Color</label>
+<div class="flex items-center gap-2 bg-black/5 border border-black/5 rounded-xl px-3 py-2 opacity-70 cursor-not-allowed">
+<div class="w-7 h-7 rounded-lg border border-black/10 shadow-sm" id="swatch-dark-color" style="background-color: #1C252E;"></div>
+<div class="flex-1 bg-transparent text-[11px] text-slate-700 font-mono" id="swatch-dark-color-text">#1C252E</div>
+</div>
+</div>
+<div class="col-span-2 space-y-1.5">
+<label class="text-[9px] text-slate-400 uppercase tracking-widest">Banner Color</label>
+<div class="flex items-center gap-2">
+<div class="flex-1 flex items-center gap-2 bg-black/10 border border-black/5 rounded-xl px-3 py-2">
+<input class="w-7 h-7 rounded-lg border-0 cursor-pointer bg-transparent p-0" id="config-banner-color" oninput="document.getElementById('config-banner-color-text').value = this.value; updateBannerPreview()" type="color" value="#1C252E"/>
+<input class="flex-1 bg-transparent text-[11px] text-slate-700 font-mono outline-none w-0" id="config-banner-color-text" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){ document.getElementById('config-banner-color').value = this.value; updateBannerPreview(); }" type="text" value="#1C252E"/>
+</div>
+</div>
+
+<div class="bg-black/5 h-px w-full my-4"></div>
+<div class="space-y-3">
+  <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Banner Scheme & Logos</label>
+  <div class="flex flex-col gap-2">
+    <!-- Light Scheme Row -->
+    <div class="flex items-center gap-3 w-full cursor-pointer group" onclick="window.InfoniteConfigManager && window.InfoniteConfigManager.selectBannerScheme ? window.InfoniteConfigManager.selectBannerScheme('light') : selectBannerScheme('light')">
+      <!-- Radio Outside -->
+      <div class="w-5 h-5 shrink-0 rounded-full border-2 border-slate-300 flex items-center justify-center bg-slate-50 shadow-inner group-hover:border-[var(--primary)] transition-colors" id="radio-indicator-light">
+        <div class="w-2.5 h-2.5 rounded-full bg-[var(--primary)] hidden" id="radio-dot-light"></div>
+      </div>
+      <!-- The Box -->
+      <div id="row-scheme-light" class="scheme-row-selector flex-1 flex items-center justify-between p-2 border-2 border-slate-100 rounded-xl transition-all banner-color-preview shadow-sm" style="background-color: #1C252E;">
+        <!-- Square Light -->
+        <div class="w-10 h-10 shrink-0 flex items-center justify-center p-1 aspect-square">
+          <img id="preview-logo-square-light" class="w-full h-full object-contain hidden" />
+          <img id="fallback-logo-square-light" src="../../assets/logo/logo-light.svg" class="w-full h-full object-contain opacity-50" />
+        </div>
+        <!-- Banner Content Light -->
+        <div class="flex-1 min-w-0 flex items-center justify-center px-2 text-[9px] font-bold uppercase tracking-widest text-[#1C252E]">
+          Light Scheme
+        </div>
+        <!-- Rectangle Light -->
+        <div class="w-16 h-10 shrink-0 flex items-center justify-center p-1">
+          <img id="preview-logo-rectangle-light" class="max-w-full max-h-full object-contain hidden" />
+          <i id="fallback-logo-rectangle-light" class="fa-solid fa-image text-white/50"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dark Scheme Row -->
+    <div class="flex items-center gap-3 w-full cursor-pointer group" onclick="window.InfoniteConfigManager && window.InfoniteConfigManager.selectBannerScheme ? window.InfoniteConfigManager.selectBannerScheme('dark') : selectBannerScheme('dark')">
+      <!-- Radio Outside -->
+      <div class="w-5 h-5 shrink-0 rounded-full border-2 border-slate-300 flex items-center justify-center bg-slate-50 shadow-inner group-hover:border-[var(--primary)] transition-colors" id="radio-indicator-dark">
+        <div class="w-2.5 h-2.5 rounded-full bg-[var(--primary)] hidden" id="radio-dot-dark"></div>
+      </div>
+      <!-- The Box -->
+      <div id="row-scheme-dark" class="scheme-row-selector flex-1 flex items-center justify-between p-2 border-2 border-slate-100 rounded-xl transition-all banner-color-preview shadow-sm" style="background-color: #1C252E;">
+        <!-- Square Dark -->
+        <div class="w-10 h-10 shrink-0 flex items-center justify-center p-1 aspect-square">
+          <img id="preview-logo-square-dark" class="w-full h-full object-contain hidden" />
+          <img id="fallback-logo-square-dark" src="../../assets/logo/logo-dark.svg" class="w-full h-full object-contain opacity-50" />
+        </div>
+        <!-- Banner Content Dark -->
+        <div class="flex-1 min-w-0 flex items-center justify-center px-2 text-[9px] font-bold uppercase tracking-widest text-[#f3f3f3]">
+          Dark Scheme
+        </div>
+        <!-- Rectangle Dark -->
+        <div class="w-16 h-10 shrink-0 flex items-center justify-center p-1">
+          <img id="preview-logo-rectangle-dark" class="max-w-full max-h-full object-contain hidden" />
+          <i id="fallback-logo-rectangle-dark" class="fa-solid fa-image text-slate-800/40"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4 flex items-center justify-between bg-black/5 rounded-xl p-3 border border-black/5 group cursor-pointer" onclick="const cb = document.getElementById('config-saturate-logo'); cb.checked = !cb.checked; if(cb.onchange) cb.onchange();">
+    <div class="flex flex-col">
+      <label class="text-[10px] font-bold text-slate-700 cursor-pointer">Saturate Hero Logo</label>
+      <span class="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Applies optimal contrast filter to Hero section</span>
+    </div>
+    <div class="relative inline-flex items-center cursor-pointer">
+      <input type="checkbox" id="config-saturate-logo" class="sr-only peer" checked 
+             onchange="
+               const bg = this.nextElementSibling;
+               const dot = bg.querySelector('div');
+               if(this.checked) {
+                 bg.classList.replace('bg-slate-200', 'bg-[var(--primary)]');
+                 bg.classList.add('border-[var(--primary)]');
+                 bg.classList.remove('border-slate-300');
+                 dot.classList.add('translate-x-4');
+               } else {
+                 bg.classList.replace('bg-[var(--primary)]', 'bg-slate-200');
+                 bg.classList.remove('border-[var(--primary)]');
+                 bg.classList.add('border-slate-300');
+                 dot.classList.remove('translate-x-4');
+               }
+             ">
+      <div class="w-9 h-5 bg-[var(--primary)] border-2 border-[var(--primary)] peer-focus:outline-none rounded-full peer transition-colors duration-200 ease-in-out">
+        <div class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out translate-x-4"></div>
+      </div>
+    </div>
+  </div>
+  
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="fixed inset-0 bg-black/95 backdrop-blur-md z-[120] hidden flex-col p-4 md:p-8 fade-in cursor-pointer" id="pdfModal" onclick="if(event.target === this) closePdfModal()">
+<div class="flex justify-between items-center mb-4 max-w-5xl mx-auto w-full">
+<h3 class="font-black text-xs uppercase tracking-[0.2em] text-white flex items-center gap-2">
+<i class="fa-solid fa-file-pdf text-[var(--primary)]"></i> Work Life
+          Report
+        </h3>
+<button class="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white hover:bg-red-500 hover:text-white transition-all shadow-lg" onclick="closePdfModal()" title="Close">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+<div class="flex-1 max-w-5xl mx-auto w-full bg-white rounded-2xl overflow-hidden shadow-2xl relative cursor-default">
+<div class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-center" id="pdfLoading">
+<div class="w-12 h-12 border-4 border[rgba(var(--primary-rgb),0.10)] border-t-[var(--primary)] rounded-full animate-spin mb-4"></div>
+<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            Retrieving secure document...
+          </p>
+</div>
+<iframe class="w-full h-full border-none hidden" id="pdfFrame" src=""></iframe>
+</div>
+</div>
+
+<div class="fixed inset-0 bg-black/95 backdrop-blur-md z-[120] hidden flex-col p-4 md:p-8 fade-in" id="debugModal">
+<div class="flex justify-between items-center mb-4 max-w-5xl mx-auto w-full">
+<h3 class="font-black text-xs uppercase tracking-[0.2em] text-white flex items-center gap-2">
+<i class="fa-solid fa-code text-[var(--primary)]"></i> Identity Data Debug
+        </h3>
+<button class="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white hover:bg-red-500 hover:text-white transition-all shadow-lg" onclick="closeDebugModal()" title="Close">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+<div class="flex-1 max-w-5xl mx-auto w-full bg-[#1e222a] rounded-2xl overflow-hidden shadow-2xl relative border border-white/10 flex flex-col">
+<div class="flex-1 overflow-auto custom-scrollbar p-0">
+<pre><code class="language-json text-xs" id="debugJsonContent"></code></pre>
+</div>
+<div class="bg-black/20 p-3 border-t border-white/5 flex justify-end gap-2">
+<button class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest transition-colors" onclick="copyDebugJson()">
+<i class="fa-regular fa-copy mr-2"></i> Copy JSON
+            </button>
+</div>
+</div>
+</div>
+
+<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[130] hidden flex-col items-center justify-center p-4 fade-in cursor-pointer" id="widgetModal" onclick="if(event.target === this) closeWidgetModal()">
+<div class="w-full max-w-md bg-white rounded-xl overflow-hidden shadow-2xl relative flex flex-col h-[85vh] max-h-[850px] cursor-default">
+<div class="flex-1 relative bg-slate-100">
+<div class="absolute inset-0 flex items-center justify-center" id="widgetLoading">
+<i class="fa-solid fa-circle-notch animate-spin text-2xl text-[var(--primary)] opacity-50"></i>
+</div>
+<iframe class="w-full h-full border-none absolute inset-0 z-10 bg-transparent" id="widgetFrame" src=""></iframe>
+</div>
+</div>
+</div>
+
+    </div>
+  </div>
+</div>
+<!-- NEW LEAD MODAL -->
+<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] hidden flex-col items-center justify-end md:justify-center p-0 pt-6 md:p-8" id="newLeadModal">
+  <div class="w-full max-w-2xl bg-white rounded-t-[2.5rem] md:rounded-3xl overflow-hidden shadow-2xl relative flex flex-col max-h-full h-[calc(100vh-1.5rem)] md:h-auto md:max-h-[90vh]">
+    
+    <!-- Inverted Header -->
+    <div id="nl-header" class="p-5 md:p-6 border-b border-black/5 bg-slate-50 flex items-center justify-between shrink-0">
+      
+      <!-- Left: Title & Icon -->
+      <div class="flex items-center gap-3 text-left">
+        <div class="w-10 h-10 rounded-xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
+          <i class="fa-solid fa-wand-magic-sparkles text-[var(--primary)] text-sm"></i>
+        </div>
+        <div class="flex flex-col">
+          <h3 class="font-black text-[13px] uppercase tracking-widest text-slate-900 leading-tight">New Lead</h3>
+          <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">Configuration</p>
+        </div>
+      </div>
+
+      <!-- Right: Actions -->
+      <div class="flex items-center gap-3" id="nl-footer-actions">
+        <button class="bg-white border border-slate-200 text-slate-500 hover:text-slate-900 font-bold px-4 md:px-5 py-2.5 rounded-xl text-[10px] uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm" onclick="closeNewLeadModal()">
+          Cancel
+        </button>
+        <button class="btn-brand font-black px-4 md:px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest shadow-lg flex items-center gap-2" id="generateLeadBtn" onclick="generateLeadSession();">
+          <span class="hidden sm:inline">Generate Session</span>
+          <span class="inline sm:hidden">Generate</span>
+          <i class="fa-solid fa-bolt text-amber-300"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Body / Content -->
+    <div class="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar bg-slate-50/50 relative flex flex-col">
+      
+      <!-- FORM VIEW -->
+      <div id="nl-form-view" class="flex flex-col">
+      <!-- Customer ID -->
+      <div class="mb-6 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
+        <label for="generate-customer-id" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+           <i class="fa-solid fa-fingerprint text-[var(--primary)]"></i> Customer ID
+        </label>
+        <p class="text-[9px] text-slate-500 font-medium leading-tight">Unique identifier for the user initializing this session. Auto-generated if left blank.</p>
+        <input type="text" id="generate-customer-id" placeholder="ES-CITIZEN-DATA-..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono mt-1">
+      </div>
+      
+      <!-- MODULES Accordion -->
+      <div class="mb-4">
+        <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-modules')">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+              <i class="fa-solid fa-shapes"></i>
+            </div>
+            <div class="text-left">
+               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest">Modules</h4>
+               <p class="text-[9px] text-slate-500 font-medium">Select functionality to query</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300 rotate-180" id="acc-modules-icon"></i>
+        </button>
+        <div id="acc-modules" class="mt-3 transition-all duration-300">
+           <!-- Grid injected by JS -->
+           <div id="modulesGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+        </div>
+      </div>
+
+      <!-- ADVANCED Accordion -->
+      <div>
+        <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-advanced')">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">
+              <i class="fa-solid fa-sliders"></i>
+            </div>
+            <div class="text-left">
+               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest">Advanced Configuration</h4>
+               <p class="text-[9px] text-slate-500 font-medium">Routing and behavioral overrides</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300" id="acc-advanced-icon"></i>
+        </button>
+        <div id="acc-advanced" class="mt-3 hidden transition-all duration-300 bg-white border border-black/5 rounded-2xl p-5 shadow-sm flex flex-col gap-5">
+           
+           <!-- AES KEY -->
+           <div>
+             <div class="flex items-center justify-between mb-2">
+                 <label for="generate-aes-key" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                    <i class="fa-solid fa-key text-amber-500"></i> AES-256-GCM Key
+                 </label>
+                 <button class="text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded font-bold uppercase tracking-widest transition-colors flex items-center gap-1 border border-slate-200" onclick="
+                    const array = new Uint8Array(32);
+                    window.crypto.getRandomValues(array);
+                    document.getElementById('generate-aes-key').value = btoa(String.fromCharCode(...array));
+                 ">
+                    <i class="fa-solid fa-dice"></i> Randomize
+                 </button>
+             </div>
+             <p class="text-[9px] text-slate-500 font-medium leading-tight mb-2">32-byte Base64 key. Used to encrypt the session payload. If emptied, results will be stored plainly.</p>
+             <input type="text" id="generate-aes-key" value="MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE=" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono">
+           </div>
+
+           <div class="h-px w-full bg-slate-100"></div>
+
+           <!-- COMPLETION MODE / URL -->
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                 <label for="generate-completion-mode" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-flag-checkered text-blue-500"></i> Completion Mode
+                 </label>
+                 <select id="generate-completion-mode" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-bold" onchange="
+                    const urlSelect = document.getElementById('generate-completion-url');
+                    const pathGroup = document.getElementById('completion-path-group');
+                    urlSelect.disabled = this.value !== 'redirect';
+                    if(this.value !== 'redirect') {
+                        urlSelect.classList.add('opacity-50');
+                        pathGroup.classList.add('hidden');
+                    } else {
+                        urlSelect.classList.remove('opacity-50');
+                        pathGroup.classList.remove('hidden');
+                    }
+                 ">
+                    <option value="do_nothing">Wait on widgets end</option>
+                    <option value="redirect">Redirect user</option>
+                 </select>
+              </div>
+              <div>
+                 <label for="generate-completion-url" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-link text-indigo-500"></i> Completion URL
+                 </label>
+                 <select id="generate-completion-url" disabled class="opacity-50 w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono truncate">
+                    <!-- Populated by JS from app_settings -->
+                 </select>
+              </div>
+            </div>
+            
+            <!-- SUB PATH FOR REDIRECT -->
+            <div id="completion-path-group" class="hidden">
+                 <label for="generate-completion-path" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-route text-teal-500"></i> Custom Sub URL Path
+                 </label>
+                 <p class="text-[9px] text-slate-500 font-medium leading-tight mb-2">Optional parameter appended to the Base Completion URL before redirection. (e.g., <code>/onboarding/success</code>)</p>
+                 <input type="text" id="generate-completion-path" placeholder="/my-custom-path" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono">
+            </div>
+         </div>
+      </div>
+      </div>
+      <!-- END FORM VIEW -->
+
+      <!-- SUCCESS VIEW -->
+      <div id="nl-success-view" class="hidden flex-col items-center justify-center text-center py-12 my-auto fade-in">
+        <div class="w-20 h-20 rounded-full bg-green-50 border-[4px] border-green-100 flex items-center justify-center mb-6 shadow-inner">
+           <i class="fa-solid fa-check text-4xl text-green-500"></i>
+        </div>
+        <h4 class="font-black text-slate-900 text-xl tracking-tight mb-2">Session Created</h4>
+        <p class="text-xs text-slate-500 max-w-[280px] leading-relaxed mb-6">The citizen data session has been initialized. Send the following link to your user to begin the process.</p>
+        
+        <div class="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-sm mb-4">
+           <i class="fa-solid fa-link text-slate-400"></i>
+           <input type="text" id="nl-success-url" class="bg-transparent border-none text-[10px] font-mono text-slate-700 outline-none w-full" readonly value="https://...">
+           <button class="btn-brand px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest shrink-0" onclick="
+              const input = document.getElementById('nl-success-url');
+              input.select();
+              document.execCommand('copy');
+              this.innerHTML = '<i class=\'fa-solid fa-check\'></i> Copied';
+              setTimeout(() => this.innerHTML = 'Copy Link', 2000);
+           ">Copy Link</button>
+        </div>
+
+        <div class="flex items-center gap-3 w-full">
+            <button class="flex-1 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-sm" onclick="closeNewLeadModal()">
+                Close
+            </button>
+        </div>
+      </div>
+      <!-- END SUCCESS VIEW -->
+
+      <!-- ERROR VIEW -->
+      <div id="nl-error-view" class="hidden flex-col items-center justify-center text-center py-12 my-auto fade-in">
+        <div class="w-20 h-20 rounded-full bg-red-50 border-[4px] border-red-100 flex items-center justify-center mb-6 shadow-inner">
+           <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 pt-1"></i>
+        </div>
+        <h4 class="font-black text-slate-900 text-xl tracking-tight mb-2 text-red-900">Initialization Failed</h4>
+        <p class="text-xs text-slate-600 max-w-[320px] leading-relaxed mb-6">The session could not be created. Review the error details below.</p>
+        
+        <div class="w-full bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm mb-6 text-left">
+           <code id="nl-error-msg" class="text-[10px] font-mono text-red-600 break-words whitespace-pre-wrap block max-h-[120px] overflow-y-auto custom-scrollbar"></code>
+        </div>
+
+        <div class="flex items-center gap-3 w-full">
+            <button class="flex-1 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-sm" onclick="
+                document.getElementById('nl-error-view').classList.add('hidden');
+                document.getElementById('nl-error-view').classList.remove('flex');
+                document.getElementById('nl-form-view').classList.remove('hidden');
+                document.getElementById('nl-form-view').classList.add('flex');
+                document.getElementById('nl-footer-actions').classList.remove('hidden');
+                document.getElementById('nl-footer-actions').classList.add('flex');
+                document.getElementById('nl-header').classList.remove('hidden');
+                document.getElementById('nl-header').classList.add('flex');
+            ">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Form
+            </button>
+            <button class="flex-1 bg-slate-800 text-white hover:bg-slate-900 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-lg" onclick="closeNewLeadModal()">
+                Dismiss
+            </button>
+        </div>
+      </div>
+      <!-- END ERROR VIEW -->
+
+    </div>
+  </div>
+</div>
+
+
+
+<script src="../../js/config.js?v=5"></script>
+<script src="../../js/features.js?v=5"></script>
+<script src="../../js/nav-banner.js?v=5"></script>
+<script src="../../js/flows-manager.js?v=5"></script>
+<script src="../../js/status.js"></script>
+<script src="../../js/es-citizen-data.js?v=5"></script>
+</body>
+</html>
