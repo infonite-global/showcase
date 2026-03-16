@@ -1248,8 +1248,9 @@
                     <i class="fa-solid fa-money-check-dollar"></i>
                 </div>
                 
-                <div class="flex flex-col md:flex-row md:items-start justify-between gap-5 z-10 w-full">
-                    <div class="flex flex-col items-start gap-1 flex-1 min-w-0 md:mt-1">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 z-10 w-full">
+                    <!-- Column 1: Account Info -->
+                    <div class="flex flex-col items-start gap-1 flex-1 min-w-0">
                         <div class="flex items-center gap-3 w-full mb-1">
                             <h3 class="text-2xl font-black text-slate-800 tracking-tight leading-none truncate" title="${acc.product_alias || acc.product_name}">${acc.product_alias || acc.product_name}</h3>
                             <span class="px-2 py-0.5 rounded border border-indigo-200/50 bg-indigo-50 text-[9px] font-black uppercase tracking-widest text-indigo-700 w-fit shrink-0">
@@ -1265,30 +1266,44 @@
                         </div>
                     </div>
                     
-                    <div class="flex flex-col items-center shrink-0 mt-6 md:mt-0 gap-5 z-10">
-                        <div class="flex items-center gap-4 justify-center">
-                            <div class="flex flex-col items-end border-r border-slate-200 pr-4">
-                                <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">AVAILABLE</span>
-                                <span class="text-lg font-black tracking-tight ${balanceColor} font-mono leading-none">
-                                    ${formatCurrency(acc.available?.amount, acc.available?.currency)}
-                                </span>
+                    <!-- Column 2 & 3 Wrapper -->
+                    <div class="flex items-start gap-6 shrink-0 z-10">
+                        
+                        <!-- Column 2: Balances & Pills -->
+                        <div class="flex flex-col items-end gap-3">
+                            <div class="flex items-center gap-4">
+                                <div class="flex flex-col items-end border-r border-slate-200 pr-4">
+                                    <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">AVAILABLE</span>
+                                    <span class="text-lg font-black tracking-tight ${balanceColor} font-mono leading-none">
+                                        ${formatCurrency(acc.available?.amount, acc.available?.currency)}
+                                    </span>
+                                </div>
+                                <div class="flex flex-col items-start pl-1">
+                                    <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">BOOKED</span>
+                                    <span class="text-lg font-black tracking-tight text-slate-600 font-mono leading-none">
+                                        ${formatCurrency(acc.booked?.amount, acc.booked?.currency)}
+                                    </span>
+                                </div>
                             </div>
-                            <div class="flex flex-col items-start pl-1">
-                                <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">BOOKED</span>
-                                <span class="text-lg font-black tracking-tight text-slate-600 font-mono leading-none">
-                                    ${formatCurrency(acc.booked?.amount, acc.booked?.currency)}
-                                </span>
+                            
+                            <!-- Holders & Movements Pills -->
+                            <div class="flex gap-2 justify-end w-full">
+                                <div class="px-2 py-0.5 bg-white border border-slate-100 shadow-sm text-slate-500 rounded text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0">
+                                    <i class="fa-solid fa-users text-slate-300"></i> Holders <span class="w-px h-2.5 bg-slate-200 mx-0.5"></span> <span class="font-black text-slate-700">${acc.holders ? acc.holders.length : 0}</span>
+                                </div>
+                                <div class="px-2 py-0.5 bg-white border border-slate-100 shadow-sm text-slate-500 rounded text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0">
+                                    <i class="fa-solid fa-list-ul text-slate-300"></i> Movements <span class="w-px h-2.5 bg-slate-200 mx-0.5"></span> <span class="font-black text-slate-700">${acc.transactions ? acc.transactions.length : 0}</span>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="flex gap-2.5 w-full justify-center mt-auto">
-                            <button class="px-3.5 py-1.5 bg-white border border-slate-200 shadow-sm text-slate-600 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:border-slate-300 transition-colors flex items-center gap-1.5 group">
-                                <i class="fa-solid fa-users text-slate-400 group-hover:text-indigo-500 transition-colors"></i> Holders
-                            </button>
-                            <button class="px-3.5 py-1.5 bg-white border border-slate-200 shadow-sm text-slate-600 rounded-xl text-[9px] font-bold uppercase tracking-widest hover:border-slate-300 transition-colors flex items-center gap-1.5 group">
-                                <i class="fa-solid fa-list-ul text-slate-400 group-hover:text-indigo-500 transition-colors"></i> Movements
+                        <!-- Column 3: Navigation Chevron -->
+                        <div class="flex items-start">
+                            <button onclick="window.showAccountDetails('${acc.id}')" class="w-10 h-10 bg-[var(--primary-container)] text-[var(--primary)] border border-transparent rounded-xl flex items-center justify-center hover:bg-[var(--primary)] hover:text-white hover:border-[var(--primary)] transition-all shadow-sm group">
+                                <i class="fa-solid fa-chevron-right text-sm group-hover:translate-x-0.5 transition-transform"></i>
                             </button>
                         </div>
+                        
                     </div>
                 </div>
             </div>
@@ -1317,6 +1332,206 @@
             return;
         }
         renderEmptyCategory('loansContainer', 'fa-solid fa-hand-holding-dollar', 'Displaying loans...');
+    }
+
+    // --- Accounts Details Routing ---
+    window.showAccountDetails = async function(accountId) {
+        if (!window.currentResultData || !window.currentResultData.data || !window.currentResultData.data.accounts) return;
+        
+        const account = window.currentResultData.data.accounts.find(a => a.id === accountId);
+        if (!account) return;
+
+        // Perform Route Switch
+        await switchDashboardView('accounts-details');
+        
+        // Render Logic for Details
+        const container = document.getElementById('accountDetailsContainer');
+        if (!container) return;
+        
+        let html = `
+        <div class="bg-slate-50 border border-slate-100/50 rounded-2xl p-6 relative overflow-hidden mb-2 flex items-center justify-between">
+            <div class="flex flex-col gap-3 z-10">
+                <div class="flex flex-col">
+                    <h3 class="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1">${account.product_alias || account.product_name}</h3>
+                    <div class="flex items-center gap-3">
+                        <p class="text-[11px] font-mono font-bold text-slate-500"><i class="fa-solid fa-building-columns text-slate-400"></i> ${account.identifier?.value || '--'}</p>
+                        ${account.opening_date ? `<p class="text-[10px] font-bold text-slate-400 font-mono tracking-wide px-2 py-0.5 rounded bg-slate-100/80">Est. ${formatDate(account.opening_date)}</p>` : ''}
+                    </div>
+                </div>
+                <div class="flex items-center gap-8 mt-2">
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">AVAILABLE</span>
+                        <span class="text-lg font-black tracking-tight text-slate-800 font-mono leading-none">${formatCurrency(account.available?.amount, account.available?.currency)}</span>
+                    </div>
+                    ${account.booked ? `
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">BOOKED</span>
+                        <span class="text-lg font-black tracking-tight text-slate-400 font-mono leading-none">${formatCurrency(account.booked?.amount, account.booked?.currency)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <div class="absolute -right-6 -bottom-6 text-8xl md:text-9xl text-slate-200/50 pointer-events-none z-0">
+                 <i class="fa-solid fa-money-check-dollar"></i>
+            </div>
+        </div>
+        `;
+
+        // Render Holders
+        if (account.holders && account.holders.length > 0) {
+            html += `
+            <div class="mt-4">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-[var(--primary)] text-sm"></i> Account Holders
+                </h4>
+                <div class="flex flex-col gap-3">
+            `;
+            account.holders.forEach(holder => {
+                html += `
+                    <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-user text-slate-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-slate-800 leading-none">${holder.name}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `
+                </div>
+            </div>
+            `;
+        } else {
+             html += `
+             <div class="mt-4">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-[var(--primary)] text-sm"></i> Account Holders
+                </h4>
+                <p class="text-sm text-slate-400 italic">No holders information available.</p>
+             </div>
+             `;
+        }
+
+        // Render Movements
+        if (account.transactions && account.transactions.length > 0) {
+            html += `
+            <div class="mt-8">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul text-[var(--primary)] text-sm"></i> Recent Movements
+                </h4>
+                <div class="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100">
+                                    <th class="p-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Date</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Description</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 tracking-widest uppercase text-right">Amount / Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+            `;
+            
+            account.transactions.forEach(tx => {
+                const isPositive = Number(tx.amount?.amount) > 0;
+                const amtColor = isPositive ? 'text-emerald-500' : 'text-slate-800';
+                
+                let catIconHTML = '';
+                if (tx.category) {
+                    if (tx.category.startsWith('income::')) {
+                        catIconHTML = '<i class="fa-solid fa-arrow-up text-emerald-500"></i>';
+                    } else if (tx.category.startsWith('expenses::')) {
+                        catIconHTML = '<i class="fa-solid fa-arrow-down text-rose-500"></i>';
+                    } else {
+                        catIconHTML = '<i class="fa-regular fa-circle-dot text-slate-300"></i>';
+                    }
+                }
+                
+                html += `
+                                <tr class="hover:bg-slate-50/50 transition-colors group">
+                                    <td class="p-4 align-top w-28 whitespace-nowrap">
+                                        <div class="text-[11px] font-bold text-slate-600 font-mono">${formatDate(tx.operation_date)}</div>
+                                        ${tx.value_date && tx.value_date !== tx.operation_date ? `<div class="text-[9px] text-slate-400 mt-0.5">Val: ${formatDate(tx.value_date)}</div>` : ''}
+                                    </td>
+                                    <td class="p-4 align-top w-full">
+                                        <div class="flex flex-col gap-1.5 w-full max-w-[200px] sm:max-w-xs md:max-w-md lg:max-w-xl">
+                                            <!-- Top Line: Primary Description + Category Badge inline -->
+                                            <div class="flex items-center gap-2 w-full">
+                                                <div class="min-w-0 flex-1">
+                                                    ${tx.descriptions && tx.descriptions.length > 0 ? 
+                                                        `<p class="text-sm font-semibold text-slate-800 leading-tight truncate" title="${tx.descriptions[0].replace(/"/g, '&quot;')}">${tx.descriptions[0]}</p>`
+                                                        : '<p class="text-sm font-semibold text-slate-400 leading-tight truncate">--</p>'
+                                                    }
+                                                </div>
+                                                ${tx.category ? `
+                                                <div class="shrink-0 flex items-center">
+                                                    <span class="px-2 text-[8px] py-[3px] rounded bg-slate-50 text-slate-600 font-black uppercase tracking-widest truncate max-w-[120px] sm:max-w-[180px] inline-flex items-center gap-1.5 shadow-sm border border-slate-200/50" title="${tx.category.split('::').pop().replace(/_/g, ' ')}">
+                                                        ${catIconHTML} ${tx.category.split('::').pop().replace(/_/g, ' ')}
+                                                    </span>
+                                                </div>
+                                                ` : ''}
+                                            </div>
+                                            <!-- Bottom Line: Secondary Description (if exists) -->
+                                            ${tx.descriptions && tx.descriptions.length > 1 ? 
+                                                `<div class="w-full"><p class="text-xs font-normal text-slate-500 leading-tight truncate" title="${tx.descriptions[1].replace(/"/g, '&quot;')}">${tx.descriptions[1]}</p></div>` 
+                                                : ''
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="p-4 align-top text-right whitespace-nowrap">
+                                        <div class="flex flex-col items-end gap-1">
+                                            <span class="text-sm font-black tracking-tight ${amtColor} font-mono">${isPositive ? '+' : ''}${formatCurrency(tx.amount?.amount, tx.amount?.currency)}</span>
+                                            <span class="text-[10px] font-bold text-slate-400 font-mono">${formatCurrency(tx.balance?.amount, tx.balance?.currency) || '--'}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                `;
+            });
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            `;
+        } else {
+             html += `
+             <div class="mt-8">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul text-[var(--primary)] text-sm"></i> Recent Movements
+                </h4>
+                <p class="text-sm text-slate-400 italic">No movements recorded for this account.</p>
+             </div>
+             `;
+        }
+
+        container.innerHTML = html;
+        
+        // Remove active nav state from current sidebar button and set to Accounts to keep consistency
+        document.querySelectorAll('.dashboard-nav-btn').forEach(btn => {
+            btn.classList.remove('bg-[var(--primary-container)]', 'text-[var(--primary)]', 'shadow-sm', 'border', 'border-[var(--primary)]/20');
+            btn.classList.add('text-slate-500', 'border', 'border-transparent');
+            
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.remove('opacity-100');
+                icon.classList.add('opacity-60');
+            }
+        });
+        
+        const overrideNavTarget = document.getElementById('nav-accounts');
+        if (overrideNavTarget) {
+             overrideNavTarget.classList.add('bg-[var(--primary-container)]', 'text-[var(--primary)]', 'shadow-sm', 'border', 'border-[var(--primary)]/20');
+             overrideNavTarget.classList.remove('text-slate-500', 'border-transparent');
+             const icon = overrideNavTarget.querySelector('i');
+             if (icon) {
+                 icon.classList.remove('opacity-60');
+                 icon.classList.add('opacity-100');
+             }
+        }
     }
 
     // --- Custom JSON Syntax Highlighter ---

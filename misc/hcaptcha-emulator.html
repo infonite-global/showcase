@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hCaptcha Emulator - INFONITE</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00a76f;
+            --surface: #1C252E;
+            --surface-container: #232d38;
+            --on-surface: #fcfcfc;
+            --outline-variant: #374151;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: var(--surface-container);
+            padding: 40px 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 440px;
+            width: 100%;
+            border: 1px solid var(--outline-variant);
+        }
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .logo-container .material-symbols-outlined {
+            font-size: 48px;
+            color: var(--primary);
+        }
+        h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 24px;
+        }
+        p.subtitle {
+            color: #9ca3af;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+        .token-result {
+            margin-top: 24px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .token-display-input {
+            width: 100%;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            border: 1px solid var(--outline-variant);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: text;
+        }
+        .token-display-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            border: 1px solid var(--outline-variant);
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #008f5e;
+            transform: translateY(-1px);
+        }
+        button .material-symbols-outlined {
+            font-size: 20px;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .hcap-wrapper {
+            display: flex;
+            justify-content: center;
+            min-height: 78px;
+        }
+        .version-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 167, 111, 0.1);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 32px;
+        }
+    </style>
+    <script src="https://js.hcaptcha.com/1/api.js?render=explicit" async defer></script>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <span class="material-symbols-outlined">shield_person</span>
+        </div>
+        <h3>Captcha Emulator</h3>
+        <p class="subtitle">Resolving security challenge parameters</p>
+        
+        <div id="error-message" class="error" style="display: none;"></div>
+        
+        <div id="site-key-form-container" style="display: none;">
+            <p style="text-align: left; font-size: 14px; margin-bottom: 8px; font-weight: 500; color: #9ca3af;">Enter your Site Key to continue:</p>
+            <form id="site-key-form">
+                <input type="text" id="site-key-input" placeholder="e.g. 10000000-ffff-ffff-ffff-000000000001" required>
+                <button type="submit">
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                    <span>Continue</span>
+                </button>
+            </form>
+        </div>
+        
+        <div class="hcap-wrapper" id="hcaptcha-container">
+            <!-- hCaptcha will render here -->
+        </div>
+        
+        <div id="token-result" class="token-result" style="display: none;">
+            <input type="text" id="token-display" class="token-display-input" readonly placeholder="Waiting for token...">
+            <button id="copy-btn">
+                <span class="material-symbols-outlined">content_copy</span>
+                <span>Copy Token</span>
+            </button>
+        </div>
+        
+        <div>
+            <div class="version-chip">
+                <span class="material-symbols-outlined" style="font-size: 14px;">verified</span>
+                v2026.2.2302
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let widgetId;
+
+        function onCaptchaSuccess(token) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectMode = urlParams.get('redirect');
+
+            if (redirectMode === 'true') {
+                // If the proxy needs a clean redirect or replacement to stop loading
+                document.open();
+                document.write('<!DOCTYPE html><html><head><title>Captcha' + 'Solved</title></head><body style="font-family: sans-serif; padding: 20px;"><h1>Captcha Solution</h1><pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>' + token + '</code></pre></body></html>');
+                document.close();
+            } else {
+                document.getElementById('token-result').style.display = 'block';
+                document.getElementById('token-display').value = token;
+            }
+        }
+
+        document.getElementById('copy-btn').addEventListener('click', function() {
+            var tokenText = document.getElementById('token-display');
+            tokenText.select();
+            tokenText.setSelectionRange(0, 99999);
+            
+            navigator.clipboard.writeText(tokenText.value).then(() => {
+                var btn = document.getElementById('copy-btn');
+                var textSpan = btn.querySelector('span:nth-child(2)');
+                var iconSpan = btn.querySelector('.material-symbols-outlined');
+                
+                textSpan.textContent = 'Copied!';
+                iconSpan.textContent = 'check';
+                btn.style.backgroundColor = '#008f5e';
+                
+                setTimeout(() => {
+                    textSpan.textContent = 'Copy Token';
+                    iconSpan.textContent = 'content_copy';
+                    btn.style.backgroundColor = 'var(--primary)';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy', err);
+                // Fallback for older browsers
+                document.execCommand('copy');
+            });
+        });
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let siteKey = urlParams.get('site-key') || urlParams.get('sitekey');
+
+            if (!siteKey) {
+                document.getElementById('site-key-form-container').style.display = 'block';
+                document.querySelector('.subtitle').textContent = 'Please provide a site key to emulate.';
+                document.getElementById('hcaptcha-container').style.display = 'none';
+                
+                document.getElementById('site-key-form').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const inputVal = document.getElementById('site-key-input').value.trim();
+                    if (inputVal) {
+                        window.location.href = '?site-key=' + encodeURIComponent(inputVal);
+                    }
+                });
+                return;
+            }
+
+            const renderCaptcha = () => {
+                if (typeof hcaptcha !== 'undefined') {
+                    try {
+                        widgetId = hcaptcha.render('hcaptcha-container', {
+                            sitekey: siteKey,
+                            callback: onCaptchaSuccess,
+                            theme: 'dark'
+                        });
+                        
+                        // Try to trigger execute after a short delay
+                        setTimeout(function() {
+                            try { hcaptcha.execute(widgetId); } catch(e) {}
+                        }, 1000);
+                    } catch (e) {
+                        console.error('Error rendering hCaptcha', e);
+                    }
+                } else {
+                    setTimeout(renderCaptcha, 0);
+                }
+            };
+
+            renderCaptcha();
+        };
+    </script>
+</body>
+</html>
