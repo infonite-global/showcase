@@ -1101,7 +1101,7 @@
             for (const [engineCode, sessionId] of Object.entries(payload.connections)) {
                 // The engineCode looks like: TGSSXCLAVEXXPUB254ESXXXX-website
                 const baseEngineCode = engineCode.split('-')[0];
-                const logoUrl = `/assets/engine-logos/${baseEngineCode}/light-square.png`;
+                const logoUrl = `/showcase/assets/engine-logos/${baseEngineCode}/light-square.png`;
                 
                 // We use an onerror inline handler: if the logo doesn't exist, we hide the img and show the generic plug icon wrapper
                 html += `
