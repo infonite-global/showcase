@@ -12,14 +12,123 @@
         </div>
     </div>
 
-    <!-- Blank State Body -->
-    <div class="flex-1 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 min-h-[400px]">
-        <div class="flex flex-col items-center gap-3 text-center px-4">
-            <i class="fa-solid fa-code text-3xl opacity-50"></i>
-            <div>
-                <span class="block text-sm font-bold text-slate-600">Pending Implementation</span>
-                <span class="block text-xs font-medium mt-1 uppercase tracking-widest opacity-80">es-citizen-data/templates/driver.html</span>
+    <!-- Driver Status Summary Card -->
+    <div class="w-full rounded-3xl bg-[#f8fafc] border border-slate-200/60 p-5 sm:p-6 lg:p-8 flex flex-col relative overflow-hidden mb-8">
+        <!-- Abstract Decoration -->
+        <div class="absolute -right-16 -top-16 w-64 h-64 bg-slate-200/40 rounded-full blur-3xl opacity-50"></div>
+        <div class="absolute -left-6 -bottom-6 text-9xl text-[140px] text-slate-200/50 pointer-events-none">
+            <i class="fa-solid fa-car"></i>
+        </div>
+
+        <div class="flex flex-col sm:flex-row relative z-10 w-full">
+            
+            <!-- LEFT COLUMN: Identity & Licenses -->
+            <div class="flex flex-col justify-between h-full gap-4 sm:gap-5 flex-1 pr-0 sm:pr-8">
+                <!-- Data Identificativos -->
+                <div class="flex flex-col items-start">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-0.5" id="lblDriverIdType">DATOS IDENTIFICATIVOS</span>
+                    <span class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight leading-none" id="lblDriverIdValue">------</span>
+                    <span class="text-sm font-bold text-slate-600 mt-1" id="lblDriverName">--</span>
+                </div>
+                
+                <!-- Licenses -->
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1.5 align-bottom">Active Licenses</span>
+                    <div class="flex flex-wrap gap-1.5" id="driverLicensesHeaderList">
+                        <!-- Javascript will inject small pills here -->
+                        <span class="px-2 py-0.5 rounded border border-slate-200 bg-white text-[10px] font-bold text-slate-400">Loading licenses...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DIVIDER -->
+            <div class="w-full h-px sm:w-px sm:h-auto bg-slate-200/60 my-6 sm:my-0"></div>
+            
+            <!-- RIGHT COLUMN: Points & Authorizations -->
+            <div class="flex flex-col justify-between h-full gap-4 sm:gap-5 flex-1 pl-0 sm:pl-8 items-start sm:items-end">
+                <!-- Saldo en Puntos -->
+                <div class="flex items-center gap-4 shrink-0 sm:flex-row-reverse">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center shadow-sm">
+                        <i class="fa-solid fa-gauge-high text-xl sm:text-2xl text-slate-300" id="driverStatusIcon"></i>
+                    </div>
+                    <div class="flex flex-col text-left sm:text-right pt-1">
+                        <h3 class="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-none" id="lblPointBalance">--</h3>
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Point Balance</span>
+                    </div>
+                </div>
+                                
+                <!-- Special Authorizations (Smaller) -->
+                <div class="flex flex-col sm:items-end w-full" id="specialAuthContainer">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1.5 align-bottom">Special Authorizations</span>
+                    <div class="flex flex-wrap sm:flex-nowrap gap-1.5 justify-start sm:justify-end">
+                        <div id="badgeDangerousGoods" class="flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition-colors">
+                            <i class="fa-solid fa-triangle-exclamation text-[9px]"></i>
+                            <span class="text-[9px] font-black uppercase tracking-widest leading-none pt-[1px]">Dangerous:</span>
+                            <span id="lblDangerousGoodsState" class="text-[8px] font-bold uppercase leading-none pt-[1px]">--</span>
+                        </div>
+                        <div id="badgeSchoolTransport" class="flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition-colors">
+                            <i class="fa-solid fa-bus text-[9px]"></i>
+                            <span class="text-[9px] font-black uppercase tracking-widest leading-none pt-[1px]">School:</span>
+                            <span id="lblSchoolTransportState" class="text-[8px] font-bold uppercase leading-none pt-[1px]">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="flex items-center gap-2 mb-6 p-1.5 bg-slate-100/50 rounded-xl w-fit border border-slate-200/50">
+        <button id="btnTabPoints" onclick="switchDriverTab('points')" class="px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 flex-wrap">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Point Movements</span>
+        </button>
+        <button id="btnTabVehicles" onclick="switchDriverTab('vehicles')" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2">
+            <i class="fa-solid fa-truck-pickup"></i>
+            <span>Vehicles</span>
+        </button>
+    </div>
+
+    <!-- MAIN SCROLLABLE AREA -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar -mr-4 pr-4">
+        
+        <!-- ======================= -->
+        <!-- TAB 1: POINT MOVEMENTS  -->
+        <!-- ======================= -->
+        <div id="containerDriverPoints" class="flex flex-col gap-4 pb-8">
+            <h3 class="text-sm font-bold text-slate-700 tracking-tight mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Balance History
+            </h3>
+
+            <!-- Transactions List Header -->
+            <div class="flex items-center justify-between px-4 py-2 bg-slate-50 rounded-lg border border-slate-200 mb-2">
+                <div class="flex-1 min-w-0 pr-4">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Movement Detail</span>
+                </div>
+                <div class="w-32 text-right shrink-0">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Delta / After</span>
+                </div>
+            </div>
+
+            <div id="pointsList" class="flex flex-col gap-2 relative">
+                 <!-- Data will be injected here via JS -->
+                 <div class="p-6 text-center text-slate-400 text-sm italic">Loading movements...</div>
             </div>
         </div>
+
+        <!-- ======================= -->
+        <!-- TAB 2: VEHICLES         -->
+        <!-- ======================= -->
+        <div id="containerDriverVehicles" class="hidden flex-col gap-4 pb-8">
+            <h3 class="text-sm font-bold text-slate-700 tracking-tight mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-car text-slate-400"></i> Registered Vehicles
+            </h3>
+            
+            <div id="vehiclesGrid" class="grid grid-cols-1 gap-4">
+                 <div class="p-6 text-center text-slate-400 text-sm italic border border-dashed rounded-xl border-slate-200">No vehicles registered.</div>
+            </div>
+        </div>
+
     </div>
 </div>

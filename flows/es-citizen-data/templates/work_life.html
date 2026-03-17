@@ -1,25 +1,97 @@
 <!-- CATEGORY VIEW: WORK LIFE -->
-<div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in">
+<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in overflow-y-auto">
     
     <!-- View Header -->
-    <div class="flex items-center gap-4 mb-8">
+    <div class="flex items-center gap-4 mb-8 shrink-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] text-[var(--primary)] flex items-center justify-center text-xl shadow-sm border border-[var(--primary)]/20">
             <i class="fa-solid fa-briefcase"></i>
         </div>
-        <div>
+        <div class="flex-1 min-w-0">
             <h2 class="text-xl font-black text-slate-800 tracking-tight">Work Life</h2>
-            <p class="text-xs font-medium text-slate-500 mt-1">Social Security contribution history and employment periods.</p>
+            <p class="text-xs font-medium text-slate-500 mt-1 truncate">Social Security contribution history, labor check, and employment periods.</p>
         </div>
     </div>
 
-    <!-- Blank State Body -->
-    <div class="flex-1 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 min-h-[400px]">
-        <div class="flex flex-col items-center gap-3 text-center px-4">
-            <i class="fa-solid fa-code text-3xl opacity-50"></i>
-            <div>
-                <span class="block text-sm font-bold text-slate-600">Pending Implementation</span>
-                <span class="block text-xs font-medium mt-1 uppercase tracking-widest opacity-80">es-citizen-data/templates/work_life.html</span>
+    <!-- Data Dashboard grid -->
+    <div class="flex flex-col gap-6 pb-6">
+        
+        <!-- Labor Status Summary Card -->
+        <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-8 relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 text-9xl text-slate-200/50 pointer-events-none z-0">
+                <i class="fa-solid fa-chart-line"></i>
             </div>
+            
+            <!-- Left Side: Time and Status -->
+            <div class="flex items-center gap-6 relative z-10">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center shadow-sm shrink-0" id="laborStatusBadge">
+                    <!-- Dynamic Activity Status Icon -->
+                    <i class="fa-solid fa-user-clock text-2xl sm:text-3xl text-slate-300 mb-1" id="laborStatusIcon"></i>
+                </div>
+                
+                <div class="flex flex-col justify-center">
+                    <div class="flex items-baseline gap-2 mb-1">
+                        <h3 class="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight leading-none" id="lblTotalDays">--</h3>
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Total Accumulated Time</span>
+                    </div>
+                    <p class="text-xs sm:text-sm font-semibold text-slate-500 mb-2.5" id="lblTotalTimeHuman">--</p>
+                    <span id="lblLaborActiveBadge" class="hidden self-start px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-widest"></span>
+                </div>
+            </div>
+
+            <!-- Right Side: SSN and PDF Action -->
+            <div class="flex flex-col sm:flex-row xl:flex-col items-start sm:items-center xl:items-end gap-6 sm:gap-8 relative z-10 w-full xl:w-auto mt-4 xl:mt-0 pt-6 xl:pt-0 border-t xl:border-t-0 border-slate-200 xl:border-l xl:pl-8">
+                
+                <!-- SSN Data -->
+                <div class="flex flex-col xl:items-end">
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-hashtag"></i> Social Security Number
+                    </span>
+                    <span id="lblSSN" class="text-lg font-bold text-slate-700 font-mono tracking-tight">--</span>
+                </div>
+
+                <!-- PDF Action button -->
+                <div id="btnDownloadWorkLifeWrapper" class="hidden w-full sm:w-auto">
+                    <button id="btnDownloadWorkLife" class="w-full sm:w-auto flex justify-center items-center gap-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-5 py-2.5 rounded-xl shadow-sm transition-all group">
+                        <div class="w-7 h-7 rounded-md bg-red-50 text-red-500 flex items-center justify-center shrink-0 group-hover:bg-red-100 transition-colors">
+                            <i class="fa-solid fa-file-pdf"></i>
+                        </div>
+                        <div class="flex flex-col items-start leading-tight">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Official Document</span>
+                            <span class="text-xs font-bold">Work Life Report</span>
+                        </div>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="mt-2 pt-6 border-t border-slate-100 flex flex-col gap-6 relative z-10 w-full">
+            
+            <!-- Tabs Header -->
+            <div class="flex items-center gap-2 p-1 bg-slate-100 rounded-xl self-start">
+                <button onclick="switchWorkLifeTab('relations')" id="btnTabRelations" class="px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-building-user text-[var(--primary)]"></i> Work Relations
+                </button>
+                <button onclick="switchWorkLifeTab('bases')" id="btnTabBases" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 flex-wrap">
+                    <i class="fa-solid fa-money-bill-trend-up"></i> Contribution Bases
+                </button>
+            </div>
+
+            <!-- Tab Content: Work Relations History -->
+            <div id="containerWorkRelations" class="flex flex-col gap-4 animate-fade-in w-full">
+                <div class="flex flex-col gap-0" id="listWorkRelations">
+                    <p class="text-sm text-slate-400 font-medium italic">No work relations data available.</p>
+                </div>
+            </div>
+
+            <!-- Tab Content: Contribution Bases History -->
+            <div id="containerContributionBases" class="hidden flex-col gap-4 animate-fade-in w-full">
+                <!-- Grouped list layout for the months -->
+                <div class="flex flex-col gap-6" id="listContributionBases">
+                    <p class="text-sm text-slate-400 font-medium italic">No contribution bases data available.</p>
+                </div>
+            </div>
+            
         </div>
     </div>
 </div>

@@ -995,7 +995,7 @@
             }
         }
 
-        if (profile.gender) {
+        if (profile.gender && profile.type === 'person') {
             const badge = document.getElementById('lblGenderBadge');
             if (badge) {
                 badge.textContent = profile.gender;

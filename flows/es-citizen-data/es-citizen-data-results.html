@@ -880,7 +880,7 @@
                     case 'academic':
                         if(typeof renderAcademicData === 'function') renderAcademicData(window.currentResultData);
                         break;
-                    case 'employment':
+                    case 'work_life':
                         if(typeof renderEmploymentData === 'function') renderEmploymentData(window.currentResultData);
                         break;
                     case 'taxes':
@@ -954,6 +954,486 @@
         return String.fromCodePoint(...codePoints);
     }
 
+    function formatDaysToYearsMonthsDays(totalDays) {
+        if (totalDays === undefined || totalDays === null || isNaN(totalDays)) return '--';
+        const years = Math.floor(totalDays / 365);
+        let remaining = totalDays % 365;
+        const months = Math.floor(remaining / 30);
+        const days = remaining % 30;
+        
+        let parts = [];
+        if (years > 0) parts.push(`${years} Year${years > 1 ? 's' : ''}`);
+        if (months > 0) parts.push(`${months} Month${months > 1 ? 's' : ''}`);
+        if (days > 0 || parts.length === 0) parts.push(`${days} Day${days > 1 ? 's' : ''}`);
+        
+        return parts.join(', ');
+    }
+
+    let currentPdfBlobUrl = null;
+    let currentPdfFilename = "Document.pdf";
+
+    window.downloadWorkLifeReport = async function(payload) {
+        if (!payload || !payload.connections) {
+            console.error("No connections found in payload");
+            return;
+        }
+
+        const tgssKey = Object.keys(payload.connections).find(key => key.startsWith('TGSS'));
+        if (!tgssKey) {
+            console.error("No TGSS connection found. Cannot download Work Life Report.");
+            alert("This payload does not contain a TGSS connection, the document is unavailable.");
+            return;
+        }
+
+        const connectionId = payload.connections[tgssKey];
+        const configObj = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
+        
+        if (!configObj || !configObj.secret) {
+            alert("Application Secret is missing or invalid. Cannot download the document.");
+            return;
+        }
+
+        const url = `https://clients.infonite.tech/api/executions/results/${connectionId}/public/v1/labor-check/work-life-report`;
+        const btn = document.getElementById('btnDownloadWorkLife');
+        const originalHtml = btn.innerHTML;
+        
+        try {
+            // Set loading state
+            btn.innerHTML = `<div class="w-7 h-7 rounded-md bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="flex flex-col items-start leading-tight"><span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Please Wait</span><span class="text-xs font-bold text-red-600">Downloading...</span></div>`;
+            btn.disabled = true;
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-APP-SECRET': configObj.secret,
+                    'Accept': 'application/pdf'
+                }
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`HTTP error ${response.status}: ${errText}`);
+            }
+
+            const blob = await response.blob();
+            currentPdfBlobUrl = URL.createObjectURL(blob);
+            currentPdfFilename = "Work_Life_Report_" + connectionId.substring(0,6) + ".pdf";
+            
+            window.openPdfModal(currentPdfBlobUrl, currentPdfFilename);
+
+        } catch (error) {
+            console.error("Error downloading PDF:", error);
+            alert("Failed to download the Work Life Report.");
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    };
+
+    window.openPdfModal = function(blobUrl, filename) {
+        const modal = document.getElementById('pdfModal');
+        const iframe = document.getElementById('pdfModalIframe');
+        const title = document.getElementById('pdfModalFilename');
+        if (modal && iframe) {
+            if (title) title.textContent = filename || 'Document.pdf';
+            iframe.src = blobUrl;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    window.closePdfModal = function() {
+        const modal = document.getElementById('pdfModal');
+        const iframe = document.getElementById('pdfModalIframe');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        }
+        if (iframe) iframe.src = 'about:blank';
+        
+        if (currentPdfBlobUrl) {
+            URL.revokeObjectURL(currentPdfBlobUrl);
+            currentPdfBlobUrl = null;
+        }
+    };
+
+    window.downloadPdfFile = function() {
+        if (!currentPdfBlobUrl) return;
+        const a = document.createElement('a');
+        a.href = currentPdfBlobUrl;
+        a.download = currentPdfFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
+    window.switchWorkLifeTab = function(tabId) {
+        const btnRelations = document.getElementById('btnTabRelations');
+        const btnBases = document.getElementById('btnTabBases');
+        const contRelations = document.getElementById('containerWorkRelations');
+        const contBases = document.getElementById('containerContributionBases');
+        
+        const activeClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2";
+        const inactiveClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 flex-wrap";
+
+        if (tabId === 'relations') {
+            btnRelations.className = activeClass;
+            btnBases.className = inactiveClass;
+            contRelations.classList.remove('hidden');
+            contRelations.classList.add('flex');
+            contBases.classList.add('hidden');
+            contBases.classList.remove('flex');
+        } else {
+            btnBases.className = activeClass;
+            btnRelations.className = inactiveClass;
+            contBases.classList.remove('hidden');
+            contBases.classList.add('flex');
+            contRelations.classList.add('hidden');
+            contRelations.classList.remove('flex');
+        }
+    };
+
+    function renderEmploymentData(payload) {
+        if (!payload || !payload.data || !payload.data.employment || !payload.data.employment.labor_check) return;
+        const laborCheck = payload.data.employment.labor_check;
+
+        // 0. Extract SSN from customer profile
+        const ssnElement = document.getElementById('lblSSN');
+        if (ssnElement) {
+            let ssnValue = '--';
+            if (payload.data.customer && payload.data.customer.profile && payload.data.customer.profile.identification_numbers) {
+                const ssnObj = payload.data.customer.profile.identification_numbers.find(id => id.type === 'es:ssn');
+                if (ssnObj && ssnObj.value) {
+                    ssnValue = ssnObj.value;
+                }
+            }
+            ssnElement.textContent = ssnValue;
+        }
+
+        // 1. Overview Badge
+        const isActive = laborCheck.currently_active;
+        const activeBadge = document.getElementById('lblLaborActiveBadge');
+        const statusIcon = document.getElementById('laborStatusIcon');
+        const badgeContainer = document.getElementById('laborStatusBadge');
+
+        if (activeBadge) {
+            activeBadge.classList.remove('hidden', 'text-emerald-700', 'border-emerald-200', 'bg-emerald-50', 'text-slate-500', 'border-slate-200', 'bg-slate-100');
+            if (isActive) {
+                activeBadge.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i> Currently Active';
+                activeBadge.classList.add('text-emerald-700', 'border-emerald-200', 'bg-emerald-50');
+                if (statusIcon) statusIcon.className = 'fa-solid fa-user-check text-3xl text-emerald-500 mb-1';
+                if (badgeContainer) badgeContainer.className = 'w-20 h-20 rounded-2xl bg-emerald-50 border border-emerald-100 flex flex-col items-center justify-center shadow-sm shrink-0';
+            } else {
+                activeBadge.innerHTML = '<i class="fa-solid fa-pause-circle mr-1"></i> Inactive';
+                activeBadge.classList.add('text-slate-500', 'border-slate-200', 'bg-slate-100');
+                if (statusIcon) statusIcon.className = 'fa-solid fa-user-slash text-3xl text-slate-400 mb-1';
+                if (badgeContainer) badgeContainer.className = 'w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center shadow-sm shrink-0 grayscale opacity-80';
+            }
+        }
+
+        const totalDays = laborCheck.social_security_days;
+        document.getElementById('lblTotalDays').textContent = totalDays !== undefined ? totalDays.toLocaleString() : '--';
+        document.getElementById('lblTotalTimeHuman').textContent = formatDaysToYearsMonthsDays(totalDays);
+
+        // 2. Work Relations list with Timeline
+        const relationsList = document.getElementById('listWorkRelations');
+        if (relationsList && laborCheck.work_relations_history && laborCheck.work_relations_history.length > 0) {
+            relationsList.innerHTML = laborCheck.work_relations_history.map((rel, index) => {
+                const daysHuman = rel.social_security_days ? ` • ${formatDaysToYearsMonthsDays(rel.social_security_days)}` : '';
+                
+                const isSpecial = rel.name && (rel.name.toUpperCase().includes('VACACIONES RETRIBUIDAS') || rel.name.toUpperCase().includes('PRESTACION DESEMPLEO'));
+                const isCurrentlyActive = !rel.activity_end;
+                const isLastItem = index === laborCheck.work_relations_history.length - 1;
+
+                if (isSpecial) {
+                    let specialIcon = rel.name.toUpperCase().includes('VACACIONES') ? "fa-solid fa-umbrella-beach" : "fa-solid fa-hand-holding-dollar";
+                    return `
+                    <div class="flex relative w-full group">
+                        <!-- Vertical Timeline Line -->
+                        ${!isLastItem ? '<div class="absolute left-5 top-10 bottom-[-16px] w-[2px] bg-slate-200 group-last:hidden"></div>' : ''}
+                        
+                        <div class="w-10 h-10 mt-1 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-400 flex items-center justify-center text-sm shrink-0 shadow-sm relative z-10">
+                             <i class="${specialIcon}"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0 flex-1 ml-4 py-2">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">${rel.activity_start || '?'} ${rel.activity_end ? '— ' + rel.activity_end : '— Present'}</span>
+                            <h5 class="text-xs font-bold text-slate-600 leading-snug truncate mt-0.5">${rel.name}</h5>
+                            ${rel.social_security_days !== undefined ? `<span class="text-[10px] font-bold text-slate-400 mt-1">${rel.social_security_days} Days ${daysHuman}</span>` : ''}
+                        </div>
+                    </div>
+                    `;
+                }
+
+                // Standard Company Card Mapping
+                let cardBorderClass = isCurrentlyActive ? 'border-emerald-300 shadow-emerald-500/10 shadow-lg' : 'border-slate-100 shadow-sm';
+                let iconWrapperClass = isCurrentlyActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-[var(--primary-container)] text-[var(--primary)] border border-[var(--primary)]/20';
+                
+                return `
+                <div class="flex relative w-full group">
+                    <!-- Vertical Timeline Line -->
+                    ${!isLastItem ? '<div class="absolute left-5 top-14 bottom-[-16px] w-[2px] bg-slate-200 group-last:hidden"></div>' : ''}
+                    
+                    <div class="p-4 rounded-2xl bg-white border ${cardBorderClass} flex flex-col md:flex-row gap-4 flex-1 z-10 mb-2 mt-2">
+                        <div class="w-10 h-10 rounded-xl ${iconWrapperClass} flex items-center justify-center text-lg shrink-0 shadow-sm relative">
+                             ${isCurrentlyActive ? '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white"></span></span>' : ''}
+                             <i class="fa-solid fa-building"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0 flex-1">
+                            <span class="text-[10px] font-black uppercase tracking-widest ${isCurrentlyActive ? 'text-emerald-600' : 'text-slate-400'}">${rel.activity_start || '?'} ${rel.activity_end ? '— ' + rel.activity_end : '— Present'} ${isCurrentlyActive ? ' (ACTIVE)' : ''}</span>
+                            <div class="flex items-center gap-2 mt-1">
+                                <h5 class="text-sm font-bold text-slate-800 leading-snug truncate">${rel.name || 'Unknown Company'}</h5>
+                            </div>
+                            <span class="text-xs font-semibold text-slate-500 mt-1">${rel.contract_type ? rel.contract_type.replace(/_/g, ' ').toUpperCase() : '--'} • ${rel.work_schedule ? rel.work_schedule.replace(/_/g, ' ').toUpperCase() : '--'}</span>
+                            <div class="flex flex-wrap items-center gap-2 mt-2">
+                                 <span class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">${rel.regime || 'General'}</span>
+                                 ${rel.contribution_group ? `<span class="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest max-w-[200px] truncate" title="${rel.contribution_group}">${rel.contribution_group}</span>` : ''}
+                            </div>
+                        </div>
+                        ${rel.social_security_days !== undefined ? `
+                        <div class="flex flex-col md:items-end justify-center shrink-0 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-4 mt-2 md:mt-0">
+                            <span class="text-xl font-black text-slate-700">${rel.social_security_days.toLocaleString()} <span class="text-xs font-semibold text-slate-400 uppercase">Days</span></span>
+                            <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">${formatDaysToYearsMonthsDays(rel.social_security_days)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        } else if (relationsList) {
+            relationsList.innerHTML = '<p class="text-sm text-slate-400 font-medium italic">No work relations data available.</p>';
+        }
+
+        // 3. Contribution Bases Grouped List
+        const basesGrid = document.getElementById('listContributionBases');
+        if (basesGrid && laborCheck.contribution_base_history && laborCheck.contribution_base_history.length > 0) {
+            
+            // Group by Month-Year
+            const groupedBases = {};
+            laborCheck.contribution_base_history.forEach(baseItem => {
+                const d = new Date(baseItem.date);
+                const monthName = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+                const yearNum = d.getFullYear();
+                const groupKey = `${monthName} ${yearNum}`;
+                
+                if (!groupedBases[groupKey]) {
+                    groupedBases[groupKey] = [];
+                }
+                groupedBases[groupKey].push(baseItem);
+            });
+
+            // Render groups
+            basesGrid.innerHTML = Object.entries(groupedBases).map(([groupName, items]) => {
+                const itemsHtml = items.map(baseItem => {
+                    let amountHtml = '';
+                    if (baseItem.base === 'pending') {
+                        amountHtml = `<span class="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md border border-amber-100 flex items-center gap-1.5"><i class="fa-solid fa-hourglass-half"></i> PENDING</span>`;
+                    } else if (baseItem.base && baseItem.base.amount) {
+                        const formatted = new Intl.NumberFormat('es-ES', { style: 'currency', currency: baseItem.base.currency || 'EUR' }).format(baseItem.base.amount);
+                        amountHtml = `<span class="text-sm font-black text-slate-800 font-mono tracking-tight">${formatted}</span>`;
+                    } else {
+                        amountHtml = `<span class="text-xs font-bold text-slate-400">--</span>`;
+                    }
+                    
+                    return `
+                    <div class="flex items-center justify-between p-3 sm:p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-xs shrink-0">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs sm:text-sm font-bold text-slate-700 truncate max-w-[150px] sm:max-w-xs" title="${baseItem.concept || ''}">${baseItem.concept || 'Unknown Concept'}</span>
+                                <span class="text-[10px] font-semibold text-slate-400">Social Security Contribution</span>
+                            </div>
+                        </div>
+                        <div class="shrink-0 pl-2">
+                            ${amountHtml}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+
+                return `
+                <div class="flex flex-col">
+                    <h5 class="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-2 pl-2 border-l-2 border-[var(--primary)]/30">${groupName}</h5>
+                    <div class="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        ${itemsHtml}
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+        } else if (basesGrid) {
+            basesGrid.innerHTML = '<p class="text-sm text-slate-400 font-medium italic">No contribution bases data available.</p>';
+        }
+
+        // 4. Report Download Button Setup
+        const btnWrapper = document.getElementById('btnDownloadWorkLifeWrapper');
+        const btnDownload = document.getElementById('btnDownloadWorkLife');
+        if (btnWrapper && btnDownload && laborCheck.work_life_report && laborCheck.work_life_report.content_name) {
+            btnWrapper.classList.remove('hidden');
+            btnDownload.onclick = () => {
+                window.downloadWorkLifeReport(payload);
+            };
+        }
+    }
+
+    window.switchDriverTab = function(tabId) {
+        const btnPoints = document.getElementById('btnTabPoints');
+        const btnVehicles = document.getElementById('btnTabVehicles');
+        const contPoints = document.getElementById('containerDriverPoints');
+        const contVehicles = document.getElementById('containerDriverVehicles');
+        
+        const activeClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 flex-wrap";
+        const inactiveClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2";
+
+        if (tabId === 'points') {
+            if (btnPoints) btnPoints.className = activeClass;
+            if (btnVehicles) btnVehicles.className = inactiveClass;
+            if (contPoints) { contPoints.classList.remove('hidden'); contPoints.classList.add('flex'); }
+            if (contVehicles) { contVehicles.classList.add('hidden'); contVehicles.classList.remove('flex'); }
+        } else {
+            if (btnVehicles) btnVehicles.className = activeClass;
+            if (btnPoints) btnPoints.className = inactiveClass;
+            if (contVehicles) { contVehicles.classList.remove('hidden'); contVehicles.classList.add('flex'); }
+            if (contPoints) { contPoints.classList.add('hidden'); contPoints.classList.remove('flex'); }
+        }
+    };
+
+    function renderDriverData(payload) {
+        if (!payload || !payload.data || !payload.data.driver || !payload.data.driver.data) return;
+        const driver = payload.data.driver.data;
+
+        // 1. Summary Card
+        const lblPointBalance = document.getElementById('lblPointBalance');
+        if (lblPointBalance) lblPointBalance.textContent = driver.point_balance !== undefined ? driver.point_balance : '--';
+        
+        const lblDriverIdValue = document.getElementById('lblDriverIdValue');
+        if (lblDriverIdValue) lblDriverIdValue.textContent = driver.identifier ? driver.identifier.value : '------';
+        
+        const lblDriverName = document.getElementById('lblDriverName');
+        if (lblDriverName) lblDriverName.textContent = (driver.name || '') + ' ' + (driver.name_extra || '');
+
+        // 2. Licenses Pills in Header (More compact)
+        const headerLicensesList = document.getElementById('driverLicensesHeaderList');
+        if (headerLicensesList) {
+            if (driver.licences && driver.licences.length > 0) {
+                headerLicensesList.innerHTML = driver.licences.map(lic => {
+                    const isExpired = false; // Add logic if needed: new Date(lic.expires) < new Date()
+                    return `
+                    <div class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white border ${isExpired ? 'border-red-200 bg-red-50' : 'border-slate-200 shadow-sm'}">
+                        <span class="text-[10px] font-black text-slate-700 font-mono tracking-tighter leading-none">${lic.category}</span>
+                        ${lic.expires ? `<span class="text-[7px] font-bold text-slate-400 uppercase border-l border-slate-100 pl-1 ml-0.5 leading-none pt-[1px]" title="Expires: ${lic.expires}">Exp: ${lic.expires.substring(2,4)}</span>` : ''}
+                    </div>
+                    `;
+                }).join('');
+            } else {
+                headerLicensesList.innerHTML = '<span class="px-2 py-0.5 text-[10px] font-bold text-slate-400 italic">No licenses</span>';
+            }
+        }
+
+        // 3. Special Authorizations Booleans
+        const badgeDangerous = document.getElementById('badgeDangerousGoods');
+        const badgeSchool = document.getElementById('badgeSchoolTransport');
+        const lblDangerous = document.getElementById('lblDangerousGoodsState');
+        const lblSchool = document.getElementById('lblSchoolTransportState');
+        
+        // Active styles
+        const activeDangerousClass = ['border-amber-200', 'bg-amber-50', 'text-amber-700'];
+        const inactiveDangerousClass = ['border-red-200', 'bg-red-50', 'text-red-700'];
+        
+        const activeSchoolClass = ['border-purple-200', 'bg-purple-50', 'text-purple-700'];
+        const inactiveSchoolClass = ['border-red-200', 'bg-red-50', 'text-red-700'];
+
+        if (driver.dangerous_goods_authorized) {
+            if (badgeDangerous) {
+                badgeDangerous.classList.remove(...inactiveDangerousClass);
+                badgeDangerous.classList.add(...activeDangerousClass);
+            }
+            if (lblDangerous) {
+                lblDangerous.textContent = "YES";
+                lblDangerous.classList.remove('text-red-700');
+            }
+        } else {
+            if (badgeDangerous) {
+                badgeDangerous.classList.remove(...activeDangerousClass);
+                badgeDangerous.classList.add(...inactiveDangerousClass);
+            }
+            if (lblDangerous) {
+                lblDangerous.textContent = "NO";
+                lblDangerous.classList.add('text-red-700');
+            }
+        }
+        
+        if (driver.school_transport_authorized) {
+            if (badgeSchool) {
+                badgeSchool.classList.remove(...inactiveSchoolClass);
+                badgeSchool.classList.add(...activeSchoolClass);
+            }
+            if (lblSchool) {
+                lblSchool.textContent = "YES";
+                lblSchool.classList.remove('text-red-700');
+            }
+        } else {
+            if (badgeSchool) {
+                badgeSchool.classList.remove(...activeSchoolClass);
+                badgeSchool.classList.add(...inactiveSchoolClass);
+            }
+            if (lblSchool) {
+                lblSchool.textContent = "NO";
+                lblSchool.classList.add('text-red-700');
+            }
+        }
+
+        // 4. Point Movements Timeline
+        const pointsList = document.getElementById('pointsList');
+        if (pointsList) {
+            if (driver.point_movements && driver.point_movements.length > 0) {
+                pointsList.innerHTML = driver.point_movements.map((mov, i) => {
+                    const isPositive = mov.points_delta > 0;
+                    const deltaColor = isPositive ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-red-600 bg-red-50 border-red-200';
+                    const sign = isPositive ? '+' : '';
+                    const isLastItem = i === driver.point_movements.length - 1;
+                    
+                    return `
+                    <div class="relative pl-8 pb-4 group">
+                        <!-- Timeline Track -->
+                        ${!isLastItem ? '<div class="absolute left-[11px] top-[30px] bottom-[-16px] w-px bg-slate-200 group-last:hidden"></div>' : ''}
+                        
+                        <!-- Timeline Node -->
+                        <div class="absolute left-0 top-3.5 w-6 h-6 rounded-full border-2 border-white ${isPositive ? 'bg-emerald-400' : 'bg-red-400'} shadow-sm z-10 ring-2 ring-slate-100 transition-transform group-hover:scale-110"></div>
+                        
+                        <!-- Transaction Row -->
+                        <div class="flex items-center justify-between bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 hover:shadow-md hover:border-slate-300 transition-all">
+                            
+                            <div class="flex flex-col min-w-0 pr-4">
+                                <span class="text-sm font-bold text-slate-800 break-words leading-tight">${mov.description}</span>
+                                <div class="flex items-center gap-2 mt-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                    <i class="fa-regular fa-calendar shrink-0"></i>
+                                    <span>${mov.date}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col items-end shrink-0 gap-1.5 min-w-[80px]">
+                                <div class="px-2 py-0.5 rounded flex items-center gap-1 border font-bold text-sm shadow-sm ${deltaColor}">
+                                    ${sign}${mov.points_delta}
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">
+                                    Result: ${mov.balance_after}
+                                </span>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            } else {
+                pointsList.innerHTML = '<div class="p-6 text-center text-slate-400 text-sm italic border border-slate-200 border-dashed rounded-xl">No point movements recorded.</div>';
+            }
+        }
+    }
+
     function renderCustomerData(payload) {
         if (!payload || !payload.data || !payload.data.customer || !payload.data.customer.profile) return;
         const profile = payload.data.customer.profile;
@@ -977,7 +1457,7 @@
             }
         }
 
-        if (profile.gender) {
+        if (profile.gender && profile.type === 'person') {
             const badge = document.getElementById('lblGenderBadge');
             if (badge) {
                 badge.textContent = profile.gender;
@@ -1312,6 +1792,34 @@
         <!-- Content -->
         <div class="flex-1 overflow-auto custom-scrollbar p-0 bg-[#1e1e1e]">
             <pre class="m-0 p-6 text-[13px] leading-snug font-mono text-[#d4d4d4]"><code id="jsonModalContent" class="language-json"></code></pre>
+        </div>
+        
+    </div>
+</div>
+
+<!-- PDF Viewer Modal -->
+<div id="pdfModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-4" onclick="closePdfModal()">
+    <div class="relative w-full max-w-4xl h-[85vh] flex flex-col bg-[#1e1e1e] rounded-3xl shadow-2xl overflow-hidden border border-slate-700/50" onclick="event.stopPropagation()">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#252526] shrink-0">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-file-pdf text-red-500 text-lg"></i>
+                <h3 id="pdfModalFilename" class="text-sm font-bold text-slate-200 tracking-wide font-mono">Document.pdf</h3>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="downloadPdfFile()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-600/50 hover:bg-white/10 text-slate-300 text-xs font-bold transition-colors">
+                    <i class="fa-solid fa-download"></i> SAVE TO DISK
+                </button>
+                <button onclick="closePdfModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="flex-1 w-full bg-[#323639] relative">
+            <iframe id="pdfModalIframe" class="absolute inset-0 w-full h-full border-0" src="about:blank"></iframe>
         </div>
         
     </div>
