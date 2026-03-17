@@ -565,6 +565,7 @@ window.generateLeadSession = async function() {
             customer_id: customerId,
             settings: {
                 tokenized_access: tokenizedAccess,
+                allowed_engines: window.INFONITE_ES_BANKS_ENGINES || [],
                 executions_hooks_extra_data: {
                     "customer": "{customer_id}",
                     "fixed": "1"
