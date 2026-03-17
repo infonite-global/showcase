@@ -1,0 +1,27 @@
+/**
+ * Lists of specific engine identifiers for the Infonite widgets.
+ * Used to restrict the widget's bank search list to specific countries or specific configurations.
+ */
+
+window.INFONITE_ES_BANKS_ENGINES = [
+    'DEMOBANKXXXXFIN100ES9999-mobile',
+    'BNEXTXXXXXXXFIN100ES6717-mobile',
+    'SANTANDERXXXFIN100ES0049-mobile',
+    'BBVAXXXXXXXXFIN100ES0182-mobile',
+    'CAIXABANKSAXFIN100ES2100-mobile',
+    'IMAGINBANKXXFIN100ES2100-mobile',
+    'KUTXABANKSAXFIN100ES2100-mobile',
+    'BANKINTERXXXFIN100ES0128-website',
+    'INGXXXXXXXXXFIN100ES1465-website',
+    'ABANCACORPORFIN100ES2080-website',
+    'CAJALABORALXFIN100ES3035-mobile',
+    'CAJAMARCAJARFIN100ES3058-mobile',
+    'BANCOSABADELFIN100ES0081-mobile',
+    'UNICAJABANCOFIN100ES2103-website',
+    'RURALVIAXXXXFIN100ESXXXX-website',
+    'IBERCAJABANCFIN100ES2085-website',
+    'MYINVESTORXXFIN100ES1544-website',
+    'WIZINKSXXXXXFIN100ES0229-website',
+    'OPENXXXXXXXXFIN100ES0073-website',
+    'BANCOLOMBNEGFIN101CO0007-website'
+];
