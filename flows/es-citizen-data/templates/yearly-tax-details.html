@@ -1,0 +1,24 @@
+<!-- CATEGORY VIEW: YEARLY TAX DETAILS -->
+<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in overflow-y-auto relative">
+    
+    <!-- View Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8 shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] text-[var(--primary)] flex items-center justify-center text-xl shadow-sm border border-[var(--primary)]/20 shrink-0">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight">Fiscal Year <span id="yearlyTaxTitleYear" class="text-[var(--primary)]"></span></h2>
+                <p class="text-xs font-medium text-slate-500 mt-1">Detailed breakdown of incomes, deductions, and tax results.</p>
+            </div>
+        </div>
+        <button onclick="document.getElementById('nav-taxes').click()" class="flex items-center gap-2 px-4 h-10 w-fit rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors shadow-sm text-[10px] font-black uppercase tracking-widest shrink-0">
+            <i class="fa-solid fa-arrow-left"></i> Back to Taxes
+        </button>
+    </div>
+
+    <!-- Data grid -->
+    <div id="yearlyTaxDetailsContainer" class="flex flex-col gap-6 pb-6">
+        <!-- Injected via JS -->
+    </div>
+</div>
