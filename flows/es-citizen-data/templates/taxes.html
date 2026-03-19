@@ -1,25 +1,18 @@
 <!-- CATEGORY VIEW: TAXES & DEBTS -->
-<div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in">
-    
+<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in overflow-y-auto">
     <!-- View Header -->
-    <div class="flex items-center gap-4 mb-8">
+    <div class="flex items-center gap-4 mb-8 shrink-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] text-[var(--primary)] flex items-center justify-center text-xl shadow-sm border border-[var(--primary)]/20">
             <i class="fa-solid fa-file-invoice-dollar"></i>
         </div>
         <div>
-            <h2 class="text-xl font-black text-slate-800 tracking-tight">Taxes & Debts</h2>
-            <p class="text-xs font-medium text-slate-500 mt-1">AEAT tax obligations, certificates and outstanding debts.</p>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">Taxes & Fiscal Data</h2>
+            <p class="text-xs font-medium text-slate-500 mt-1">Yearly tax declarations, AEAT obligations, and fiscal history.</p>
         </div>
     </div>
 
-    <!-- Blank State Body -->
-    <div class="flex-1 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 min-h-[400px]">
-        <div class="flex flex-col items-center gap-3 text-center px-4">
-            <i class="fa-solid fa-code text-3xl opacity-50"></i>
-            <div>
-                <span class="block text-sm font-bold text-slate-600">Pending Implementation</span>
-                <span class="block text-xs font-medium mt-1 uppercase tracking-widest opacity-80">es-citizen-data/templates/taxes.html</span>
-            </div>
-        </div>
+    <!-- Data grid -->
+    <div id="taxesContainer" class="flex flex-col gap-4 pb-6">
+        <!-- Injected via JS -->
     </div>
 </div>
