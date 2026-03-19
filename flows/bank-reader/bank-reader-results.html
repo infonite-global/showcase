@@ -252,16 +252,18 @@
                   <i class="fa-solid fa-hand-holding-dollar opacity-60"></i> Loans
               </button>
               
-              <button onclick="switchDashboardView('credits')" id="nav-credits" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
-                  <i class="fa-solid fa-money-check-dollar opacity-60"></i> Credits
-              </button>
-
-              <button onclick="switchDashboardView('direct_debits')" id="nav-direct_debits" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
-                  <i class="fa-solid fa-money-bill-transfer opacity-60"></i> Direct Debits
-              </button>
-
               <button onclick="switchDashboardView('investments')" id="nav-investments" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
                   <i class="fa-solid fa-chart-line opacity-60"></i> Investments
+              </button>
+
+              <button disabled class="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-400 opacity-60 flex items-center gap-3 cursor-not-allowed">
+                  <i class="fa-solid fa-money-check-dollar opacity-60"></i> Credits
+                  <span class="bg-amber-50 text-amber-600 text-[8px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded ml-auto border border-amber-200/50">Soon</span>
+              </button>
+
+              <button disabled class="w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-400 opacity-60 flex items-center gap-3 cursor-not-allowed">
+                  <i class="fa-solid fa-money-bill-transfer opacity-60"></i> Direct Debits
+                  <span class="bg-amber-50 text-amber-600 text-[8px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded ml-auto border border-amber-200/50">Soon</span>
               </button>
 
               <div class="h-px bg-slate-100 w-full my-2"></div>
@@ -919,6 +921,9 @@
                     case 'cards':
                         if(typeof renderCardsData === 'function') renderCardsData(window.currentResultData);
                         break;
+                    case 'deposits':
+                        if(typeof renderDepositsData === 'function') renderDepositsData(window.currentResultData);
+                        break;
                     case 'loans':
                         if(typeof renderLoansData === 'function') renderLoansData(window.currentResultData);
                         break;
@@ -1341,6 +1346,446 @@
         });
         container.innerHTML = html;
     }
+    function renderDepositsData(payload) {
+        const container = document.getElementById('depositsContainer');
+        if (!container) return;
+        
+        if (!payload || !payload.data || !payload.data.deposits || payload.data.deposits.length === 0) {
+            renderEmptyCategory('depositsContainer', 'fa-solid fa-vault', 'No deposits or saving goals found.');
+            return;
+        }
+        
+        let html = '';
+        payload.data.deposits.forEach(dep => {
+            const isGoal = dep.sub_family === 'financial_deposit:goal';
+            
+            if (isGoal) {
+                // SAVING GOAL TEMPLATE
+                const totalGoal = parseFloat(dep.goal_amount?.amount || 0);
+                const currentBalance = parseFloat(dep.balance?.amount || 0);
+                const progressPercent = totalGoal > 0 ? Math.min(100, Math.max(0, (currentBalance / totalGoal) * 100)) : 0;
+                
+                const rateHtml = dep.interest_rate ? `<div class="px-2 py-0.5 bg-white border border-emerald-100 shadow-sm text-emerald-600 rounded text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-arrow-trend-up"></i> ${dep.interest_rate.value}% ${dep.interest_rate.description || ''}</div>` : '';
+                
+                const timeStr = dep.last_date ? `<p class="text-[10px] font-mono font-medium text-emerald-600/60 mt-2"><i class="fa-regular fa-clock"></i> Target: ${formatDate(dep.last_date)}</p>` : '';
+                
+                html += `
+                <div class="flex flex-col md:flex-row bg-emerald-50 border border-emerald-200/50 rounded-3xl p-6 lg:p-7 relative overflow-hidden mb-4 group cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all">
+                    <!-- Column 1: Info -->
+                    <div class="flex flex-col items-start gap-1 flex-1 min-w-0 z-10 w-full mb-4 md:mb-0">
+                        <div class="flex items-center gap-3 w-full mb-1">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                            <h3 class="text-xl font-black text-emerald-900 tracking-tight leading-none truncate" title="${dep.product_alias || dep.product_name}">${dep.product_alias || dep.product_name}</h3>
+                        </div>
+                        
+                        <div class="mt-2 text-3xl font-black font-mono tracking-tight text-emerald-700 leading-none">
+                            ${formatCurrency(currentBalance, dep.balance?.currency)}
+                             <span class="text-sm font-bold text-emerald-600/50 tracking-normal !font-sans">/ ${formatCurrency(totalGoal, dep.goal_amount?.currency)} goal</span>
+                        </div>
+                        
+                        ${timeStr}
+                        
+                        <div class="flex gap-2 justify-start mt-4">
+                            ${rateHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- Column 2: Circular Progress -->
+                    <div class="flex items-center justify-center md:justify-end shrink-0 z-10">
+                        <div class="relative w-28 h-28 rounded-full flex items-center justify-center border-[6px] border-emerald-100 shadow-inner" style="background: conic-gradient(#10b981 ${progressPercent}%, transparent 0)">
+                            <div class="absolute inset-[6px] bg-emerald-50 rounded-full flex flex-col items-center justify-center shadow-sm border border-emerald-200/50">
+                                <span class="text-xs font-black text-emerald-800 tracking-widest leading-none">${progressPercent.toFixed(0)}%</span>
+                                <span class="text-[8px] font-bold text-emerald-600/70 tracking-widest uppercase mt-0.5">REACHED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            } else {
+                // TIME DEPOSIT TEMPLATE (classic)
+                const rateHtml = dep.interest_rate ? `<div class="px-2 py-0.5 bg-white border border-slate-100 shadow-sm text-slate-500 rounded text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-percent text-slate-300"></i> ${dep.interest_rate.value}% ${dep.interest_rate.description || ''}</div>` : '';
+                
+                const contractHtml = dep.contract ? `<div class="px-2 py-0.5 bg-white border border-slate-100 shadow-sm text-slate-500 rounded text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-file-contract text-slate-300"></i> Contract ${dep.contract.value}</div>` : '';
+                
+                const datesStr = (dep.start_date && dep.last_date) ? `
+                    <div class="flex items-center gap-2 mt-4 w-full bg-slate-100/50 rounded-lg p-3 border border-slate-100">
+                        <div class="flex flex-col items-start flex-1 min-w-0">
+                            <span class="text-[8px] font-bold text-slate-400 tracking-widest uppercase whitespace-nowrap">Start Date</span>
+                            <span class="text-xs font-mono font-bold text-slate-700 whitespace-nowrap">${formatDate(dep.start_date)}</span>
+                        </div>
+                        <i class="fa-solid fa-arrow-right text-slate-300 text-xs shrink-0 mx-1"></i>
+                        <div class="flex flex-col items-end flex-1 min-w-0 text-right">
+                            <span class="text-[8px] font-bold text-slate-400 tracking-widest uppercase whitespace-nowrap">Maturity Date</span>
+                            <span class="text-xs font-mono font-bold text-slate-800 whitespace-nowrap">${formatDate(dep.last_date)}</span>
+                        </div>
+                    </div>
+                ` : '';
+
+                html += `
+                <div class="flex flex-col bg-slate-50 border border-slate-100/50 rounded-2xl p-6 lg:p-7 relative overflow-hidden mb-4 group cursor-pointer hover:border-slate-300 hover:shadow-md transition-all">
+                    <div class="absolute -right-6 -bottom-6 text-8xl md:text-9xl text-slate-200/50 pointer-events-none z-0 transition-transform group-hover:scale-110">
+                        <i class="fa-solid fa-piggy-bank"></i>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 z-10 w-full mb-0 relative">
+                        <!-- Column 1: Info -->
+                        <div class="flex flex-col items-start gap-1 flex-1 min-w-0">
+                            <div class="flex items-center gap-3 w-full mb-1">
+                                <h3 class="text-2xl font-black text-slate-800 tracking-tight leading-none truncate" title="${dep.product_alias || dep.product_name}">${dep.product_alias || dep.product_name}</h3>
+                                <span class="px-2 py-0.5 rounded border border-blue-200/50 bg-blue-50 text-[9px] font-black uppercase tracking-widest text-blue-700 w-fit shrink-0 flex items-center">
+                                    <i class="fa-solid fa-clock-rotate-left me-1"></i> TIME DEPOSIT
+                                </span>
+                            </div>
+                            
+                            <div class="mt-2 text-3xl font-black font-mono tracking-tight text-slate-800 leading-none">
+                                ${formatCurrency(dep.balance?.amount, dep.balance?.currency)}
+                            </div>
+                            
+                            <div class="flex gap-2 justify-start mt-4 w-full">
+                                ${rateHtml}
+                                ${contractHtml}
+                            </div>
+                        </div>
+                        
+                        <!-- Column 2: Dates Widget -->
+                        <div class="flex flex-col items-end shrink-0 z-10 w-full md:w-auto">
+                            ${datesStr}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+        });
+        
+        container.innerHTML = html;
+    }
+
+    window.switchInvestmentsTab = function(tabId) {
+        document.querySelectorAll('.investment-tab-btn').forEach(btn => {
+            btn.classList.remove('bg-slate-800', 'text-white', 'border-slate-800');
+            btn.classList.add('bg-white', 'text-slate-500', 'border-slate-200', 'hover:bg-slate-50');
+        });
+        const activeBtn = document.getElementById('inv-tab-' + tabId);
+        if(activeBtn) {
+            activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-200', 'hover:bg-slate-50');
+            activeBtn.classList.add('bg-slate-800', 'text-white', 'border-slate-800');
+        }
+        
+        document.querySelectorAll('.investment-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        const activeContent = document.getElementById('inv-content-' + tabId);
+        if(activeContent) activeContent.classList.remove('hidden');
+    };
+
+    function renderInvestmentsData(payload) {
+        const container = document.getElementById('investmentsContainer');
+        const tabsContainer = document.getElementById('investmentsTabsContainer');
+        if (!container || !tabsContainer) return;
+        
+        const inv = payload?.data?.investments;
+        if (!inv || (!inv.accounts?.length && !inv.stocks?.length && !inv.funds?.length && !inv.pensions?.length)) {
+            renderEmptyCategory('investmentsContainer', 'fa-solid fa-chart-line', 'No investment portfolios, stocks, or funds found.');
+            tabsContainer.classList.add('hidden');
+            return;
+        }
+        tabsContainer.classList.remove('hidden');
+
+        // Categorize Arrays
+        const accounts = inv.accounts || [];
+        const stocks = inv.stocks || [];
+        const funds = inv.funds || [];
+        const pensions = inv.pensions || [];
+
+        // Build Relationship Map
+        const accountAssets = {};
+        accounts.forEach(acc => accountAssets[acc.identifier?.value] = { stocks: [], funds: [] });
+
+        const orphanStocks = [];
+        stocks.forEach(st => {
+            if(st.account?.value && accountAssets[st.account.value]) accountAssets[st.account.value].stocks.push(st);
+            else orphanStocks.push(st);
+        });
+
+        const orphanFunds = [];
+        funds.forEach(fd => {
+            if(fd.account?.value && accountAssets[fd.account.value]) accountAssets[fd.account.value].funds.push(fd);
+            else orphanFunds.push(fd);
+        });
+
+        // Subtable Renderer
+        const renderSubRow = (item, typeStr, iconHtml) => {
+            const val = parseFloat(item.valuation?.amount || 0);
+            const perf = parseFloat(item.performance?.value || 0);
+            const perfColor = perf >= 0 ? 'text-emerald-500' : 'text-red-500';
+            const qty = item.quantity ? `Qty: ${parseFloat(item.quantity).toFixed(2)}` : '';
+            return `
+            <div class="flex flex-col md:flex-row md:items-center justify-between p-3.5 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors gap-2">
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-slate-400 w-5 flex justify-center">${iconHtml}</span>
+                        <span class="text-sm font-bold text-slate-800 truncate" title="${item.product_alias || item.product_name}">${item.product_alias || item.product_name}</span>
+                        ${item.ticker ? `<span class="bg-white border border-slate-200 px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black tracking-widest text-slate-500 uppercase">${item.ticker}</span>` : ''}
+                    </div>
+                </div>
+                <div class="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto mt-2 md:mt-0 pl-7 md:pl-0">
+                    <span class="text-xs font-mono font-medium text-slate-400">${qty}</span>
+                    <span class="text-xs font-bold font-mono ${perfColor} w-16 text-right">${!isNaN(perf) ? (perf >= 0 ? '+' : '') + perf.toFixed(2) + '%' : ''}</span>
+                    <span class="text-sm font-black font-mono text-slate-800 w-24 text-right">${formatCurrency(val, item.valuation?.currency)}</span>
+                </div>
+            </div>`;
+        };
+
+        // Full Card Renderer (for orphans & pensions)
+        const renderAssetCard = (asset, typeIcon, typeColor, typeLabel) => {
+            const val = parseFloat(asset.valuation?.amount || 0);
+            const perf = parseFloat(asset.performance?.value || 0);
+            const perfColor = perf >= 0 ? 'text-emerald-500' : 'text-red-500';
+            const perfIcon = perf >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+            
+            const appreciateAmount = asset.appreciation ? parseFloat(asset.appreciation.amount) : NaN;
+            const appreciateStr = isNaN(appreciateAmount) ? '' : `
+                <div class="flex items-center gap-1 text-[11px] font-bold ${appreciateAmount >= 0 ? 'text-emerald-500' : 'text-red-500'} mt-1">
+                    ${appreciateAmount >= 0 ? '+' : ''}${formatCurrency(appreciateAmount, asset.appreciation?.currency)}
+                </div>
+            `;
+            const unitPrice = asset.unit_price ? `<span class="text-[10px] font-mono text-slate-400">Unit: ${formatCurrency(asset.unit_price.amount, asset.unit_price.currency)}</span>` : '';
+            const quantity = asset.quantity ? `<span class="text-[10px] font-mono text-slate-400 ml-3">Qty: ${parseFloat(asset.quantity).toFixed(4)}</span>` : '';
+            
+            let identStr = '--';
+            if(asset.isin) identStr = `ISIN: ${asset.isin}`;
+            else if(asset.identifier?.value) identStr = asset.identifier.value;
+            else if(asset.contract?.value) identStr = `Contract: ${asset.contract.value}`;
+
+            const tickerHtml = asset.ticker ? `<span class="bg-slate-100 border border-slate-200 text-slate-500 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm">${asset.ticker}</span>` : '';
+            const marketHtml = asset.market ? `<span class="bg-slate-100 border border-slate-200 text-slate-500 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm">${asset.market}</span>` : '';
+
+            return `
+            <div class="flex flex-col bg-slate-50 border border-slate-100/50 rounded-[1.25rem] p-5 lg:p-6 relative overflow-hidden group cursor-pointer hover:border-slate-300 hover:shadow-md transition-all">
+                <div class="absolute -right-4 -bottom-4 text-7xl text-slate-200/50 pointer-events-none z-0 transition-transform group-hover:scale-110">
+                    ${typeIcon}
+                </div>
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-6 w-full z-10 relative">
+                    <div class="flex flex-col items-start gap-1 flex-1 min-w-0">
+                        <div class="flex items-center gap-2 w-full mb-1 flex-wrap">
+                            <span class="px-2 py-0.5 rounded border ${typeColor} text-[8px] font-black uppercase tracking-widest w-fit shrink-0 flex items-center">
+                                ${typeLabel}
+                            </span>
+                            ${tickerHtml}
+                            ${marketHtml}
+                        </div>
+                        <h3 class="text-lg font-black text-slate-800 tracking-tight leading-none mt-1" title="${asset.product_alias || asset.product_name}">${asset.product_alias || asset.product_name}</h3>
+                        <p class="text-[10px] font-mono font-medium text-slate-400 mt-2 flex items-center gap-1.5 bg-white border border-slate-100 rounded px-2 py-1 shadow-sm w-fit">
+                            <i class="fa-solid fa-fingerprint opacity-50"></i> ${identStr}
+                        </p>
+                    </div>
+                    <div class="flex flex-col items-end shrink-0 text-right">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">VALUATION</span>
+                            <span class="text-xl font-black tracking-tight text-slate-800 font-mono leading-none">${formatCurrency(val, asset.valuation?.currency)}</span>
+                        </div>
+                        <div class="flex flex-col items-end mt-2 bg-white border border-slate-100 rounded-lg p-2 shadow-sm w-full">
+                            <div class="flex items-center gap-1 text-sm font-black font-mono ${perfColor}">
+                                <i class="fa-solid ${perfIcon} text-[10px] mb-0.5"></i>
+                                ${!isNaN(perf) ? (perf > 0 ? '+' : '') + perf.toFixed(2) + '%' : '--%'}
+                            </div>
+                            ${appreciateStr}
+                        </div>
+                        ${unitPrice || quantity ? `<div class="flex mt-3 justify-end w-full">${unitPrice}${quantity}</div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        };
+
+        let tabsHtml = '';
+        let contentHtml = '';
+        let firstTab = null;
+
+        // Portfolios Tab
+        if(accounts.length > 0) {
+            firstTab = firstTab || 'portfolios';
+            tabsHtml += `<button id="inv-tab-portfolios" onclick="switchInvestmentsTab('portfolios')" class="investment-tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center gap-2 outline-none"><i class="fa-solid fa-briefcase opacity-50"></i> Portfolios <span class="bg-slate-100 text-slate-500 px-1.5 rounded-full text-[10px]">${accounts.length}</span></button>`;
+            let html = '<div id="inv-content-portfolios" class="investment-tab-content flex flex-col gap-4">';
+            accounts.forEach(acc => {
+                const val = parseFloat(acc.valuation?.amount || 0);
+                const asts = accountAssets[acc.identifier?.value];
+                const hasAssets = asts.stocks.length > 0 || asts.funds.length > 0;
+                
+                let subHtml = '';
+                if(hasAssets) {
+                    subHtml += `<div class="mt-5 border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden">`;
+                    if(asts.stocks.length > 0) {
+                        subHtml += `<div class="bg-slate-50/50 px-4 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 shadow-[inset_0_2px_4px_-2px_rgba(0,0,0,0.02)]"><i class="fa-solid fa-arrow-trend-up me-1"></i> Equities</div>`;
+                        asts.stocks.forEach(st => subHtml += renderSubRow(st, 'STOCK', '<i class="fa-solid fa-city text-blue-500"></i>'));
+                    }
+                    if(asts.funds.length > 0) {
+                        subHtml += `<div class="bg-slate-50/50 px-4 py-2 text-[9px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 shadow-[inset_0_2px_4px_-2px_rgba(0,0,0,0.02)]"><i class="fa-solid fa-layer-group me-1"></i> Funds</div>`;
+                        asts.funds.forEach(fd => subHtml += renderSubRow(fd, 'FUND', '<i class="fa-solid fa-chart-pie text-purple-500"></i>'));
+                    }
+                    subHtml += `</div>`;
+                }
+
+                html += `
+                <div class="flex flex-col bg-slate-50/50 border border-slate-200/60 rounded-[1.5rem] p-5 lg:p-7 relative group transition-all">
+                    <div class="flex justify-between items-start md:items-center w-full z-10 gap-4 flex-col md:flex-row">
+                        <div class="flex flex-col">
+                            <span class="px-2 py-0.5 rounded border border-indigo-200/50 bg-indigo-50 text-indigo-700 text-[8px] font-black uppercase tracking-widest w-fit mb-2 flex items-center shadow-sm">
+                                <i class="fa-solid fa-briefcase me-1"></i> PORTFOLIO ACCOUNT
+                            </span>
+                            <h3 class="text-xl font-black text-slate-800 leading-none">${acc.product_alias || acc.product_name}</h3>
+                            <p class="text-xs font-mono font-bold text-slate-400 mt-2 flex items-center gap-1.5 bg-white border border-slate-100 px-2 py-1 rounded w-fit shadow-sm"><i class="fa-solid fa-building-columns opacity-50"></i> ${acc.identifier?.masked || acc.identifier?.value || '--'}</p>
+                        </div>
+                        <div class="flex flex-col items-start md:items-end w-full md:w-auto bg-white p-3 md:p-0 md:bg-transparent rounded-xl border border-slate-100 md:border-0 shadow-sm md:shadow-none mt-2 md:mt-0">
+                            <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1">TOTAL VALUATION</span>
+                            <span class="text-2xl lg:text-3xl font-black tracking-tight text-slate-800 font-mono leading-none">${formatCurrency(val, acc.valuation?.currency)}</span>
+                        </div>
+                    </div>
+                    ${subHtml}
+                </div>`;
+            });
+            html += '</div>';
+            contentHtml += html;
+        }
+
+        // Orphan Stocks Tab
+        if(orphanStocks.length > 0) {
+            firstTab = firstTab || 'stocks';
+            tabsHtml += `<button id="inv-tab-stocks" onclick="switchInvestmentsTab('stocks')" class="investment-tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center gap-2 outline-none"><i class="fa-solid fa-arrow-trend-up opacity-50"></i> Stocks <span class="bg-slate-100 text-slate-500 px-1.5 rounded-full text-[10px]">${orphanStocks.length}</span></button>`;
+            let html = '<div id="inv-content-stocks" class="investment-tab-content hidden flex flex-col gap-3">';
+            orphanStocks.forEach(st => html += renderAssetCard(st, '<i class="fa-solid fa-city"></i>', 'border-blue-200/50 bg-blue-50 text-blue-700', 'STOCK'));
+            html += '</div>';
+            contentHtml += html;
+        }
+
+        // Orphan Funds Tab
+        if(orphanFunds.length > 0) {
+            firstTab = firstTab || 'funds';
+            tabsHtml += `<button id="inv-tab-funds" onclick="switchInvestmentsTab('funds')" class="investment-tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center gap-2 outline-none"><i class="fa-solid fa-layer-group opacity-50"></i> Funds <span class="bg-slate-100 text-slate-500 px-1.5 rounded-full text-[10px]">${orphanFunds.length}</span></button>`;
+            let html = '<div id="inv-content-funds" class="investment-tab-content hidden flex flex-col gap-3">';
+            orphanFunds.forEach(fd => html += renderAssetCard(fd, '<i class="fa-solid fa-chart-pie"></i>', 'border-purple-200/50 bg-purple-50 text-purple-700', 'FUND'));
+            html += '</div>';
+            contentHtml += html;
+        }
+
+        // Pensions Tab
+        if(pensions.length > 0) {
+            firstTab = firstTab || 'pensions';
+            tabsHtml += `<button id="inv-tab-pensions" onclick="switchInvestmentsTab('pensions')" class="investment-tab-btn whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition-colors flex items-center gap-2 outline-none"><i class="fa-solid fa-umbrella opacity-50"></i> Pensions <span class="bg-slate-100 text-slate-500 px-1.5 rounded-full text-[10px]">${pensions.length}</span></button>`;
+            let html = '<div id="inv-content-pensions" class="investment-tab-content hidden flex flex-col gap-3">';
+            pensions.forEach(pn => html += renderAssetCard(pn, '<i class="fa-solid fa-tree"></i>', 'border-amber-200/50 bg-amber-50 text-amber-700', 'PENSION'));
+            html += '</div>';
+            contentHtml += html;
+        }
+
+        tabsContainer.innerHTML = tabsHtml;
+        container.innerHTML = contentHtml;
+        
+        if(firstTab) switchInvestmentsTab(firstTab);
+    }
+
+    function renderLoansData(payload) {
+        const container = document.getElementById('loansContainer');
+        if (!container) return;
+        
+        if (!payload || !payload.data || !payload.data.loans || payload.data.loans.length === 0) {
+            renderEmptyCategory('loansContainer', 'fa-solid fa-hand-holding-dollar', 'No loans or mortgages found or extracted yet.');
+            return;
+        }
+        
+        let html = '';
+        payload.data.loans.forEach(loan => {
+            const isMortgage = loan.sub_family === 'financial_loan:mortgage';
+            const iconHtml = isMortgage ? '<i class="fa-solid fa-house-chimney"></i>' : '<i class="fa-solid fa-hand-holding-dollar"></i>';
+            
+            const badgeClass = isMortgage 
+                ? 'border-indigo-200/50 bg-indigo-50 text-indigo-700' 
+                : 'border-amber-200/50 bg-amber-50 text-amber-700';
+                
+            const subFamilyLabel = isMortgage 
+                ? '<i class="fa-solid fa-house me-1"></i> MORTGAGE' 
+                : '<i class="fa-solid fa-user me-1"></i> PERSONAL LOAN';
+            
+            // Progress Bar Calculation
+            const total = parseFloat(loan.initial_balance?.amount || 0);
+            const outstanding = Math.abs(parseFloat(loan.outstanding_balance?.amount || 0));
+            const paid = total - outstanding;
+            const progressPercent = total > 0 ? Math.min(100, Math.max(0, (paid / total) * 100)) : 0;
+            
+            const nextPaymentDate = loan.next_payment_date ? `<p class="text-[10px] font-mono font-medium text-slate-400 flex items-center gap-1.5"><i class="fa-regular fa-calendar text-slate-300"></i> Next Payment: ${formatDate(loan.next_payment_date)}</p>` : '';
+            
+            const periodsHtml = loan.pending_periods !== undefined ? `<div class="px-2 py-0.5 bg-white border border-slate-100 shadow-sm text-slate-500 rounded text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0"><i class="fa-regular fa-clock text-slate-300"></i> Periods <span class="w-px h-2.5 bg-slate-200 mx-0.5"></span> <span class="font-black text-slate-700">${loan.current_period || 0} / ${loan.total_periods || '--'}</span></div>` : '';
+
+            const rateHtml = loan.interest_rate ? `<div class="px-2 py-0.5 bg-white border border-slate-100 shadow-sm text-slate-500 rounded text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-percent text-slate-300"></i> Rate <span class="w-px h-2.5 bg-slate-200 mx-0.5"></span> <span class="font-black text-slate-700">${loan.interest_rate.value}% ${loan.interest_rate.description || ''}</span></div>` : '';
+            
+            html += `
+            <div class="flex flex-col bg-slate-50 border border-slate-100/50 rounded-2xl p-6 lg:p-7 relative overflow-hidden mb-4 group cursor-pointer hover:border-slate-300 hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] transition-all">
+                <div class="absolute -right-6 -bottom-6 text-8xl md:text-9xl text-slate-200/50 pointer-events-none z-0 transition-transform group-hover:scale-110">
+                    ${iconHtml}
+                </div>
+                
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-6 z-10 w-full mb-6 relative">
+                    <!-- Column 1: Info -->
+                    <div class="flex flex-col items-start gap-1 flex-1 min-w-0">
+                        <div class="flex items-center gap-3 w-full mb-1">
+                            <h3 class="text-2xl font-black text-slate-800 tracking-tight leading-none truncate" title="${loan.product_alias || loan.product_name}">${loan.product_alias || loan.product_name}</h3>
+                            <span class="px-2 py-0.5 rounded border ${badgeClass} text-[9px] font-black uppercase tracking-widest w-fit shrink-0 flex items-center">
+                                ${subFamilyLabel}
+                            </span>
+                        </div>
+                        
+                        <div class="flex flex-col gap-1.5 mt-1">
+                            <p class="text-[11px] font-mono font-bold text-slate-500 flex items-center gap-1.5 w-fit">
+                                <i class="fa-solid fa-file-contract text-slate-400"></i> ${loan.identifier?.value || '--'}
+                            </p>
+                            ${nextPaymentDate}
+                        </div>
+                    </div>
+                    
+                    <!-- Column 2: Balances -->
+                    <div class="flex items-start gap-6 shrink-0 z-10">
+                        <div class="flex flex-col items-end gap-3">
+                            <div class="flex items-center gap-4">
+                                <div class="flex flex-col items-end border-r border-slate-200 pr-4">
+                                    <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">NEXT PAYMENT</span>
+                                    <span class="text-lg font-black tracking-tight text-slate-900 font-mono leading-none">
+                                        ${formatCurrency(loan.next_payment_amount?.amount, loan.next_payment_amount?.currency)}
+                                    </span>
+                                </div>
+                                <div class="flex flex-col items-start pl-1">
+                                    <span class="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-0.5">OUTSTANDING</span>
+                                    <span class="text-lg font-black tracking-tight text-red-500 font-mono leading-none">
+                                        ${formatCurrency(loan.outstanding_balance?.amount, loan.outstanding_balance?.currency)}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Detailed Pills -->
+                            <div class="flex gap-2 justify-end w-full">
+                                ${rateHtml}
+                                ${periodsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 3: Progress Bar -->
+                <div class="w-full relative z-10 mt-auto">
+                    <div class="flex justify-between items-end mb-1.5">
+                        <span class="text-[10px] font-black text-slate-400 tracking-widest uppercase">Repayment Progress</span>
+                        <span class="text-[10px] font-mono font-bold text-slate-500">${formatCurrency(paid, loan.initial_balance?.currency)} / ${formatCurrency(total, loan.initial_balance?.currency)}</span>
+                    </div>
+                    <div class="w-full bg-slate-200/60 rounded-full h-2 overflow-hidden">
+                        <div class="bg-amber-500 h-2 rounded-full transition-all duration-1000 ease-out" style="width: ${progressPercent}%"></div>
+                    </div>
+                </div>
+            </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
 
     function renderCardsData(payload) {
         const container = document.getElementById('cardsContainer');
@@ -1476,18 +1921,6 @@
         
         container.innerHTML = html;
     }
-
-    function renderLoansData(payload) {
-        const container = document.getElementById('loansContainer');
-        if (!container) return;
-        
-        if (!payload || !payload.data || !payload.data.loans || payload.data.loans.length === 0) {
-            renderEmptyCategory('loansContainer', 'fa-solid fa-hand-holding-dollar', 'No loans or mortgages found.');
-            return;
-        }
-        renderEmptyCategory('loansContainer', 'fa-solid fa-hand-holding-dollar', 'Displaying loans...');
-    }
-
     // --- Accounts Details Routing ---
     window.showAccountDetails = async function(accountId) {
         if (!window.currentResultData || !window.currentResultData.data || !window.currentResultData.data.accounts) return;
