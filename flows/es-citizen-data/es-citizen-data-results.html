@@ -1055,6 +1055,68 @@
         }
     };
 
+    window.downloadTaxModelPDF = async function(year) {
+        const payload = window.currentResultData;
+        if (!payload || !payload.connections) {
+            console.error("No connections found in payload");
+            return;
+        }
+
+        const aeatKey = Object.keys(payload.connections).find(key => key.startsWith('AEAT'));
+        if (!aeatKey) {
+            console.error("No AEAT connection found. Cannot download Model 100 Report.");
+            alert("This payload does not contain an AEAT connection, the document is unavailable.");
+            return;
+        }
+
+        const connectionId = payload.connections[aeatKey];
+        const configObj = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
+        
+        if (!configObj || !configObj.secret) {
+            alert("Application Secret is missing or invalid. Cannot download the document.");
+            return;
+        }
+
+        const url = `https://clients.infonite.tech/api/executions/results/${connectionId}/public/v1/tax/yearly-situation/${year}/model-100`;
+        const btn = document.getElementById(`btnDownloadTaxModel-${year}`);
+        const originalHtml = btn ? btn.innerHTML : '';
+        
+        try {
+            if (btn) {
+                btn.innerHTML = `<div class="w-6 h-6 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="flex flex-col items-start leading-tight"><span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Please Wait</span><span class="text-xs font-bold text-red-600">Downloading...</span></div>`;
+                btn.disabled = true;
+            }
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-APP-SECRET': configObj.secret,
+                    'Accept': 'application/pdf'
+                }
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`HTTP error ${response.status}: ${errText}`);
+            }
+
+            const blob = await response.blob();
+            currentPdfBlobUrl = URL.createObjectURL(blob);
+            currentPdfFilename = `Model_100_${year}_${connectionId.substring(0,6)}.pdf`;
+            
+            window.openPdfModal(currentPdfBlobUrl, currentPdfFilename);
+
+        } catch (error) {
+            console.error("Error downloading PDF:", error);
+            alert("Failed to download the Model 100 Report. Please check the network connectivity or try reloading.");
+        } finally {
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
+    };
+
     window.openPdfModal = function(blobUrl, filename) {
         const modal = document.getElementById('pdfModal');
         const iframe = document.getElementById('pdfModalIframe');
@@ -1761,7 +1823,7 @@
     function renderTaxDetailRow(label, amount) {
         if (amount === undefined || amount === null) return '';
         return `
-            <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+            <div class="px-6 py-4 flex items-center justify-between transition-colors">
                 <span class="text-sm font-semibold text-slate-600">${label}</span>
                 <span class="text-sm font-bold font-mono text-slate-800">${formatCurrency(amount)}</span>
             </div>
@@ -1803,7 +1865,7 @@
                         
                         <div class="flex items-center gap-6">
                             <div class="flex flex-col text-right hidden lg:flex">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gross Income</span>
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gross Employment</span>
                                 <span class="text-base font-black text-slate-800 font-mono mt-0.5">${formatCurrency(incomeAmount)}</span>
                             </div>
                             <div class="w-10 h-10 rounded-full bg-white border border-slate-100 text-slate-400 flex items-center justify-center group-hover:bg-[var(--primary)] group-hover:text-white transition-colors shadow-sm shrink-0">
@@ -1837,39 +1899,271 @@
 
             const incomeAmount = parseFloat(tax.employment_income_totals?.remuneration?.amount || 0);
 
+            const tabHeader = `
+                <div class="flex items-center gap-2 p-1 bg-slate-100/80 rounded-xl w-full overflow-x-auto no-scrollbar">
+                    <button onclick="window.switchTaxDetailTab('employment')" id="btnTaxTab-employment" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-briefcase text-[var(--primary)]"></i> Employment
+                    </button>
+                    <button onclick="window.switchTaxDetailTab('bank')" id="btnTaxTab-bank" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-building-columns"></i> Bank Accounts
+                    </button>
+                    <button onclick="window.switchTaxDetailTab('savings')" id="btnTaxTab-savings" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-piggy-bank"></i> Savings Base
+                    </button>
+                    <button onclick="window.switchTaxDetailTab('assets')" id="btnTaxTab-assets" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-arrow-trend-up"></i> Asset Sales
+                    </button>
+                </div>
+            `;
+
+            // Building HTML Tables for Arrays
+            let employmentTable = '';
+            if (tax.employment_income && tax.employment_income.length > 0) {
+                employmentTable = `
+                    <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                                <tr>
+                                    <th class="px-5 py-3">Payer / Employer</th>
+                                    <th class="px-5 py-3 text-right">Gross Remun.</th>
+                                    <th class="px-5 py-3 text-right">Withholding</th>
+                                    <th class="px-5 py-3 text-right">Deductible</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                ${tax.employment_income.map(item => `
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-5 py-3">
+                                            <div class="font-bold text-slate-800">${item.payer_name || '--'}</div>
+                                            <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.payer_nif || '--'}</div>
+                                        </td>
+                                        <td class="px-5 py-3 text-right font-mono font-bold text-slate-700">${formatCurrency(item.remuneration?.amount)}</td>
+                                        <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.withholding?.amount)}</td>
+                                        <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.deductible_expenses?.amount)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            let bankTable = '';
+            if (tax.bank_account_performance && tax.bank_account_performance.length > 0) {
+                bankTable = `
+                    <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                                <tr>
+                                    <th class="px-5 py-3">Financial Entity</th>
+                                    <th class="px-5 py-3 text-right">Gross Remun.</th>
+                                    <th class="px-5 py-3 text-right">Withholding</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                ${tax.bank_account_performance.map(item => `
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-5 py-3">
+                                            <div class="font-bold text-slate-800">${item.payer_name || '--'}</div>
+                                            <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.payer_nif || '--'}</div>
+                                        </td>
+                                        <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.remuneration?.amount)}</td>
+                                        <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.withholding?.amount)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            let savingsTable = '';
+            if (tax.savings_tax_base_performance && tax.savings_tax_base_performance.length > 0) {
+                savingsTable = `
+                    <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                                <tr>
+                                    <th class="px-5 py-3">Issuer / Payer</th>
+                                    <th class="px-5 py-3 text-center">Type</th>
+                                    <th class="px-5 py-3 text-right">Full Amount</th>
+                                    <th class="px-5 py-3 text-right">Withholding</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                ${tax.savings_tax_base_performance.map(item => `
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-5 py-3">
+                                            <div class="font-bold text-slate-800">${item.issuer_name || '--'}</div>
+                                            <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.issuer_nif || '--'}</div>
+                                        </td>
+                                        <td class="px-5 py-3 text-center font-bold text-[10px] text-slate-500">${item.type || '--'}</td>
+                                        <td class="px-5 py-3 text-right font-mono font-bold text-slate-700">${formatCurrency(item.full_amount?.amount)}</td>
+                                        <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.withholding?.amount)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            let assetsTable = '';
+            if (tax.financial_assets_sale && tax.financial_assets_sale.length > 0) {
+                assetsTable = `
+                    <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                                <tr>
+                                    <th class="px-5 py-3">Asset / Issuer</th>
+                                    <th class="px-5 py-3 text-center">Op. Date</th>
+                                    <th class="px-5 py-3 text-right">Sale Val.</th>
+                                    <th class="px-5 py-3 text-right">Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 bg-white">
+                                ${tax.financial_assets_sale.map(item => {
+                                    const d = item.operation_date ? new Date(item.operation_date) : null;
+                                    const dateStr = d ? d.toLocaleDateString('en-GB') : '--';
+                                    const perf = parseFloat(item.performance?.amount || 0);
+                                    let perfColor = perf > 0 ? 'text-emerald-500' : (perf < 0 ? 'text-red-500' : 'text-slate-500');
+                                    
+                                    return `
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-5 py-3">
+                                            <div class="font-bold text-slate-800">${item.value || item.issuer_name || 'Asset'}</div>
+                                            <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.issuer_nif || item.market_key || ''}</div>
+                                        </td>
+                                        <td class="px-5 py-3 text-center font-mono font-medium text-slate-500">${dateStr}</td>
+                                        <td class="px-5 py-3 text-right font-mono font-bold text-slate-700">${formatCurrency(item.sale_amount?.amount)}</td>
+                                        <td class="px-5 py-3 text-right font-mono font-bold ${perfColor}">${formatCurrency(item.performance?.amount)}</td>
+                                    </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                assetsTable = `
+                    <div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full">
+                        <i class="fa-solid fa-money-bill-transfer text-2xl mb-2 opacity-50"></i>
+                        No asset sales reported for this fiscal year.
+                    </div>
+                `;
+            }
+
+            const paneEmployment = `
+                <div id="paneTaxTab-employment" class="flex flex-col gap-4 animate-fade-in w-full">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Gross Remuneration', tax.employment_income_totals?.remuneration?.amount)}
+                        ${renderTaxDetailRow('Withholdings (IRPF)', tax.employment_income_totals?.withholding?.amount)}
+                        ${renderTaxDetailRow('Deductible Expenses', tax.employment_income_totals?.deductible_expenses?.amount)}
+                        ${renderTaxDetailRow('Benefits in Kind', tax.employment_income_totals?.benefits_in_kind?.amount)}
+                    </div>
+                    ${employmentTable}
+                </div>
+            `;
+            
+            const paneBank = `
+                <div id="paneTaxTab-bank" class="hidden flex-col gap-4 animate-fade-in w-full">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Remuneration (Interest)', tax.bank_account_performance_totals?.remuneration?.amount)}
+                        ${renderTaxDetailRow('Withholdings', tax.bank_account_performance_totals?.withholding?.amount)}
+                    </div>
+                    ${bankTable}
+                </div>
+            `;
+
+            const paneSavings = `
+                <div id="paneTaxTab-savings" class="hidden flex-col gap-4 animate-fade-in w-full">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Full Amount', tax.savings_tax_base_performance_totals?.full_amount?.amount)}
+                        ${renderTaxDetailRow('Withholdings', tax.savings_tax_base_performance_totals?.withholding?.amount)}
+                    </div>
+                    ${savingsTable}
+                </div>
+            `;
+
+            const paneAssets = `
+                <div id="paneTaxTab-assets" class="hidden flex-col gap-4 animate-fade-in w-full">
+                    ${assetsTable}
+                </div>
+            `;
+
             container.innerHTML = `
-                <!-- Main KPI Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-file-signature opacity-50 mr-1.5"></i> Expedient Status</span>
-                        <span class="text-lg font-black text-slate-800 mt-1 uppercase">${tax.expedient_status || 'COMPLETED'}</span>
+                <!-- Compact KPI Header -->
+                <div class="bg-slate-50 border border-slate-100 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
+                    <div class="flex items-center gap-6">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Expedient Status</span>
+                            <span class="text-sm font-bold text-slate-800 flex items-center gap-2"><div class="w-2 h-2 rounded-full ${tax.expedient_status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'} shadow-sm"></div> ${tax.expedient_status ? tax.expedient_status.toUpperCase() : 'UNKNOWN'}</span>
+                        </div>
+                        <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Gross Employment</span>
+                            <span class="text-sm font-bold text-[var(--primary)] font-mono">${formatCurrency(incomeAmount)}</span>
+                        </div>
                     </div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-calendar-check opacity-50 mr-1.5"></i> Mod 100 Date</span>
-                        <span class="text-lg font-black text-slate-800 mt-1">${tax.model_100_date || '--'}</span>
-                    </div>
-                    <div class="bg-[var(--primary-container)] border border-[var(--primary)]/20 rounded-2xl p-5 flex flex-col justify-center shadow-sm relative overflow-hidden">
-                        <div class="absolute -right-4 -bottom-4 opacity-[0.03] text-7xl"><i class="fa-solid fa-sack-dollar"></i></div>
-                        <span class="text-[10px] font-black text-[var(--primary)] uppercase tracking-widest relative z-10"><i class="fa-solid fa-briefcase mr-1.5"></i> Employment Income</span>
-                        <span class="text-2xl font-black text-slate-800 font-mono mt-1 relative z-10">${formatCurrency(incomeAmount)} <span class="text-[10px] uppercase font-bold text-slate-500 font-sans tracking-widest ml-1">GROSS</span></span>
+                    
+                    <div class="flex flex-wrap md:flex-nowrap items-center gap-4 border-t md:border-t-0 border-slate-200 pt-5 md:pt-0">
+                        <div class="flex flex-col md:items-end w-full md:w-auto mb-2 md:mb-0">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-calendar-day opacity-50"></i> Model 100 Date</span>
+                            <span class="text-[13px] font-bold text-slate-700 font-mono tracking-tight">${tax.model_100_date || '--'}</span>
+                        </div>
+                        
+                        <!-- PDF Download Action -->
+                        <div class="flex flex-col items-center md:items-end gap-1 w-full md:w-auto">
+                            <button id="btnDownloadTaxModel-${tax.year}" ${tax.expedient_status === 'completed' ? `onclick="window.downloadTaxModelPDF('${tax.year}')"` : 'disabled'} class="w-full md:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 disabled:hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl transition-colors shadow-sm text-xs font-bold group">
+                                <div class="w-6 h-6 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0 group-hover:bg-red-100 transition-colors">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                <div class="flex flex-col items-start leading-tight">
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Official Document</span>
+                                    <span class="text-xs font-bold">Download Receipt</span>
+                                </div>
+                            </button>
+                            <span class="text-[8px] font-bold uppercase tracking-widest text-slate-400 text-center md:text-right px-2">${tax.expedient_status === 'completed' ? 'PDF provided directly from AEAT payload.' : 'Document unavailable for incomplete files.'}</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Detailed Metrics List -->
-                <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm mt-2">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                        <h4 class="text-xs font-black text-slate-800 uppercase tracking-widest">Financial Breakdown</h4>
-                    </div>
-                    <div class="divide-y divide-slate-100">
-                        ${renderTaxDetailRow('Gross Employment Remuneration', parseFloat(tax.employment_income_totals?.remuneration?.amount || 0))}
-                        ${renderTaxDetailRow('Employment Withholdings (IRPF)', parseFloat(tax.employment_income_totals?.withholding?.amount || 0))}
-                        ${renderTaxDetailRow('Deductible Work Expenses', parseFloat(tax.employment_income_totals?.deductible_expenses?.amount || 0))}
-                        ${renderTaxDetailRow('Benefits in Kind', parseFloat(tax.employment_income_totals?.benefits_in_kind?.amount || 0))}
-                        ${renderTaxDetailRow('Bank Account Remuneration (Interest)', parseFloat(tax.bank_account_performance_totals?.remuneration?.amount || 0))}
-                        ${renderTaxDetailRow('Savings Tax Base Performance', parseFloat(tax.savings_tax_base_performance_totals?.full_amount?.amount || 0))}
+                <div class="mt-6 flex flex-col gap-4">
+                    ${tabHeader}
+                    <div class="flex flex-col gap-2 relative min-h-[250px] w-full pt-2">
+                        ${paneEmployment}
+                        ${paneBank}
+                        ${paneSavings}
+                        ${paneAssets}
                     </div>
                 </div>
             `;
+    };
+
+    window.switchTaxDetailTab = function(tabId) {
+        const tabs = ['employment', 'bank', 'savings', 'assets'];
+        tabs.forEach(t => {
+            const btn = document.getElementById(`btnTaxTab-${t}`);
+            const pane = document.getElementById(`paneTaxTab-${t}`);
+            if(!btn || !pane) return;
+
+            if (t === tabId) {
+                btn.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 whitespace-nowrap";
+                const icon = btn.querySelector('i');
+                if(icon) icon.classList.add('text-[var(--primary)]');
+                pane.classList.remove('hidden');
+                pane.classList.add('flex');
+            } else {
+                btn.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap";
+                const icon = btn.querySelector('i');
+                if(icon) icon.classList.remove('text-[var(--primary)]');
+                pane.classList.add('hidden');
+                pane.classList.remove('flex');
+            }
+        });
     };
 
     function renderAuditLog(payload) {
