@@ -1,25 +1,32 @@
 <!-- CATEGORY VIEW: ACADEMIC DATA -->
-<div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in">
+<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in overflow-y-auto">
     
     <!-- View Header -->
-    <div class="flex items-center gap-4 mb-8">
-        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] text-[var(--primary)] flex items-center justify-center text-xl shadow-sm border border-[var(--primary)]/20">
-            <i class="fa-solid fa-graduation-cap"></i>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 relative">
+        <div class="flex items-center gap-4 relative z-10">
+            <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] text-[var(--primary)] flex items-center justify-center text-xl shadow-sm border border-[var(--primary)]/20 shrink-0">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-slate-800 tracking-tight">Academic & Formation</h2>
+                <p class="text-xs font-medium text-slate-500 mt-1">Official university degrees and recorded non-university education history.</p>
+            </div>
         </div>
-        <div>
-            <h2 class="text-xl font-black text-slate-800 tracking-tight">Academic Data</h2>
-            <p class="text-xs font-medium text-slate-500 mt-1">University degrees and non-university education history.</p>
+        
+        <!-- Abstract Decoration -->
+        <div class="absolute right-0 top-0 text-8xl text-slate-100/40 pointer-events-none -translate-y-4 translate-x-4">
+            <i class="fa-solid fa-book-open"></i>
         </div>
     </div>
 
-    <!-- Blank State Body -->
-    <div class="flex-1 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-slate-400 min-h-[400px]">
-        <div class="flex flex-col items-center gap-3 text-center px-4">
-            <i class="fa-solid fa-code text-3xl opacity-50"></i>
-            <div>
-                <span class="block text-sm font-bold text-slate-600">Pending Implementation</span>
-                <span class="block text-xs font-medium mt-1 uppercase tracking-widest opacity-80">es-citizen-data/templates/academic.html</span>
-            </div>
+    <!-- Degrees Section -->
+    <div class="flex flex-col gap-4 flex-1">
+        <h3 class="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-award text-slate-400"></i> Higher Education Degrees
+        </h3>
+        <div id="higherEducationDegreesList" class="flex flex-col gap-4">
+            <!-- JS Injection -->
+            <div class="p-6 text-center text-slate-400 text-sm italic border border-slate-200 border-dashed rounded-xl">Loading degrees...</div>
         </div>
     </div>
 </div>

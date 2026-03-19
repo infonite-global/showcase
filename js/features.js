@@ -32,7 +32,7 @@ const INFONITE_FEATURES = {
             "read_transactions": true,
             "from_date": "60 days ago",
             "to_date": "today",
-            "filter_by_type": ["credit", "prepaid"]
+            "filter_by_type": ["credit", "prepaid", "debit"]
         }
     },
     deposits_read: {

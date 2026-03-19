@@ -881,6 +881,33 @@
             
             // Execute the specific renderer for this category now that the DOM is ready
             if (window.currentResultData) {
+                // Determine if feature is accepted
+                let featureAccepted = true;
+                const features = window.currentResultData.consent?.accepted_features || [];
+                
+                if (categoryId === 'customer') featureAccepted = features.some(f => f.startsWith('customer_information') || f === 'identification');
+                else if (categoryId === 'accounts') featureAccepted = features.includes('accounts_read');
+                else if (categoryId === 'cards') featureAccepted = features.includes('cards_read');
+                else if (categoryId === 'loans') featureAccepted = features.includes('loans_read');
+                else if (categoryId === 'credits') featureAccepted = features.includes('credits_read');
+                else if (categoryId === 'direct_debits') featureAccepted = features.includes('direct_debits_read');
+                else if (categoryId === 'investments') featureAccepted = features.includes('investment_accounts_read') || features.includes('funds_read') || features.includes('stocks_read') || features.includes('pensions_read');
+                
+                if (!featureAccepted && categoryId !== 'audit') {
+                    rootContainer.innerHTML = `
+                        <div class="h-full w-full rounded-[2rem] bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center fade-in min-h-[400px]">
+                            <div class="flex flex-col items-center gap-4 max-w-sm">
+                                <div class="w-16 h-16 rounded-full bg-slate-200/50 flex items-center justify-center mb-2">
+                                    <i class="fa-solid fa-lock text-3xl text-slate-400"></i>
+                                </div>
+                                <h3 class="text-xl font-black text-slate-700 tracking-tight">Module Not Executed</h3>
+                                <p class="text-sm font-medium text-slate-500">This data module was not selected or authorized during the consent phase, so no information was retrieved.</p>
+                            </div>
+                        </div>
+                    `;
+                    return; // skip calling render functions
+                }
+
                 switch(categoryId) {
                     case 'customer':
                         // Inject results data
@@ -1156,6 +1183,9 @@
         const lblIp = document.getElementById('lblConsentIp');
         if (lblIp && consent.user_ip) lblIp.textContent = consent.user_ip;
 
+        const lblCid = document.getElementById('lblCustomerId');
+        if (lblCid && currentSessionData?.customer_id) lblCid.textContent = currentSessionData.customer_id;
+
         const lblOrigin = document.getElementById('lblConsentOrigin');
         if (lblOrigin && consent.origin) lblOrigin.textContent = consent.origin;
 
@@ -1320,7 +1350,131 @@
             renderEmptyCategory('cardsContainer', 'fa-solid fa-credit-card', 'No active cards found or extracted yet.');
             return;
         }
-        renderEmptyCategory('cardsContainer', 'fa-solid fa-credit-card', 'Displaying cards...');
+        
+        const groupedCards = {
+            'Debit Cards': [],
+            'Credit Cards': [],
+            'Prepaid Cards': [],
+            'Other Cards': []
+        };
+        
+        payload.data.cards.forEach(card => {
+            if (card.sub_family?.includes('debit')) groupedCards['Debit Cards'].push(card);
+            else if (card.sub_family?.includes('credit')) groupedCards['Credit Cards'].push(card);
+            else if (card.sub_family?.includes('prepaid')) groupedCards['Prepaid Cards'].push(card);
+            else groupedCards['Other Cards'].push(card);
+        });
+
+        let html = '';
+        
+        Object.keys(groupedCards).forEach(groupName => {
+            const cards = groupedCards[groupName];
+            if (cards.length === 0) return;
+            
+            html += `
+                <div class="mb-2">
+                    <h4 class="text-sm font-black text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <i class="fa-solid fa-credit-card text-[var(--primary)] text-sm opacity-80"></i> ${groupName}
+                        <span class="ml-2 bg-slate-100 text-slate-500 py-0.5 px-2 rounded-full text-[10px] font-bold">${cards.length}</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            `;
+            
+            cards.forEach(card => {
+                const isCredit = card.sub_family?.includes('credit') || card.sub_family?.includes('prepaid');
+                let balanceHtml = '';
+                
+                if (isCredit && card.limit) {
+                    const availableVal = parseFloat(card.available?.amount || 0);
+                    const limitVal = parseFloat(card.limit?.amount || 0);
+                    const disposedVal = parseFloat(card.disposed?.amount || 0);
+                    
+                    const percentDisposed = limitVal > 0 ? Math.min(100, (Math.abs(disposedVal) / limitVal) * 100) : 0;
+                    const balanceColor = card.available?.amount < 0 ? 'text-rose-500' : 'text-slate-800';
+                    
+                    balanceHtml = `
+                        <div class="flex flex-col gap-1 w-full mt-3">
+                            <div class="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">
+                                <span class="${balanceColor}">Avail. ${formatCurrency(card.available?.amount, card.available?.currency)}</span>
+                                <span>Limit ${formatCurrency(card.limit?.amount, card.limit?.currency)}</span>
+                            </div>
+                            <div class="w-full h-1 bg-slate-200 rounded-full overflow-hidden flex">
+                                <div class="h-full bg-[var(--primary)] rounded-full" style="width: ${percentDisposed}%"></div>
+                            </div>
+                            <div class="text-[8px] font-bold text-slate-400 mt-0.5 text-right w-full">
+                                Disposed: ${formatCurrency(card.disposed?.amount, card.disposed?.currency)}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const brandLower = card.identifier?.brand?.toLowerCase() || '';
+                const brandName = card.identifier?.brand || 'Unknown';
+                const subFamilyClean = card.sub_family?.split(':').pop() || 'Card';
+                const cardTypeLabel = `${brandName} ${subFamilyClean}`;
+                
+                const brandWatermarkClass = brandLower === 'visa' ? 'fa-brands fa-cc-visa' : 
+                                           (brandLower === 'mastercard' ? 'fa-brands fa-cc-mastercard' : 
+                                           (brandLower === 'amex' || brandLower === 'american express' ? 'fa-brands fa-cc-amex' : 'fa-solid fa-credit-card'));
+                
+                const statusColor = card.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200/50' : 'bg-rose-50 text-rose-600 border-rose-200/50';
+                const statusIcon = card.status === 'active' ? 'fa-check' : 'fa-lock';
+                
+                html += `
+                <div class="flex flex-col bg-white border border-slate-200/60 rounded-2xl relative overflow-hidden shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group" onclick="window.showCardDetails('${card.id}')">
+                    <!-- Watermark -->
+                    <div class="absolute -right-4 -bottom-4 text-[7rem] text-slate-100/60 pointer-events-none z-0 transform group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500">
+                        <i class="${brandWatermarkClass}"></i>
+                    </div>
+                    
+                    <div class="flex flex-col z-10 w-full h-full justify-between p-4 px-5 pb-0">
+                        <!-- Top Header: Type & Status -->
+                        <div class="flex items-start justify-between w-full mb-4 relative gap-2">
+                            <span class="text-[11px] font-black capitalize tracking-tight text-slate-700 flex items-center gap-1.5 leading-tight">
+                                ${cardTypeLabel}
+                            </span>
+                            <span class="px-2 py-[2px] rounded border ${statusColor} text-[8px] font-black uppercase tracking-widest flex items-center gap-1 shrink-0">
+                                <i class="fa-solid ${statusIcon}"></i> ${card.status || 'UNKNOWN'}
+                            </span>
+                        </div>
+                        
+                        <!-- Middle row: Details -->
+                        <div class="flex flex-col gap-0.5 items-start w-full mb-4 relative z-10 w-3/4">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                                Expires ${formatDate(card.expiration_date)}
+                            </span>
+                            <span class="text-base sm:text-lg font-mono font-black text-slate-700 tracking-wider">
+                                ${card.identifier?.masked || card.identifier?.value || '--'}
+                            </span>
+                            <span class="text-[11px] font-bold text-slate-500 line-clamp-1" title="${card.product_alias || card.product_name}">
+                                ${card.product_alias || card.product_name}
+                            </span>
+                            
+                            ${balanceHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Row -->
+                    <div class="flex items-center justify-between w-full px-5 py-2.5 border-t border-slate-100/80 bg-slate-50/50 relative z-10 mt-auto">
+                        <div class="px-2 py-0.5 bg-white border border-slate-200 shadow-sm text-slate-500 rounded text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-receipt text-slate-400"></i> Movements <span class="w-px h-2 bg-slate-200 mx-0.5"></span> <span class="font-black text-slate-700">${card.transactions ? card.transactions.length : 0}</span>
+                        </div>
+                        
+                        <div class="text-[var(--primary)] text-[9px] uppercase tracking-widest flex items-center gap-1 font-black group-hover:text-indigo-600 transition-colors">
+                            Details <i class="fa-solid fa-chevron-right text-[8px] group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
     }
 
     function renderLoansData(payload) {
@@ -1523,6 +1677,265 @@
         });
         
         const overrideNavTarget = document.getElementById('nav-accounts');
+        if (overrideNavTarget) {
+             overrideNavTarget.classList.add('bg-[var(--primary-container)]', 'text-[var(--primary)]', 'shadow-sm', 'border', 'border-[var(--primary)]/20');
+             overrideNavTarget.classList.remove('text-slate-500', 'border-transparent');
+             const icon = overrideNavTarget.querySelector('i');
+             if (icon) {
+                 icon.classList.remove('opacity-60');
+                 icon.classList.add('opacity-100');
+             }
+        }
+    }
+
+    // --- Cards Details Routing ---
+    window.showCardDetails = async function(cardId) {
+        if (!window.currentResultData || !window.currentResultData.data || !window.currentResultData.data.cards) return;
+        
+        const card = window.currentResultData.data.cards.find(c => c.id === cardId);
+        if (!card) return;
+
+        // Perform Route Switch
+        await switchDashboardView('cards-details');
+        
+        // Render Logic for Details
+        const container = document.getElementById('cardDetailsContainer');
+        if (!container) return;
+        
+        const brandLower = card.identifier?.brand?.toLowerCase() || '';
+        const brandName = card.identifier?.brand || 'Unknown';
+        const subFamilyClean = card.sub_family?.split(':').pop() || 'Card';
+        const cardTypeLabel = `${brandName} ${subFamilyClean}`;
+        
+        const brandWatermarkClass = brandLower === 'visa' ? 'fa-brands fa-cc-visa' : 
+                                   (brandLower === 'mastercard' ? 'fa-brands fa-cc-mastercard' : 
+                                   (brandLower === 'amex' || brandLower === 'american express' ? 'fa-brands fa-cc-amex' : 'fa-solid fa-credit-card'));
+
+        const brandIcon = brandLower === 'visa' ? 'fa-brands fa-cc-visa text-blue-700' : 
+                         (brandLower === 'mastercard' ? 'fa-brands fa-cc-mastercard text-red-500' : 
+                         (brandLower === 'amex' || brandLower === 'american express' ? 'fa-brands fa-cc-amex text-blue-500' : 'fa-solid fa-credit-card text-slate-400'));
+                                   
+        const isCredit = card.sub_family?.includes('credit') || card.sub_family?.includes('prepaid');
+        const statusColor = card.status === 'active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200/50' : 'bg-rose-50 text-rose-600 border-rose-200/50';
+        const statusIcon = card.status === 'active' ? 'fa-check' : 'fa-lock';
+        
+        const safeFormatCurrency = (amount, currency) => {
+            if (amount === null || amount === undefined || isNaN(Number(amount))) return '--';
+            return formatCurrency(amount, currency);
+        };
+        
+        let html = `
+        <div class="bg-slate-50 border border-slate-200/60 rounded-2xl relative overflow-hidden mb-6 shadow-sm p-5">
+            <!-- Watermark -->
+            <div class="absolute -right-4 -bottom-4 text-[10rem] text-slate-100/60 pointer-events-none z-0 transform -rotate-12">
+                 <i class="${brandWatermarkClass}"></i>
+            </div>
+            
+            <div class="flex flex-col z-10 w-full relative">
+                <!-- Top Row: Title & Status -->
+                <div class="flex items-start justify-between w-full mb-4">
+                    <span class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i class="${brandIcon} text-lg"></i> ${cardTypeLabel}
+                    </span>
+                    <span class="px-2 py-0.5 rounded border ${statusColor} text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5 shrink-0 bg-white">
+                        <i class="fa-solid ${statusIcon}"></i> ${card.status || 'UNKNOWN'}
+                    </span>
+                </div>
+                
+                <!-- Main Data -->
+                <div class="flex items-center gap-6 flex-wrap">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Number</span>
+                        <span class="text-lg font-mono font-bold text-slate-800 tracking-widest">${card.identifier?.masked || card.identifier?.value || '--'}</span>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-x-8 gap-y-3 mt-4">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alias</span>
+                        <span class="text-sm font-bold text-slate-700">${card.product_alias || card.product_name}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expires</span>
+                        <span class="text-sm font-bold text-slate-700">${card.expiration_date ? formatDate(card.expiration_date) : '--'}</span>
+                    </div>
+                    ${card.holder_name ? `
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cardholder</span>
+                        <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-user text-slate-400 text-[10px]"></i> ${card.holder_name}</span>
+                    </div>
+                    ` : ''}
+                    ${card.linked_account ? `
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Linked Account</span>
+                        <span class="text-[13px] font-mono font-bold text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200"><i class="fa-solid fa-link text-slate-400 text-[10px] mr-1.5"></i>${card.linked_account.masked}</span>
+                    </div>
+                    ` : ''}
+                </div>
+        `;
+        
+        if (isCredit) {
+            html += `
+                <div class="flex flex-wrap items-center gap-x-8 gap-y-4 pt-5 border-t border-slate-100/80 mt-5">
+            `;
+            if (card.limit || card.available) {
+                html += `
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Available / Limit</span>
+                        <div class="flex items-baseline gap-1.5">
+                            <span class="text-base font-mono font-bold text-slate-800">${safeFormatCurrency(card.available?.amount, card.available?.currency)}</span>
+                            <span class="text-[11px] font-mono font-bold text-slate-400">/ ${safeFormatCurrency(card.limit?.amount, card.limit?.currency)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            if (card.disposed) {
+                html += `
+                    <div class="flex flex-col border-l border-slate-100 pl-6">
+                        <span class="text-[9px] font-bold text-emerald-600/70 uppercase tracking-wider">Disposed</span>
+                        <span class="text-base font-mono font-bold text-emerald-600">${safeFormatCurrency(card.disposed?.amount, card.disposed?.currency)}</span>
+                    </div>
+                `;
+            }
+            if (card.payment_amount) {
+                 html += `
+                    <div class="flex flex-col border-l border-slate-100 pl-6">
+                        <span class="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Payment Due</span>
+                        <span class="text-base font-mono font-bold text-indigo-600">${safeFormatCurrency(card.payment_amount?.amount, card.payment_amount?.currency)}</span>
+                    </div>
+                 `;
+            }
+            if (card.next_payment_date) {
+                 html += `
+                    <div class="flex flex-col border-l border-slate-100 pl-6">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Next Payment</span>
+                        <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5"><i class="fa-regular fa-calendar-check text-slate-300"></i> ${formatDate(card.next_payment_date)}</span>
+                    </div>
+                 `;
+            }
+            if (card.billing_period_start && card.billing_period_end) {
+                 html += `
+                    <div class="flex flex-col border-l border-slate-100 pl-6">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Billing Cycle</span>
+                        <span class="text-[11px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 shadow-sm">${formatDate(card.billing_period_start)} <span class="font-normal mx-0.5 text-slate-400">to</span> ${formatDate(card.billing_period_end)}</span>
+                    </div>
+                 `;
+            }
+            html += `
+                </div>
+            `;
+        }
+        
+        html += `
+            </div>
+        </div>
+        `;
+
+        // Render Movements
+        if (card.transactions && card.transactions.length > 0) {
+            html += `
+            <div class="mt-8">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul text-[var(--primary)] text-sm"></i> Recent Transactions
+                </h4>
+                <div class="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100">
+                                    <th class="p-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Date</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 tracking-widest uppercase">Description</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 tracking-widest uppercase text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+            `;
+            
+            card.transactions.forEach(tx => {
+                const isPositive = Number(tx.amount?.amount) > 0;
+                const amtColor = isPositive ? 'text-emerald-500' : 'text-slate-800';
+                
+                let catIconHTML = '';
+                if (tx.category) {
+                    if (tx.category.startsWith('income::')) {
+                        catIconHTML = '<i class="fa-solid fa-arrow-up text-emerald-500"></i>';
+                    } else if (tx.category.startsWith('expenses::')) {
+                        catIconHTML = '<i class="fa-solid fa-arrow-down text-rose-500"></i>';
+                    } else {
+                        catIconHTML = '<i class="fa-regular fa-circle-dot text-slate-300"></i>';
+                    }
+                }
+                
+                html += `
+                                <tr class="hover:bg-slate-50/50 transition-colors group">
+                                    <td class="p-4 align-top w-28 whitespace-nowrap">
+                                        <div class="text-[11px] font-bold text-slate-600 font-mono">${formatDate(tx.operation_date || tx.value_date)}</div>
+                                    </td>
+                                    <td class="p-4 align-top w-full">
+                                        <div class="flex flex-col gap-1.5 w-full max-w-[200px] sm:max-w-xs md:max-w-md lg:max-w-xl">
+                                            <div class="flex items-center gap-2 w-full">
+                                                <div class="min-w-0 flex-1">
+                                                    ${tx.descriptions && tx.descriptions.length > 0 ? 
+                                                        `<p class="text-sm font-semibold text-slate-800 leading-tight truncate" title="${tx.descriptions[0].replace(/"/g, '&quot;')}">${tx.descriptions[0]}</p>`
+                                                        : '<p class="text-sm font-semibold text-slate-400 leading-tight truncate">--</p>'
+                                                    }
+                                                </div>
+                                                ${tx.category ? `
+                                                <div class="shrink-0 flex items-center">
+                                                    <span class="px-2 text-[8px] py-[3px] rounded bg-slate-50 text-slate-600 font-black uppercase tracking-widest truncate max-w-[120px] sm:max-w-[180px] inline-flex items-center gap-1.5 shadow-sm border border-slate-200/50" title="${tx.category.split('::').pop().replace(/_/g, ' ')}">
+                                                        ${catIconHTML} ${tx.category.split('::').pop().replace(/_/g, ' ')}
+                                                    </span>
+                                                </div>
+                                                ` : ''}
+                                            </div>
+                                            ${tx.descriptions && tx.descriptions.length > 1 ? 
+                                                `<div class="w-full"><p class="text-xs font-normal text-slate-500 leading-tight truncate" title="${tx.descriptions[1].replace(/"/g, '&quot;')}">${tx.descriptions[1]}</p></div>` 
+                                                : ''
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="p-4 align-top text-right whitespace-nowrap">
+                                        <div class="flex flex-col items-end gap-1">
+                                            <span class="text-sm font-black tracking-tight ${amtColor} font-mono">${isPositive ? '+' : ''}${formatCurrency(tx.amount?.amount, tx.amount?.currency)}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                `;
+            });
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            `;
+        } else {
+             html += `
+             <div class="mt-8">
+                <h4 class="text-xs font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-ul text-[var(--primary)] text-sm"></i> Recent Transactions
+                </h4>
+                <p class="text-sm text-slate-400 italic">No transactions recorded for this card.</p>
+             </div>
+             `;
+        }
+
+        container.innerHTML = html;
+        
+        // Remove active nav state from current sidebar button and set to Cards to keep consistency
+        document.querySelectorAll('.dashboard-nav-btn').forEach(btn => {
+            btn.classList.remove('bg-[var(--primary-container)]', 'text-[var(--primary)]', 'shadow-sm', 'border', 'border-[var(--primary)]/20');
+            btn.classList.add('text-slate-500', 'border', 'border-transparent');
+            
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.remove('opacity-100');
+                icon.classList.add('opacity-60');
+            }
+        });
+        
+        const overrideNavTarget = document.getElementById('nav-cards');
         if (overrideNavTarget) {
              overrideNavTarget.classList.add('bg-[var(--primary-container)]', 'text-[var(--primary)]', 'shadow-sm', 'border', 'border-[var(--primary)]/20');
              overrideNavTarget.classList.remove('text-slate-500', 'border-transparent');

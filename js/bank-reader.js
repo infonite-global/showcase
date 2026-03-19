@@ -264,7 +264,12 @@ window.renderHistory = function() {
                                <i class="fa-regular fa-copy"></i>
                            </button>
                        </div>
-                       <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5 truncate max-w-[200px] sm:max-w-[280px]" title="${cid}">${cid}</p>
+                       <div class="flex items-center gap-1.5 mt-0.5">
+                           <p class="text-[10px] text-slate-500 uppercase tracking-widest truncate max-w-[150px] sm:max-w-[200px]" title="${cid}">${cid}</p>
+                           ${cid !== '--' ? `<button onclick="navigator.clipboard.writeText('${cid}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors opacity-0 group-hover:opacity-100" title="Copy Customer ID">
+                               <i class="fa-regular fa-copy"></i>
+                           </button>` : ''}
+                       </div>
                    </div>
                </div>
             </td>
