@@ -481,6 +481,20 @@ function populateCompletionUrls() {
     });
 }
 
+window.selectMarket = function(marketType) {
+    const hiddenInput = document.getElementById('generate-market-selection');
+    if (hiddenInput) {
+        hiddenInput.value = marketType;
+    }
+    document.querySelectorAll('.market-pill').forEach(btn => {
+        if (btn.dataset.market === marketType) {
+            btn.className = "market-pill py-2 border border-[var(--primary)] bg-[rgba(var(--primary-rgb),0.05)] text-[var(--primary)] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-0.5";
+        } else {
+            btn.className = "market-pill py-2 border border-black/5 bg-black/5 hover:bg-black/10 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-0.5";
+        }
+    });
+};
+
 window.closeNewLeadModal = function() {
     const modal = document.getElementById('newLeadModal');
     if (!modal) return;
@@ -566,11 +580,19 @@ window.generateLeadSession = async function() {
         }
 
         // 3. Assemble Strict Payload
+        const marketSelection = document.getElementById('generate-market-selection') ? document.getElementById('generate-market-selection').value : 'ALL_BANKS';
+        let allowedEngines = window.INFONITE_ALL_BANKS_ENGINES || [];
+        if (marketSelection === 'ES_RETAIL') {
+            allowedEngines = window.INFONITE_ES_RETAIL_BANKS_ENGINES || [];
+        } else if (marketSelection === 'CO_BUSINESS') {
+            allowedEngines = window.INFONITE_CO_BUSINESS_BANKS_ENGINES || [];
+        }
+
         const payload = {
             customer_id: customerId,
             settings: {
                 tokenized_access: tokenizedAccess,
-                allowed_engines: window.INFONITE_ES_BANKS_ENGINES || [],
+                allowed_engines: allowedEngines,
                 executions_hooks_extra_data: {
                     "customer": "{customer_id}",
                     "fixed": "1"
