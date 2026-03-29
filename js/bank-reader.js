@@ -505,27 +505,19 @@ window.closeNewLeadModal = function() {
         header.classList.remove('hidden');
     }
 
-    modal.classList.add('opacity-0', 'invisible');
-    modal.classList.remove('opacity-100', 'visible');
-    
-    const panel = document.getElementById('newLeadPanel');
-    if (panel) {
-        panel.classList.add('translate-y-full');
-        panel.classList.remove('translate-y-0');
-    }
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
 
-    // Reset views for next open after transition
-    setTimeout(() => {
-        document.getElementById('nl-success-view').classList.add('hidden');
-        document.getElementById('nl-success-view').classList.remove('flex');
-        document.getElementById('nl-error-view').classList.add('hidden');
-        document.getElementById('nl-error-view').classList.remove('flex');
-        
-        document.getElementById('nl-form-view').classList.remove('hidden');
-        document.getElementById('nl-form-view').classList.add('flex');
-        document.getElementById('nl-footer-actions').classList.remove('hidden');
-        document.getElementById('nl-footer-actions').classList.add('flex');
-    }, 300);
+    // Reset views for next open immediately
+    document.getElementById('nl-success-view').classList.add('hidden');
+    document.getElementById('nl-success-view').classList.remove('flex');
+    document.getElementById('nl-error-view').classList.add('hidden');
+    document.getElementById('nl-error-view').classList.remove('flex');
+    
+    document.getElementById('nl-form-view').classList.remove('hidden');
+    document.getElementById('nl-form-view').classList.add('flex');
+    document.getElementById('nl-footer-actions').classList.remove('hidden');
+    document.getElementById('nl-footer-actions').classList.add('flex');
 };
 
 // Setup simple accordion toggling for Advanced Configuration
