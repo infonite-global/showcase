@@ -645,6 +645,8 @@ function openEditor(id = null) {
     window.tempSyncedConfig = null;
     
     const saveBtn = document.getElementById("saveConfigBtn");
+    const exportBtn = document.getElementById("exportConfigBtn");
+    
     if (saveBtn) {
         if (isNew) {
             saveBtn.disabled = true;
@@ -652,6 +654,16 @@ function openEditor(id = null) {
         } else {
             saveBtn.disabled = false;
             saveBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+    }
+    
+    if (exportBtn) {
+        if(isNew || config.isMock) {
+            exportBtn.classList.add("hidden");
+            exportBtn.classList.remove("flex");
+        } else {
+            exportBtn.classList.remove("hidden");
+            exportBtn.classList.add("flex");
         }
     }
     
@@ -1166,3 +1178,49 @@ document.addEventListener("DOMContentLoaded", () => {
     updateActiveConfigUI();
     applyTheme(InfoniteConfigManager.getConfig());
 });
+
+window.exportActiveConfigUrl = function() {
+    const data = InfoniteConfigManager.getStorageData();
+    const currentId = document.getElementById("edit-config-id").value;
+    const config = data.list.find(c => c.id === currentId);
+    
+    if (!config || config.isMock) {
+        alert("Wait until the environment is fully synchronized before exporting.");
+        return;
+    }
+    
+    const payload = {
+        s: config.secret,
+        u: config.widgetUrl,
+        ht: config.hostType,
+        sl: config.saturateLogo,
+        bc: config.bannerColor,
+        bs: config.bannerColorScheme
+    };
+    
+    const encoded = btoa(JSON.stringify(payload));
+    
+    const basePath = typeof getBasePath === 'function' ? getBasePath() : '';
+    let baseUrlStr = window.location.href.split('?')[0].split('#')[0];
+    let appRootPath = baseUrlStr;
+    const pathParts = baseUrlStr.split('/');
+    if(pathParts.includes('flows')) {
+       appRootPath = pathParts.slice(0, pathParts.indexOf('flows')).join('/') + '/';
+    } else {
+       appRootPath = baseUrlStr.substring(0, baseUrlStr.lastIndexOf('/') + 1);
+    }
+    
+    const url = new URL(`setup.html?c=${encoded}`, appRootPath);
+    
+    navigator.clipboard.writeText(url.href).then(() => {
+        const btn = document.getElementById("exportConfigBtn");
+        if(btn) {
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-check text-[var(--primary)]"></i> Copied`;
+            setTimeout(() => btn.innerHTML = originalHtml, 2000);
+        }
+    }).catch(err => {
+        console.error("Failed to copy URL", err);
+        alert("Failed to copy URL to clipboard.");
+    });
+};
