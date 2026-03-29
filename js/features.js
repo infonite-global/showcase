@@ -162,8 +162,8 @@ const INFONITE_FEATURES = {
         icon: 'fa-solid fa-certificate',
         defaultConfig: {}
     },
-    yearly_tax_situation: {
-        code: 'yearly_tax_situation',
+    yearly_individual_tax: {
+        code: 'yearly_individual_tax',
         name: 'Yearly Tax Situation',
         workMessage: 'Consulting your tax situation',
         icon: 'fa-solid fa-file-invoice-dollar',
@@ -223,7 +223,7 @@ const INFONITE_FLOWS = {
             'citizen_data', 
             'driver_data', 
             'labor_check', 
-            'yearly_tax_situation',
+            'yearly_individual_tax',
             'academic_data'
         ]
     }

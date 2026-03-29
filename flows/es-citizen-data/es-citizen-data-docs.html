@@ -223,6 +223,7 @@
       <a href="#verification-polling" class="text-sm font-medium text-slate-500 hover:text-[var(--primary)] transition-colors py-1.5 toc-link">3. Verification &amp; Polling</a>
       <a href="#webhooks-decryption" class="text-sm font-medium text-slate-500 hover:text-[var(--primary)] transition-colors py-1.5 toc-link">4. Webhooks &amp; Decryption</a>
       <a href="#synchronous-data" class="text-sm font-medium text-slate-500 hover:text-[var(--primary)] transition-colors py-1.5 toc-link">5. Synchronous Data</a>
+      <a href="#document-downloads" class="text-sm font-medium text-slate-500 hover:text-[var(--primary)] transition-colors py-1.5 toc-link">6. Document Downloads</a>
     </nav>
   </aside>
 
@@ -273,7 +274,7 @@
       { "code": "labor_check" },
       { "code": "academic_data" },
       { "code": "public_pensions" },
-      { "code": "yearly_tax_situation" }
+      { "code": "yearly_individual_tax" }
     ]
   }
 }</code></pre>
@@ -463,6 +464,9 @@
         "social_security_days": 1825,
         "work_relations_history": [
           { "name": "Tech Company SL", "activity_start": "2020-01-15", "work_type": "employee" }
+        ],
+        "attachments": [
+          { "id": "69c95070e499265c8351b433", "product": "attachment", "sub_family": "attachment:es-tgss-life-report", "content_name": "work_life_report.pdf" }
         ]
       }
     },
@@ -474,9 +478,42 @@
         "completion_status": "completed",
         "issue_date": "2015-07-01"
       }]
+    },
+    "tax": {
+      "individual_yearly": [
+        {
+          "product": "tax_information",
+          "fiscal_year_start": "2025-01-01",
+          "status": "data",
+          "income": {
+            "employment": {
+              "total_gross": { "amount": "34505.25", "currency": "EUR" },
+              "lines": [
+                 { "employer_name": "Tech Company SL", "gross_income": { "amount": "34505.25" } }
+              ]
+            }
+          },
+          "attachments": [
+            { "id": "69c950bf503d56078f8dc28d", "product": "attachment", "sub_family": "attachment:es-aeat-model-100", "content_name": "100_2025.pdf" }
+          ]
+        }
+      ]
     }
   }
 }</code></pre>
+
+        <h2 id="document-downloads" class="scroll-mt-32 mt-12">6. Document Downloads (Attachments)</h2>
+        <p>Entities containing an <code>attachments</code> array natively hold metadata indicating generated reports or original documents emitted by the Administration. You can download the binary file safely by passing the <code>session_id</code> and the document's <code>id</code> to the Centralized Attachments Endpoint.</p>
+
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-2 mt-4">
+            <div class="flex items-center gap-2">
+                <span class="px-2 py-1 bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold rounded uppercase">GET</span>
+                <code class="text-[13px] border border-slate-200 bg-white px-2 py-1 rounded">/api/flows/attachments?session_id={session_id}&attachment_id={attachment_id}</code>
+            </div>
+            <a href="https://widgets.infonite.tech/apidocs#/operations/client_execution_results_attachments_download_api_flows_attachments_get" target="_blank" class="flex items-center gap-1.5 text-[10px] font-black text-[#00a76f] hover:text-[#008f5f] uppercase tracking-widest transition-colors">
+                API Reference <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+        </div>
 
     </div>
   </div>
@@ -558,7 +595,6 @@
 <input class="w-full bg-black/10 border border-black/5 rounded-xl px-4 py-3 text-xs text-slate-900 focus:border-[rgba(var(--primary-rgb),0.40)] outline-none transition-all" id="config-widget-url" placeholder="https://widgets.infonite.tech" oninput="document.getElementById('saveConfigBtn').disabled = true; document.getElementById('saveConfigBtn').classList.add('opacity-50', 'cursor-not-allowed');" type="text"/>
 </div>
 <div class="hidden">
-<input id="config-client-url" type="text" value="https://clients.infonite.tech"/>
 </div>
 
   <h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest mb-3 mt-6">Theme</h4>

@@ -1,11 +1,10 @@
-const INFONITE_VERSION = "2026.3.2210";
+const INFONITE_VERSION = "2026.3.2900";
 
 const DEFAULT_CONFIG_ITEM = {
     id: "default",
     name: "No Application",
     secret: "",
     widgetUrl: "https://widgets.infonite.tech",
-    clientUrl: "https://clients.infonite.tech",
     primaryColor: "#00a76f",
     darkColor: "#1C252E",
     bannerColor: "#1C252E",
@@ -639,7 +638,7 @@ function openEditor(id = null) {
     const data = InfoniteConfigManager.getStorageData();
     const DEFAULT_CONFIG_ITEM = InfoniteConfigManager.DEFAULT_CONFIG_ITEM;
     const isNew = !id;
-    const config = isNew ? { ...DEFAULT_CONFIG_ITEM, name: "New Environment", id: crypto.randomUUID(), secret: "", widgetUrl: "https://widgets.infonite.tech", hostType: "production", clientUrl: "https://clients.infonite.tech", isMock: false, saturateLogo: true } : data.list.find(c => c.id === id);
+    const config = isNew ? { ...DEFAULT_CONFIG_ITEM, name: "New Environment", id: crypto.randomUUID(), secret: "", widgetUrl: "https://widgets.infonite.tech", hostType: "production", isMock: false, saturateLogo: true } : data.list.find(c => c.id === id);
     
     if (!config) return; 
 
@@ -674,7 +673,7 @@ function openEditor(id = null) {
     if (nameInput) nameInput.value = config.name;
     
     const clientInput = document.getElementById("config-client-url");
-    if (clientInput) clientInput.value = config.clientUrl;
+    if (clientInput) clientInput.remove(); // Safely remove if it exists
     
     document.getElementById("config-secret").value = config.secret;
     document.getElementById("config-widget-url").value = config.widgetUrl;
@@ -843,7 +842,6 @@ async function saveCurrentConfig() {
         id: realId,
         name: isNew ? "New Environment" : (configFromList?.name || "Unnamed"),
         secret: document.getElementById("config-secret").value.trim(),
-        clientUrl: "https://clients.infonite.tech", // Hardcoded
         primaryColor: (document.getElementById("swatch-primary-color-text") ? document.getElementById("swatch-primary-color-text").textContent : DEFAULT_CONFIG_ITEM.primaryColor) || DEFAULT_CONFIG_ITEM.primaryColor,
         darkColor: (document.getElementById("swatch-dark-color-text") ? document.getElementById("swatch-dark-color-text").textContent : DEFAULT_CONFIG_ITEM.darkColor) || DEFAULT_CONFIG_ITEM.darkColor,
         bannerColor: document.getElementById("config-banner-color").value || DEFAULT_CONFIG_ITEM.bannerColor,

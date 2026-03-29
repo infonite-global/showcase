@@ -9,7 +9,7 @@ const ALLOWED_MODULES = [
     'academic_data',
     'labor_check',
     'public_pensions',
-    'yearly_tax_situation'
+    'yearly_individual_tax'
 ];
 
 const DEFAULT_SELECTED_MODULES = [
