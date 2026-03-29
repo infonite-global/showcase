@@ -852,7 +852,7 @@
                <span class="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Encrypts the bank credentials for 90 days of recurrent background sync</span>
              </div>
              <div class="relative inline-flex items-center cursor-pointer">
-               <input type="checkbox" id="generate-tokenized-access" class="sr-only peer" checked 
+               <input type="checkbox" id="generate-tokenized-access" class="sr-only peer" 
                       onchange="
                         const bg = this.nextElementSibling;
                         const dot = bg.querySelector('div');
@@ -868,8 +868,8 @@
                           dot.classList.remove('translate-x-4');
                         }
                       ">
-               <div class="w-9 h-5 bg-[var(--primary)] border-2 border-[var(--primary)] peer-focus:outline-none rounded-full peer transition-colors duration-200 ease-in-out">
-                 <div class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out translate-x-4"></div>
+               <div class="w-9 h-5 bg-slate-200 border-2 border-slate-300 peer-focus:outline-none rounded-full peer transition-colors duration-200 ease-in-out">
+                 <div class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out"></div>
                </div>
              </div>
            </div>
