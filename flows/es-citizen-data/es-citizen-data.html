@@ -511,7 +511,7 @@
 <div class="space-y-2">
 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">App Secret (X-APP-SECRET)</label>
 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-  <input class="flex-1 bg-black/10 border border-black/5 rounded-xl px-4 py-3 text-xs text-[var(--primary)] font-mono focus:border-[rgba(var(--primary-rgb),0.40)] outline-none transition-all" id="config-secret" placeholder="Enter secret key..." oninput="document.getElementById('saveConfigBtn').disabled = true; document.getElementById('saveConfigBtn').classList.add('opacity-50', 'cursor-not-allowed');" type="password"/>
+  <input class="flex-1 bg-black/10 border border-black/5 rounded-xl px-4 py-3 text-xs text-[var(--primary)] font-mono focus:border-[rgba(var(--primary-rgb),0.40)] outline-none transition-all" id="config-secret" placeholder="Enter secret key..." oninput="document.getElementById('saveConfigBtn').disabled = true; document.getElementById('saveConfigBtn').classList.add('opacity-50', 'cursor-not-allowed');" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" style="-webkit-text-security: disc;" type="text"/>
   <button type="button" id="btn-sync-server" onclick="if(typeof handleManualSync === 'function') handleManualSync();" class="whitespace-nowrap sm:w-auto w-full text-[10px] font-bold uppercase tracking-widest text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 hover:text-slate-900 transition-colors flex items-center justify-center gap-2 px-4 py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
     <i class="fa-solid fa-arrows-rotate"></i> Sync from server
   </button>
@@ -538,7 +538,7 @@
 </div>
 <div id="custom-url-container" class="space-y-2 hidden mt-3">
 <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Widget Service Domain</label>
-<input class="w-full bg-black/10 border border-black/5 rounded-xl px-4 py-3 text-xs text-slate-900 focus:border-[rgba(var(--primary-rgb),0.40)] outline-none transition-all" id="config-widget-url" placeholder="https://widgets.infonite.tech" oninput="document.getElementById('saveConfigBtn').disabled = true; document.getElementById('saveConfigBtn').classList.add('opacity-50', 'cursor-not-allowed');" type="text"/>
+<input class="w-full bg-black/10 border border-black/5 rounded-xl px-4 py-3 text-xs text-slate-900 focus:border-[rgba(var(--primary-rgb),0.40)] outline-none transition-all" id="config-widget-url" placeholder="https://widgets.infonite.tech" oninput="document.getElementById('saveConfigBtn').disabled = true; document.getElementById('saveConfigBtn').classList.add('opacity-50', 'cursor-not-allowed');" autocomplete="off" data-lpignore="true" data-form-type="other" type="text"/>
 </div>
 <div class="hidden">
 </div>
