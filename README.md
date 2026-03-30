@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://adler-marmol.github.io/infonite-brand/">📖 View Full Brand Guidelines</a>
+  <a href="https://infonite-technologies.github.io/assets-public/">📖 View Full Brand Guidelines</a>
 </p>
 
 ---
@@ -59,15 +59,15 @@ The brand represents the limitless potential of data extraction and process auto
 
 | Variant                      | Preview                                            | Raw URL                                                                                                         |
 | ---------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Dark (for light backgrounds) | <img src="assets/logo/logo-dark.png" height="32">  | [logo-dark.png](https://raw.githubusercontent.com/adler-marmol/infonite-brand/main/assets/logo/logo-dark.png)   |
-| Light (for dark backgrounds) | <img src="assets/logo/logo-light.png" height="32"> | [logo-light.png](https://raw.githubusercontent.com/adler-marmol/infonite-brand/main/assets/logo/logo-light.png) |
+| Dark (for light backgrounds) | <img src="assets/logo/logo-dark.png" height="32">  | [logo-dark.png](https://raw.githubusercontent.com/INFONITE-Technologies/assets-public/refs/heads/main/logo/logo-dark.png)   |
+| Light (for dark backgrounds) | <img src="assets/logo/logo-light.png" height="32"> | [logo-light.png](https://raw.githubusercontent.com/INFONITE-Technologies/assets-public/refs/heads/main/logo/logo-light.png) |
 
 ### Wordmark (for headers, documents)
 
 | Variant                      | Preview                                                 | Raw URL                                                                                                                   |
 | ---------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Dark (for light backgrounds) | <img src="assets/logo/text-logo-dark.png" height="24">  | [text-logo-dark.png](https://raw.githubusercontent.com/adler-marmol/infonite-brand/main/assets/logo/text-logo-dark.png)   |
-| Light (for dark backgrounds) | <img src="assets/logo/text-logo-light.png" height="24"> | [text-logo-light.png](https://raw.githubusercontent.com/adler-marmol/infonite-brand/main/assets/logo/text-logo-light.png) |
+| Dark (for light backgrounds) | <img src="assets/logo/text-logo-dark.png" height="24">  | [text-logo-dark.png](https://raw.githubusercontent.com/INFONITE-Technologies/assets-public/refs/heads/main/logo/text-logo-dark.png)   |
+| Light (for dark backgrounds) | <img src="assets/logo/text-logo-light.png" height="24"> | [text-logo-light.png](https://raw.githubusercontent.com/INFONITE-Technologies/assets-public/refs/heads/main/logo/text-logo-light.png) |
 
 > 💡 **The Icon**: Simplified from the wordmark's **"it"** — two connected data points symbolizing infinite information flow.
 
@@ -79,7 +79,7 @@ The brand represents the limitless potential of data extraction and process auto
 
 ```html
 <img
-  src="https://raw.githubusercontent.com/adler-marmol/infonite-brand/main/assets/logo/logo-dark.png"
+  src="https://raw.githubusercontent.com/INFONITE-Technologies/assets-public/refs/heads/main/logo/logo-dark.png"
   alt="INFONITE"
   height="32"
 />
@@ -88,7 +88,7 @@ The brand represents the limitless potential of data extraction and process auto
 ### Embed Wordmark (Markdown)
 
 ```markdown
-![INFONITE](https://raw.githubusercontent.com/adler-marmol/infonite-brand/main/assets/logo/text-logo-dark.png)
+![INFONITE](https://raw.githubusercontent.com/INFONITE-Technologies/assets-public/refs/heads/main/logo/text-logo-dark.png)
 ```
 
 ---
