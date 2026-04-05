@@ -1512,9 +1512,12 @@
                                              <h6 class="font-black text-slate-900 text-sm truncate uppercase tracking-tight">${
                                                 v.make || "VEHICLE"
                                               } ${v.model || ""}</h6>
-                                             <span class="text-[10px] font-mono font-bold text-slate-500 bg-white border border-black/10 px-2 py-0.5 rounded-md mt-1 inline-block">${
-                                                v.license_plate || "NO LICENSE PLATE"
-                                              }</span>
+                                             <div class="flex flex-wrap gap-1 mt-1">
+                                                 <span class="text-[10px] font-mono font-bold text-slate-500 bg-white border border-black/10 px-2 py-0.5 rounded-md inline-block">${
+                                                    v.license_plate || "NO LICENSE PLATE"
+                                                  }</span>
+                                                 ${v.mileage ? `<span class="text-[10px] font-bold text-slate-500 bg-white border border-black/10 px-2 py-0.5 rounded-md inline-flex items-center gap-1"><i class="fa-solid fa-gauge-high"></i> ${v.mileage.toLocaleString('es-ES')} km</span>` : ''}
+                                             </div>
                                         </div>
                                     </div>
 
@@ -1525,13 +1528,14 @@
                                             <h6 class="font-black text-slate-900 text-sm truncate uppercase tracking-tight">${
                                               v.make || "VEHICLE"
                                             } ${v.model || ""}</h6>
-                                            <div class="flex items-center gap-2 mt-1.5">
+                                            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
                                                 <span class="text-[10px] font-mono font-bold text-slate-900 bg-white border border-black/10 px-2 py-0.5 rounded-md shadow-sm">${
                                                   v.license_plate || "NO LICENSE PLATE"
                                                 }</span>
                                                 <span class="text-[9px] text-slate-400 font-medium px-1.5 py-0.5 border border-black/5 rounded bg-black/[0.02] uppercase">${
                                                     v.fuel_type || "N/A"
                                                 }</span>
+                                                ${v.mileage ? `<span class="text-[9px] text-slate-600 font-bold px-1.5 py-0.5 border border-black/5 rounded bg-black/[0.02] uppercase shadow-sm flex items-center gap-1"><i class="fa-solid fa-gauge-high opacity-70"></i> ${v.mileage.toLocaleString('es-ES')} km</span>` : ''}
                                             </div>
                                         </div>
 
@@ -1577,38 +1581,29 @@
         // --- 3. Academic Data Rendering ---
         const academicData = data.data?.academic || {};
         const higherDegrees = academicData.higher_education_degrees || [];
+        const secondary = academicData.secondary_education || [];
         
-        // Console Warning for unsupported types
-        // Check for other keys in academicData or unsupported sub_families
-        const academicKeys = Object.keys(academicData);
-        if (academicKeys.length > 1 || (academicKeys.length === 1 && academicKeys[0] !== 'higher_education_degrees')) {
-             console.warn("Academic Data contains unsupported types:", academicKeys.filter(k => k !== 'higher_education_degrees'));
-        }
+        const allDegrees = [...higherDegrees, ...secondary];
 
         let academicHtml = "";
         
         if (!data.data?.academic && !data.data?.academic_data) {
              academicHtml = '<div class="text-center text-slate-700 py-6 italic font-mono text-[10px]">Academic Module omitted</div>';
-        } else if (higherDegrees.length === 0) {
-             academicHtml = '<div class="text-center text-slate-400 py-6 italic font-mono text-[10px]">No university degrees found</div>';
+        } else if (allDegrees.length === 0) {
+             academicHtml = '<div class="text-center text-slate-400 py-6 italic font-mono text-[10px]">No academic records found</div>';
         } else {
              academicHtml = '<div class="grid grid-cols-1 gap-4">';
              
-             higherDegrees.forEach(degree => {
-                 // Warning for non-bachelor if strict
-                 if (degree.sub_family !== 'academic_data:higher_bachelor') {
-                     console.warn("Unsupported degree type found:", degree.sub_family);
-                     return; 
-                 }
-                 
+             allDegrees.forEach(degree => {
                  const statusIcon = degree.completion_status === 'completed' ? 'fa-check-circle' : 'fa-spinner';
                  const statusColor = degree.completion_status === 'completed' ? 'text-[var(--primary)]' : 'text-amber-500';
                  const statusBg = degree.completion_status === 'completed' ? 'bg[rgba(var(--primary-rgb),0.10)]' : 'bg-amber-500/10';
+                 const enumInfo = (window.INFONITE_ENUMS && window.INFONITE_ENUMS.ACADEMIC_DATA_TYPES && window.INFONITE_ENUMS.ACADEMIC_DATA_TYPES[degree.sub_family]) || { label: 'Certification', icon: 'fa-certificate' };
                  
                  academicHtml += `
                     <div class="bg-black/[0.015] border border-black/5 rounded-xl p-4 flex flex-col sm:flex-row gap-4 hover:bg-black/5 transition-colors group">
                         <div class="w-12 h-12 rounded-lg bg-white border border-black/5 flex items-center justify-center shrink-0 shadow-sm">
-                            <i class="fa-solid fa-graduation-cap text-xl text-slate-400 group-hover:text-[var(--primary)] transition-colors"></i>
+                            <i class="fa-solid ${enumInfo.icon} text-xl text-slate-400 group-hover:text-[var(--primary)] transition-colors"></i>
                         </div>
                         <div class="flex-1">
                             <div class="flex justify-between items-start mb-1">
@@ -1618,17 +1613,18 @@
                                     ${degree.completion_status === 'completed' ? 'Graduated' : degree.completion_status}
                                 </span>
                             </div>
-                            <p class="text-[10px] font-bold text-slate-500 mb-2">${degree.institution_name} <span class="font-normal opacity-60">(${degree.institution_country})</span></p>
+                            <p class="text-[10px] font-bold text-[var(--primary)] mb-1 uppercase tracking-widest">${enumInfo.label}</p>
+                            <p class="text-[10px] font-bold text-slate-500 mb-2">${degree.institution_name} <span class="font-normal opacity-60">(${degree.institution_code ? degree.institution_code + ' - ' : ''}${degree.institution_country})</span></p>
                             
                             <div class="flex flex-wrap gap-3 mt-3 pt-3 border-t border-black/5">
                                  <div class="flex items-center gap-1.5">
                                     <i class="fa-regular fa-calendar text-[9px] text-slate-400"></i>
                                     <span class="text-[9px] text-slate-600">Completion: <span class="font-mono font-bold text-slate-900">${degree.issue_date || degree.end_date || "N/A"}</span></span>
                                  </div>
-                                 ${degree.official_id ? `
+                                 ${(degree.official_id || degree.national_registry_id) ? `
                                  <div class="flex items-center gap-1.5">
                                     <i class="fa-solid fa-fingerprint text-[9px] text-slate-400"></i>
-                                    <span class="text-[9px] text-slate-600">Official ID: <span class="font-mono font-bold text-slate-900 bg-white px-1.5 rounded border border-black/10">${degree.official_id}</span></span>
+                                    <span class="text-[9px] text-slate-600">Official ID: <span class="font-mono font-bold text-slate-900 bg-white px-1.5 rounded border border-black/10">${degree.official_id || degree.national_registry_id}</span></span>
                                  </div>` : ''}
                             </div>
                         </div>
@@ -1637,11 +1633,6 @@
              });
              
              academicHtml += '</div>';
-             
-             // Check if html is empty (all filtered out)
-             if (academicHtml === '<div class="grid grid-cols-1 gap-4"></div>') {
-                 academicHtml = '<div class="text-center text-slate-400 py-6 italic font-mono text-[10px]">No compatible degrees found</div>';
-             }
         }
 
         // --- 4. Employment / Labor History Rendering ---

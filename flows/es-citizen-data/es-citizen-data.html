@@ -763,6 +763,37 @@
         </label>
         <p class="text-[9px] text-slate-500 font-medium leading-tight">Unique identifier for the user initializing this session. Auto-generated if left blank.</p>
         <input type="text" id="generate-customer-id" placeholder="ES-CITIZEN-DATA-..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono mt-1">
+        
+        <!-- SANDBOX -->
+        <div class="mt-3 flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-black/5 group cursor-pointer" onclick="const cb = document.getElementById('generate-sandbox-mode'); cb.checked = !cb.checked; if(cb.onchange) cb.onchange();">
+             <div class="flex flex-col">
+               <label class="text-[10px] font-bold text-slate-700 cursor-pointer flex items-center gap-2">
+                 <i class="fa-solid fa-code text-amber-500"></i> Sandbox Execution
+               </label>
+               <span class="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Use mock data for testing</span>
+             </div>
+             <div class="relative inline-flex items-center cursor-pointer">
+               <input type="checkbox" id="generate-sandbox-mode" class="sr-only peer" 
+                      onchange="
+                        const sbg = this.nextElementSibling;
+                        const sdot = sbg.querySelector('div');
+                        if(this.checked) {
+                          sbg.classList.replace('bg-slate-200', 'bg-amber-500');
+                          sbg.classList.add('border-amber-500');
+                          sbg.classList.remove('border-slate-300');
+                          sdot.classList.add('translate-x-4');
+                        } else {
+                          sbg.classList.replace('bg-amber-500', 'bg-slate-200');
+                          sbg.classList.remove('border-amber-500');
+                          sbg.classList.add('border-slate-300');
+                          sdot.classList.remove('translate-x-4');
+                        }
+                      ">
+               <div class="w-9 h-5 bg-slate-200 border-2 border-slate-300 peer-focus:outline-none rounded-full peer transition-colors duration-200 ease-in-out">
+                 <div class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out"></div>
+               </div>
+             </div>
+        </div>
       </div>
       
       <!-- MODULES Accordion -->
@@ -936,6 +967,7 @@
 <script src="../../js/features.js?v=5"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
 <script src="../../js/flows-manager.js?v=5"></script>
+<script src="../../js/enums.js?v=6"></script>
 <script src="../../js/status.js"></script>
 <script src="../../js/es-citizen-data.js?v=5"></script>
 </body>

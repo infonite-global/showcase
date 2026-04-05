@@ -21,12 +21,23 @@
 
     <!-- Degrees Section -->
     <div class="flex flex-col gap-4 flex-1">
-        <h3 class="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2 mb-2">
-            <i class="fa-solid fa-award text-slate-400"></i> Higher Education Degrees
-        </h3>
-        <div id="higherEducationDegreesList" class="flex flex-col gap-4">
-            <!-- JS Injection -->
-            <div class="p-6 text-center text-slate-400 text-sm italic border border-slate-200 border-dashed rounded-xl">Loading degrees...</div>
+        <div id="higher-education-wrapper" class="flex flex-col gap-4">
+            <h3 class="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-award text-slate-400"></i> Higher Education Degrees
+            </h3>
+            <div id="higherEducationDegreesList" class="flex flex-col gap-4">
+                <!-- JS Injection -->
+                <div class="p-6 text-center text-slate-400 text-sm italic border border-slate-200 border-dashed rounded-xl" id="higher-education-empty">Loading degrees...</div>
+            </div>
+        </div>
+
+        <div id="secondary-education-wrapper" class="flex flex-col gap-4 mt-4 hidden">
+            <h3 class="text-sm font-black text-slate-800 tracking-tight flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-school text-slate-400"></i> Secondary Education
+            </h3>
+            <div id="secondaryEducationList" class="flex flex-col gap-4">
+                <!-- JS Injection -->
+            </div>
         </div>
     </div>
 </div>

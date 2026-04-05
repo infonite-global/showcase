@@ -892,6 +892,7 @@
                 if (categoryId === 'customer') featureAccepted = features.some(f => f.startsWith('customer_information') || f === 'identification');
                 else if (categoryId === 'accounts') featureAccepted = features.includes('accounts_read');
                 else if (categoryId === 'cards') featureAccepted = features.includes('cards_read');
+                else if (categoryId === 'deposits') featureAccepted = features.includes('deposits_read');
                 else if (categoryId === 'loans') featureAccepted = features.includes('loans_read');
                 else if (categoryId === 'credits') featureAccepted = features.includes('credits_read');
                 else if (categoryId === 'direct_debits') featureAccepted = features.includes('direct_debits_read');

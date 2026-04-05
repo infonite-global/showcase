@@ -248,6 +248,10 @@
                   <i class="fa-solid fa-briefcase opacity-60"></i> Work Life
               </button>
               
+              <button onclick="switchDashboardView('state-pensions')" id="nav-state-pensions" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
+                  <i class="fa-solid fa-piggy-bank opacity-60"></i> State Pensions
+              </button>
+              
               <button onclick="switchDashboardView('taxes')" id="nav-taxes" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
                   <i class="fa-solid fa-file-invoice-dollar opacity-60"></i> Taxes
               </button>
@@ -475,6 +479,7 @@
 </div>
 </div>
 <script src="../../js/config.js?v=5"></script>
+<script src="../../js/enums.js?v=6"></script>
 <script src="../../js/status.js"></script>
 <script src="../../js/features.js?v=5"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
@@ -878,7 +883,8 @@
                 if (categoryId === 'customer') featureAccepted = features.some(f => f.includes('customer_information'));
                 else if (categoryId === 'driver') featureAccepted = features.includes('driver_data');
                 else if (categoryId === 'academic') featureAccepted = features.includes('academic_data');
-                else if (categoryId === 'work_life') featureAccepted = features.includes('labor_check') || features.includes('public_pensions');
+                else if (categoryId === 'work_life') featureAccepted = features.includes('labor_check');
+                else if (categoryId === 'state-pensions') featureAccepted = features.includes('public_pensions');
                 else if (categoryId === 'taxes') featureAccepted = features.includes('yearly_individual_tax');
                 
                 if (!featureAccepted && categoryId !== 'audit') {
@@ -909,6 +915,9 @@
                         break;
                     case 'work_life':
                         if(typeof renderEmploymentData === 'function') renderEmploymentData(window.currentResultData);
+                        break;
+                    case 'state-pensions':
+                        if(typeof renderPensionsData === 'function') renderPensionsData(window.currentResultData);
                         break;
                     case 'taxes':
                         if(typeof renderTaxesData === 'function') renderTaxesData(window.currentResultData);
@@ -1217,22 +1226,27 @@
             relationsList.innerHTML = laborCheck.work_relations_history.map((rel, index) => {
                 const daysHuman = rel.social_security_days ? ` • ${formatDaysToYearsMonthsDays(rel.social_security_days)}` : '';
                 
-                const isSpecial = rel.name && (rel.name.toUpperCase().includes('VACACIONES RETRIBUIDAS') || rel.name.toUpperCase().includes('PRESTACION DESEMPLEO'));
+                const isSpecial = rel.work_type === 'vacations' || rel.work_type === 'unemployment_benefits';
                 const isCurrentlyActive = !rel.activity_end;
                 const isLastItem = index === laborCheck.work_relations_history.length - 1;
 
+                const enumInfo = (window.INFONITE_ENUMS && window.INFONITE_ENUMS.WORK_RELATION_TYPES && window.INFONITE_ENUMS.WORK_RELATION_TYPES[rel.work_type]) || { label: 'Work', icon: 'fa-briefcase' };
+
                 if (isSpecial) {
-                    let specialIcon = rel.name.toUpperCase().includes('VACACIONES') ? "fa-solid fa-umbrella-beach" : "fa-solid fa-hand-holding-dollar";
+                    const activePulsing = isCurrentlyActive ? '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white"></span></span>' : '';
+                    const borderColor = isCurrentlyActive ? 'border-emerald-300 shadow-emerald-500/10 text-emerald-600 bg-emerald-50' : 'border-slate-200 text-slate-400 bg-slate-50';
+
                     return `
                     <div class="flex relative w-full group">
                         <!-- Vertical Timeline Line -->
                         ${!isLastItem ? '<div class="absolute left-5 top-10 bottom-[-16px] w-[2px] bg-slate-200 group-last:hidden"></div>' : ''}
                         
-                        <div class="w-10 h-10 mt-1 rounded-full bg-slate-50 border-2 border-slate-200 text-slate-400 flex items-center justify-center text-sm shrink-0 shadow-sm relative z-10">
-                             <i class="${specialIcon}"></i>
+                        <div class="w-10 h-10 mt-1 rounded-full border-2 flex items-center justify-center text-sm shrink-0 shadow-sm relative z-10 transition-colors ${borderColor}">
+                             ${activePulsing}
+                             <i class="fa-solid ${enumInfo.icon}"></i>
                         </div>
                         <div class="flex flex-col min-w-0 flex-1 ml-4 py-2">
-                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">${rel.activity_start || '?'} ${rel.activity_end ? '— ' + rel.activity_end : '— Present'}</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest ${isCurrentlyActive ? 'text-emerald-600' : 'text-slate-400'}">${rel.activity_start || '?'} ${rel.activity_end ? '— ' + rel.activity_end : '— Present'} ${isCurrentlyActive ? ' (ACTIVE)' : ''}</span>
                             <h5 class="text-xs font-bold text-slate-600 leading-snug truncate mt-0.5">${rel.name}</h5>
                             ${rel.social_security_days !== undefined ? `<span class="text-[10px] font-bold text-slate-400 mt-1">${rel.social_security_days} Days ${daysHuman}</span>` : ''}
                         </div>
@@ -1244,22 +1258,31 @@
                 let cardBorderClass = isCurrentlyActive ? 'border-emerald-300 shadow-emerald-500/10 shadow-lg' : 'border-slate-100 shadow-sm';
                 let iconWrapperClass = isCurrentlyActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-[var(--primary-container)] text-[var(--primary)] border border-[var(--primary)]/20';
                 
+                let contractParts = [];
+                if (rel.contract_type && rel.contract_type !== 'unknown') {
+                    contractParts.push(rel.contract_type.replace(/_/g, ' ').toUpperCase());
+                }
+                if (rel.work_schedule && rel.work_schedule !== 'unknown') {
+                    contractParts.push(rel.work_schedule.replace(/_/g, ' ').toUpperCase());
+                }
+                const contractHtml = contractParts.length > 0 ? `<span class="text-xs font-semibold text-slate-500 mt-1">${contractParts.join(' • ')}</span>` : '';
+
                 return `
                 <div class="flex relative w-full group">
                     <!-- Vertical Timeline Line -->
                     ${!isLastItem ? '<div class="absolute left-5 top-14 bottom-[-16px] w-[2px] bg-slate-200 group-last:hidden"></div>' : ''}
                     
-                    <div class="p-4 rounded-2xl bg-white border ${cardBorderClass} flex flex-col md:flex-row gap-4 flex-1 z-10 mb-2 mt-2">
+                    <div class="p-4 rounded-2xl bg-white border ${cardBorderClass} flex flex-col md:flex-row gap-4 flex-1 z-10 mb-2 mt-2 transition-shadow">
                         <div class="w-10 h-10 rounded-xl ${iconWrapperClass} flex items-center justify-center text-lg shrink-0 shadow-sm relative">
                              ${isCurrentlyActive ? '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white"></span></span>' : ''}
-                             <i class="fa-solid fa-building"></i>
+                             <i class="fa-solid ${enumInfo.icon}"></i>
                         </div>
                         <div class="flex flex-col min-w-0 flex-1">
                             <span class="text-[10px] font-black uppercase tracking-widest ${isCurrentlyActive ? 'text-emerald-600' : 'text-slate-400'}">${rel.activity_start || '?'} ${rel.activity_end ? '— ' + rel.activity_end : '— Present'} ${isCurrentlyActive ? ' (ACTIVE)' : ''}</span>
                             <div class="flex items-center gap-2 mt-1">
                                 <h5 class="text-sm font-bold text-slate-800 leading-snug truncate">${rel.name || 'Unknown Company'}</h5>
                             </div>
-                            <span class="text-xs font-semibold text-slate-500 mt-1">${rel.contract_type ? rel.contract_type.replace(/_/g, ' ').toUpperCase() : '--'} • ${rel.work_schedule ? rel.work_schedule.replace(/_/g, ' ').toUpperCase() : '--'}</span>
+                            ${contractHtml}
                             <div class="flex flex-wrap items-center gap-2 mt-2">
                                  <span class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">${rel.regime || 'General'}</span>
                                  ${rel.contribution_group ? `<span class="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest max-w-[200px] truncate" title="${rel.contribution_group}">${rel.contribution_group}</span>` : ''}
@@ -1540,9 +1563,9 @@
 
                     return `
                     <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                        <!-- Header: Make, Model, Plate -->
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex items-center gap-3">
+                        <!-- Header: Make, Model, Plate, Mileage -->
+                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4">
+                            <div class="flex items-center gap-4 flex-wrap">
                                 <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden shrink-0 relative flex items-center justify-center">
                                     <img src="${logoUrl}" class="w-full h-full object-contain p-2 absolute inset-0 z-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="${veh.make}" title="${veh.make}">
                                     <div class="w-full h-full flex items-center justify-center hidden bg-slate-50" style="display: none;">
@@ -1553,9 +1576,23 @@
                                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${veh.make}</span>
                                     <h4 class="text-base font-bold text-slate-800 leading-tight">${veh.model}</h4>
                                 </div>
+                                
+                                ${veh.mileage !== undefined ? `
+                                <div class="flex flex-col justify-center xl:border-l border-slate-200 xl:pl-4 xl:ml-2 mt-2 xl:mt-0">
+                                    <div class="flex flex-col gap-1">
+                                        ${veh.mileage_date ? `<span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none opacity-80" title="Date recorded"><i class="fa-solid fa-clock mr-0.5"></i>REC: ${veh.mileage_date}</span>` : ''}
+                                        <div class="flex items-center gap-[1px] bg-slate-800 p-[2px] rounded overflow-hidden shadow-inner border border-slate-700 w-fit shrink-0" title="Mileage">
+                                            ${veh.mileage.toString().padStart(6, '0').split('').map((digit, i, arr) => `
+                                                <span class="inline-flex items-center justify-center w-3.5 h-4.5 bg-gradient-to-b from-slate-700 to-slate-900 text-slate-100 font-mono font-bold text-[10px] shadow-sm tracking-tighter rounded-[1px] ${i === arr.length - 1 ? 'text-red-400 font-black bg-gradient-to-b from-slate-800 to-slate-900' : ''}">${digit}</span>
+                                            `).join('')}
+                                            <span class="text-[8px] font-bold text-slate-400 ml-1 mr-1 uppercase">KM</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                ` : ''}
                             </div>
                             <!-- Right Header Group -->
-                            <div class="flex items-center gap-2 sm:gap-4 shrink-0 justify-end">
+                            <div class="flex items-center gap-2 sm:gap-4 shrink-0 xl:justify-end">
                                 ${dgtLabelHtml}
                                 <!-- License Plate Badge -->
                                 <div class="flex items-center bg-white border-2 border-slate-300 rounded overflow-hidden shadow-sm shrink-0">
@@ -1576,11 +1613,11 @@
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-calendar-plus opacity-50 mr-1"></i> Registration</span>
                                 <span class="text-xs font-semibold text-slate-700 mt-1">${veh.registration_date || '--'}</span>
                             </div>
-                            <div class="flex flex-col">
+                            <div class="flex flex-col border-l sm:border-l-0 border-slate-100 pl-3 sm:pl-0">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-gas-pump opacity-50 mr-1"></i> Fuel Type</span>
                                 <span class="text-xs font-semibold text-slate-700 mt-1">${veh.fuel_type || '--'}</span>
                             </div>
-                            <div class="flex flex-col border-l border-slate-100 pl-3">
+                            <div class="flex flex-col col-span-2 sm:col-span-1 border-t sm:border-t-0 sm:border-l border-slate-100 pt-3 sm:pt-0 sm:pl-3">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-clipboard-check opacity-50 mr-1"></i> ITV (Inspection)</span>
                                 <span class="text-xs font-semibold text-slate-700 mt-1">${veh.inspection_expiry_date || '--'}</span>
                             </div>
@@ -1611,63 +1648,110 @@
     }
 
     window.renderAcademicData = function(payload) {
-        const container = document.getElementById('higherEducationDegreesList');
-        if (!container) return;
+        const higherContainer = document.getElementById('higherEducationDegreesList');
+        const secondaryContainer = document.getElementById('secondaryEducationList');
+        const higherWrapper = document.getElementById('higher-education-wrapper');
+        const secondaryWrapper = document.getElementById('secondary-education-wrapper');
+        
+        if (!higherContainer) return;
 
         const academic = payload?.data?.academic;
-        if (!academic || !academic.higher_education_degrees || academic.higher_education_degrees.length === 0) {
-            container.innerHTML = `
+        const higherDegrees = academic?.higher_education_degrees || [];
+        const secondaryDegrees = academic?.secondary_education || [];
+        
+        const allDegrees = [...higherDegrees, ...secondaryDegrees];
+
+        if (allDegrees.length === 0) {
+            if (higherWrapper) {
+                higherWrapper.classList.remove('hidden');
+                higherWrapper.classList.add('flex');
+            }
+            higherContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
                     <i class="fa-solid fa-file-circle-xmark text-4xl text-slate-300 mb-3"></i>
                     <h4 class="text-sm font-bold text-slate-600">No Certifications Found</h4>
                     <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no academic certifications visible for this citizen in the analyzed payload.</p>
                 </div>`;
+            if (secondaryWrapper) {
+                secondaryWrapper.classList.add('hidden');
+                secondaryWrapper.classList.remove('flex');
+            }
             return;
         }
 
-        if (academic.higher_education_degrees && academic.higher_education_degrees.length > 0) {
-            container.innerHTML = academic.higher_education_degrees.map(degree => {
-                    const statusColor = degree.completion_status === 'completed' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-700 bg-slate-50 border-slate-200';
-                    const icon = degree.completion_status === 'completed' ? 'fa-check-circle' : 'fa-clock';
-                    
-                    return `
-                    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                        <!-- Left decoration bar -->
-                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--primary)] opacity-80"></div>
+        const renderDegreeItem = (degree) => {
+            const statusColor = degree.completion_status === 'completed' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-700 bg-slate-50 border-slate-200';
+            const icon = degree.completion_status === 'completed' ? 'fa-check-circle' : 'fa-clock';
+            const enumInfo = (window.INFONITE_ENUMS && window.INFONITE_ENUMS.ACADEMIC_DATA_TYPES && window.INFONITE_ENUMS.ACADEMIC_DATA_TYPES[degree.sub_family]) || { label: 'Certification', icon: 'fa-certificate' };
+            
+            return `
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <!-- Left decoration bar -->
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--primary)] opacity-80"></div>
+                
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div class="flex flex-col flex-1 pl-2">
+                        <span class="text-[10px] font-bold tracking-widest uppercase text-[var(--primary)] mb-1 flex items-center gap-1.5 align-middle">
+                            <i class="fa-solid ${enumInfo.icon}"></i> ${enumInfo.label}
+                        </span>
+                        <span class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-1 flex items-center gap-1.5 align-middle">
+                            <i class="fa-solid fa-building-columns"></i> ${degree.institution_name || 'Unknown Institution'} ${degree.institution_code ? '('+degree.institution_code+')' : ''} ${degree.institution_country ? '- '+degree.institution_country : ''}
+                        </span>
+                        <h4 class="text-lg sm:text-xl font-black text-slate-800 leading-tight">${degree.qualification_name}</h4>
                         
-                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                            <div class="flex flex-col flex-1 pl-2">
-                                <span class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-1 flex items-center gap-1.5 align-middle">
-                                    <i class="fa-solid fa-building-columns"></i> ${degree.institution_name || 'Unknown Institution'} ${degree.institution_country ? '('+degree.institution_country+')' : ''}
-                                </span>
-                                <h4 class="text-lg sm:text-xl font-black text-slate-800 leading-tight">${degree.qualification_name}</h4>
-                                
-                                <div class="flex items-center gap-4 mt-4 flex-wrap">
-                                    <div class="flex flex-col">
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Issue Date</span>
-                                        <span class="text-xs font-semibold text-slate-700 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i> ${degree.issue_date || '--'}</span>
-                                    </div>
-                                    <div class="h-6 w-px bg-slate-200"></div>
-                                    <div class="flex flex-col">
-                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion Date</span>
-                                        <span class="text-xs font-semibold text-slate-700 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i> ${degree.end_date || '--'}</span>
-                                    </div>
-                                </div>
+                        <div class="flex items-center gap-4 mt-4 flex-wrap">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Issue Date</span>
+                                <span class="text-xs font-semibold text-slate-700 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i> ${degree.issue_date || '--'}</span>
                             </div>
-                            
-                            <div class="flex flex-col items-start sm:items-end shrink-0 gap-2 pl-2 sm:pl-0">
-                                <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded flex items-center gap-1.5 border ${statusColor}">
-                                    <i class="fa-solid ${icon}"></i> ${degree.completion_status || 'Unknown'}
-                                </span>
-                                <div class="flex flex-col text-left sm:text-right mt-1">
-                                    <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Official Registration ID</span>
-                                    <span class="text-xs font-mono font-bold text-slate-700 select-all">${degree.official_id || '--'}</span>
-                                </div>
+                            <div class="h-6 w-px bg-slate-200"></div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion Date</span>
+                                <span class="text-xs font-semibold text-slate-700 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i> ${degree.end_date || '--'}</span>
                             </div>
                         </div>
                     </div>
-                    `;
-                }).join('');
+                    
+                    <div class="flex flex-col items-start sm:items-end shrink-0 gap-2 pl-2 sm:pl-0">
+                        <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded flex items-center gap-1.5 border ${statusColor}">
+                            <i class="fa-solid ${icon}"></i> ${degree.completion_status || 'Unknown'}
+                        </span>
+                        <div class="flex flex-col text-left sm:text-right mt-1">
+                            <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Official Registration ID</span>
+                            <span class="text-xs font-mono font-bold text-slate-700 select-all">${degree.official_id || degree.national_registry_id || '--'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        };
+
+        if (higherDegrees.length > 0) {
+            higherContainer.innerHTML = higherDegrees.map(renderDegreeItem).join('');
+            if (higherWrapper) {
+                higherWrapper.classList.remove('hidden');
+                higherWrapper.classList.add('flex');
+            }
+        } else {
+            if (higherWrapper) {
+                higherWrapper.classList.add('hidden');
+                higherWrapper.classList.remove('flex');
+            }
+        }
+
+        if (secondaryDegrees.length > 0) {
+            if (secondaryContainer) {
+                secondaryContainer.innerHTML = secondaryDegrees.map(renderDegreeItem).join('');
+            }
+            if (secondaryWrapper) {
+                secondaryWrapper.classList.remove('hidden');
+                secondaryWrapper.classList.add('flex');
+            }
+        } else {
+            if (secondaryWrapper) {
+                secondaryWrapper.classList.add('hidden');
+                secondaryWrapper.classList.remove('flex');
+            }
         }
     };
 
@@ -1822,6 +1906,55 @@
             </div>
         `;
     }
+    window.renderPensionsData = function(payload) {
+        const container = document.getElementById('statePensionsList');
+        if (!container) return;
+
+        const pensions = payload?.data?.employment?.pensions || [];
+        
+        if (!pensions || pensions.length === 0) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
+                    <i class="fa-solid fa-piggy-bank text-4xl text-slate-300 mb-3"></i>
+                    <h4 class="text-sm font-bold text-slate-600">No Pensions Found</h4>
+                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no public pensions registered for this citizen in the analyzed payload.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = pensions.map(pension => {
+            const amountStr = pension.amounts?.total?.amount || pension.amounts?.net_amount?.amount || "0";
+            return `
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <!-- Left decoration bar -->
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--primary)] opacity-80"></div>
+                
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div class="flex flex-col flex-1 pl-2">
+                        <span class="text-[10px] font-bold tracking-widest uppercase text-[var(--primary)] mb-1 flex items-center gap-1.5 align-middle">
+                            <i class="fa-solid fa-piggy-bank"></i> ${pension.product_name || 'State Pension'}
+                        </span>
+                        <h4 class="text-lg sm:text-xl font-black text-slate-800 leading-tight">${pension.product_alias || pension.product_name}</h4>
+                        
+                        <div class="flex items-center gap-4 mt-4 flex-wrap">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start Date</span>
+                                <span class="text-xs font-semibold text-slate-700 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i> ${pension.start_date || '--'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col items-start sm:items-end shrink-0 gap-1 pl-2 sm:pl-0 mt-3 sm:mt-0">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Total Amount</span>
+                        <span class="text-2xl font-black font-mono text-emerald-600">${formatCurrency(amountStr)}</span>
+                        ${pension.amounts?.net_amount?.amount ? `<span class="text-[10px] font-bold text-slate-500 mt-1">Net: ${formatCurrency(pension.amounts.net_amount.amount)}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    };
+
 
     window.renderTaxesData = function(payload) {
         const container = document.getElementById('taxesContainer');
@@ -1835,10 +1968,37 @@
         }
 
         container.innerHTML = taxes.map((tax, index) => {
-            const incomeAmount = parseFloat(tax.income?.employment?.total_gross?.amount || 0);
+            const empIncome = parseFloat(tax.income?.employment?.total_gross?.amount || 0);
+            const busIncome = parseFloat(tax.income?.business?.total_income?.amount || 0);
             const yearStr = (tax.fiscal_year_start || '').substring(0,4) || 'Unknown';
             // Use index strictly ensuring unique IDs or use fiscal_year_start 
             const identifier = tax.fiscal_year_start || index;
+
+            let incomeHtml = '';
+            if (empIncome > 0) {
+                incomeHtml += `
+                    <div class="flex flex-col text-right hidden lg:flex">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gross Employment</span>
+                        <span class="text-base font-black text-slate-800 font-mono leading-tight mt-0.5">${formatCurrency(empIncome)}</span>
+                    </div>
+                `;
+            }
+            if (busIncome > 0) {
+                incomeHtml += `
+                    <div class="flex flex-col text-right hidden lg:flex">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Business Income</span>
+                        <span class="text-base font-black text-slate-800 font-mono leading-tight mt-0.5">${formatCurrency(busIncome)}</span>
+                    </div>
+                `;
+            }
+            if (empIncome === 0 && busIncome === 0) {
+                 incomeHtml = `
+                    <div class="flex flex-col text-right hidden lg:flex">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Income</span>
+                        <span class="text-base font-black text-slate-400 font-mono leading-tight mt-0.5">--</span>
+                    </div>
+                `;
+            }
 
             return `
                 <div onclick="window.showYearlyTaxDetails('${identifier}')" class="bg-slate-50 border border-slate-100/80 rounded-[1.5rem] p-6 shadow-sm hover:shadow-md hover:border-slate-300 transition-all relative overflow-hidden group cursor-pointer flex items-center justify-between">
@@ -1860,9 +2020,8 @@
                         </div>
                         
                         <div class="flex items-center gap-6">
-                            <div class="flex flex-col text-right hidden lg:flex">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gross Employment</span>
-                                <span class="text-base font-black text-slate-800 font-mono mt-0.5">${formatCurrency(incomeAmount)}</span>
+                            <div class="flex gap-6 items-center">
+                                ${incomeHtml}
                             </div>
                             <div class="w-10 h-10 rounded-full bg-white border border-slate-100 text-slate-400 flex items-center justify-center group-hover:bg-[var(--primary)] group-hover:text-white transition-colors shadow-sm shrink-0">
                                 <i class="fa-solid fa-arrow-right text-sm"></i>
@@ -1895,28 +2054,32 @@
         const yearStr = (tax.fiscal_year_start || '').substring(0,4) || 'Unknown';
         if (titleYear) titleYear.textContent = yearStr;
 
-        const incomeAmount = parseFloat(tax.income?.employment?.total_gross?.amount || 0);
+        const empIncome = parseFloat(tax.income?.employment?.total_gross?.amount || 0);
+        const busIncome = parseFloat(tax.income?.business?.total_income?.amount || 0);
 
         const tabHeader = `
             <div class="flex items-center gap-2 p-1 bg-slate-100/80 rounded-xl w-full overflow-x-auto no-scrollbar">
                 <button onclick="window.switchTaxDetailTab('employment')" id="btnTaxTab-employment" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-briefcase text-[var(--primary)]"></i> Employment
                 </button>
+                <button onclick="window.switchTaxDetailTab('business')" id="btnTaxTab-business" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-store"></i> Business
+                </button>
                 <button onclick="window.switchTaxDetailTab('capital')" id="btnTaxTab-capital" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-piggy-bank"></i> Capital
                 </button>
-                <button onclick="window.switchTaxDetailTab('capital-gains')" id="btnTaxTab-capital-gains" class="hidden"></button>
-                <div title="Coming Soon" class="px-2 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 bg-transparent flex items-center gap-1.5 whitespace-nowrap cursor-not-allowed opacity-60">
-                    <i class="fa-solid fa-arrow-trend-up opacity-70"></i> Capital Gains<sup class="text-[7px] font-black uppercase text-slate-400 tracking-widest ml-0.5 mt-0.5">SOON</sup>
-                </div>
-                <button onclick="window.switchTaxDetailTab('business')" id="btnTaxTab-business" class="hidden"></button>
-                <div title="Coming Soon" class="px-2 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 bg-transparent flex items-center gap-1.5 whitespace-nowrap cursor-not-allowed opacity-60">
-                    <i class="fa-solid fa-store opacity-70"></i> Business<sup class="text-[7px] font-black uppercase text-slate-400 tracking-widest ml-0.5 mt-0.5">SOON</sup>
-                </div>
-                <button onclick="window.switchTaxDetailTab('real-estate')" id="btnTaxTab-real-estate" class="hidden"></button>
-                <div title="Coming Soon" class="px-2 py-2 rounded-lg text-xs font-bold transition-all text-slate-400 bg-transparent flex items-center gap-1.5 whitespace-nowrap cursor-not-allowed opacity-60">
-                    <i class="fa-solid fa-building opacity-70"></i> Real Estate<sup class="text-[7px] font-black uppercase text-slate-400 tracking-widest ml-0.5 mt-0.5">SOON</sup>
-                </div>
+                <button onclick="window.switchTaxDetailTab('capital-gains')" id="btnTaxTab-capital-gains" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Capital Gains
+                </button>
+                <button onclick="window.switchTaxDetailTab('real-estate')" id="btnTaxTab-real-estate" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-building"></i> Real Estate
+                </button>
+                <button onclick="window.switchTaxDetailTab('donations')" id="btnTaxTab-donations" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-hand-holding-heart"></i> Donations
+                </button>
+                <button onclick="window.switchTaxDetailTab('liabilities')" id="btnTaxTab-liabilities" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-file-invoice"></i> Liabilities
+                </button>
             </div>
         `;
 
@@ -1990,19 +2153,97 @@
         }
 
         let capitalGainsTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-arrow-trend-up text-2xl mb-2 opacity-50"></i>No capital gains reported for this fiscal year.</div>`;
-        if (tax.income?.capital_gains?.lines && tax.income?.capital_gains?.lines.length > 0) {
-            // Placeholder for future tabular expansion, structure typically dictates logic based on real endpoints
-            capitalGainsTable = `<div class="p-8 text-center text-slate-700 bg-slate-50 font-mono rounded-xl border border-slate-200">Capital gains lines discovered.</div>`;
+        const capGainsLines = tax.income?.capital_gains?.lines || [];
+        if (capGainsLines.length > 0) {
+            capitalGainsTable = `
+                <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                            <tr>
+                                <th class="px-5 py-3">Broker / Asset</th>
+                                <th class="px-5 py-3 text-center">Sale Date</th>
+                                <th class="px-5 py-3 text-right">Sale Value</th>
+                                <th class="px-5 py-3 text-right">Sale Expenses</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            ${capGainsLines.map(item => `
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-5 py-3">
+                                        <div class="font-bold text-slate-800">${item.broker_name || '--'}</div>
+                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.broker_id || '--'} • <span class="font-sans font-medium text-[9px] uppercase">${item.asset_description || item.asset_type || '--'}</span></div>
+                                    </td>
+                                    <td class="px-5 py-3 text-center font-semibold text-slate-500">${item.sale_date || '--'}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.sale_value?.amount)}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.sale_expenses?.amount)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
         let businessTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-store text-2xl mb-2 opacity-50"></i>No business activities reported for this fiscal year.</div>`;
-        if (tax.income?.business?.activities && tax.income?.business?.activities.length > 0) {
-             businessTable = `<div class="p-8 text-center text-slate-700 bg-slate-50 font-mono rounded-xl border border-slate-200">Business activity lines discovered.</div>`;
+        const bisLines = tax.income?.business?.activities || [];
+        if (bisLines.length > 0) {
+             businessTable = `
+                <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                            <tr>
+                                <th class="px-5 py-3">Activity</th>
+                                <th class="px-5 py-3 text-right">Income</th>
+                                <th class="px-5 py-3 text-right">Withholding</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            ${bisLines.map(item => `
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-5 py-3">
+                                        <div class="font-bold text-slate-800">${item.description || '--'}</div>
+                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.payer_id || '--'} • <span class="font-sans font-medium text-[9px] uppercase">${item.activity_code || '--'}</span></div>
+                                    </td>
+                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.total_income?.amount)}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.tax_withheld?.amount)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+             `;
         }
 
         let realEstateTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-building text-2xl mb-2 opacity-50"></i>No real estate properties reported for this fiscal year.</div>`;
-        if (tax.income?.real_estate?.properties && tax.income?.real_estate?.properties.length > 0) {
-             realEstateTable = `<div class="p-8 text-center text-slate-700 bg-slate-50 font-mono rounded-xl border border-slate-200">Real estate properties lines discovered.</div>`;
+        const reLines = tax.income?.real_estate?.properties || [];
+        if (reLines.length > 0) {
+             realEstateTable = `
+                <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                            <tr>
+                                <th class="px-5 py-3">Property</th>
+                                <th class="px-5 py-3 text-right">Gross Income</th>
+                                <th class="px-5 py-3 text-right">Deductions</th>
+                                <th class="px-5 py-3 text-right">Net Income</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            ${reLines.map(item => `
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-5 py-3">
+                                        <div class="font-bold text-slate-800">${item.address || '--'}</div>
+                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">Ref: ${item.cadastral_reference || '--'}</div>
+                                    </td>
+                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.gross_income?.amount)}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.deductible_expenses?.amount)}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-bold text-slate-800">${formatCurrency(item.net_income?.amount)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+             `;
         }
 
         const paneEmployment = `
@@ -2031,12 +2272,6 @@
 
         const paneCapitalGains = `
             <div id="paneTaxTab-capital-gains" class="hidden flex-col gap-4 animate-fade-in w-full">
-                <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Total Gain', tax.income?.capital_gains?.total_gain?.amount)}
-                    ${renderTaxDetailRow('Total Loss', tax.income?.capital_gains?.total_loss?.amount)}
-                    ${renderTaxDetailRow('Total Net', tax.income?.capital_gains?.total_net?.amount)}
-                </div>
                 ${capitalGainsTable}
             </div>
         `;
@@ -2045,7 +2280,8 @@
             <div id="paneTaxTab-business" class="hidden flex-col gap-4 animate-fade-in w-full">
                  <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
                     <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Total Net Profit', tax.income?.business?.total_net_profit?.amount)}
+                    ${renderTaxDetailRow('Total Income', tax.income?.business?.total_income?.amount)}
+                    ${renderTaxDetailRow('Total Withheld', tax.income?.business?.total_withheld?.amount)}
                 </div>
                 ${businessTable}
             </div>
@@ -2059,6 +2295,89 @@
                     ${renderTaxDetailRow('Total Net Income', tax.income?.real_estate?.total_net_income?.amount)}
                 </div>
                 ${realEstateTable}
+            </div>
+        `;
+
+        let donationsTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-hand-holding-heart text-2xl mb-2 opacity-50"></i>No donations reported for this fiscal year.</div>`;
+        const donLines = tax.deductions?.donations || [];
+        if (donLines.length > 0) {
+             donationsTable = `
+                <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                            <tr>
+                                <th class="px-5 py-3">Entity</th>
+                                <th class="px-5 py-3 text-center">Type</th>
+                                <th class="px-5 py-3 text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            ${donLines.map(item => `
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-5 py-3">
+                                        <div class="font-bold text-slate-800">${item.entity_name || '--'}</div>
+                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.entity_id || '--'}</div>
+                                    </td>
+                                    <td class="px-5 py-3 text-center font-bold text-[10px] text-slate-500">${item.donation_type || '--'} ${item.is_recurring ? '<i class="fa-solid fa-rotate text-[10px] text-[var(--primary)] ml-1" title="Recurring"></i>' : ''}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.amount?.amount)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+             `;
+        }
+
+        const paneDonations = `
+            <div id="paneTaxTab-donations" class="hidden flex-col gap-4 animate-fade-in w-full">
+                 <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                    ${renderTaxDetailRow('Total Donations', tax.deductions?.total_donations?.amount)}
+                    ${renderTaxDetailRow('Total Deductions', tax.deductions?.total_deductions?.amount)}
+                </div>
+                ${donationsTable}
+            </div>
+        `;
+
+        let liabilitiesTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-file-invoice text-2xl mb-2 opacity-50"></i>No liabilities or loans reported for this fiscal year.</div>`;
+        const liaLines = tax.liabilities?.real_estate_loans || [];
+        if (liaLines.length > 0) {
+             liabilitiesTable = `
+                <div class="border border-slate-100 rounded-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
+                            <tr>
+                                <th class="px-5 py-3">Lender / Loan ID</th>
+                                <th class="px-5 py-3 text-center">Formalization</th>
+                                <th class="px-5 py-3 text-right">Amortized Capital</th>
+                                <th class="px-5 py-3 text-right">Interests</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            ${liaLines.map(item => `
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-5 py-3">
+                                        <div class="font-bold text-slate-800">${item.lender_name || '--'} <span class="text-[10px] text-[var(--primary)] font-mono ml-1 font-bold">${parseFloat(item.participation || 0)*100}%</span></div>
+                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.loan_id ? 'Loan: ' + item.loan_id.slice(-6) : '--'}</div>
+                                    </td>
+                                    <td class="px-5 py-3 text-center font-bold text-[10px] text-slate-500">${item.formalization_date || '--'}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.amortized_capital?.amount)}</td>
+                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-700">${formatCurrency(item.interests?.amount)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+             `;
+        }
+
+        const paneLiabilities = `
+            <div id="paneTaxTab-liabilities" class="hidden flex-col gap-4 animate-fade-in w-full pb-2">
+                 <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                    ${renderTaxDetailRow('Active Loans Count', liaLines.length, true)}
+                </div>
+                ${liabilitiesTable}
             </div>
         `;
 
@@ -2089,11 +2408,37 @@
                         <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Tax Filling Status</span>
                         <span class="text-sm font-bold text-slate-800 flex items-center gap-2"><div class="w-2 h-2 rounded-full ${tax.status === 'submitted' ? 'bg-emerald-500' : 'bg-amber-500'} shadow-sm"></div> ${tax.status ? tax.status.toUpperCase() : 'DATA'}</span>
                     </div>
-                    <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Gross Employment</span>
-                        <span class="text-sm font-bold text-[var(--primary)] font-mono">${formatCurrency(incomeAmount)}</span>
-                    </div>
+                    ${(() => {
+                        let kpiHtml = '';
+                        if (empIncome > 0) {
+                            kpiHtml += `
+                                <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
+                                <div class="flex flex-col">
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Gross Employment</span>
+                                    <span class="text-sm font-bold text-[var(--primary)] font-mono leading-tight">${formatCurrency(empIncome)}</span>
+                                </div>
+                            `;
+                        }
+                        if (busIncome > 0) {
+                            kpiHtml += `
+                                <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
+                                <div class="flex flex-col">
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Business Income</span>
+                                    <span class="text-sm font-bold text-slate-800 font-mono leading-tight">${formatCurrency(busIncome)}</span>
+                                </div>
+                            `;
+                        }
+                        if (empIncome === 0 && busIncome === 0) {
+                             kpiHtml = `
+                                <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
+                                <div class="flex flex-col">
+                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Income</span>
+                                    <span class="text-sm font-bold text-slate-400 font-mono leading-tight">--</span>
+                                </div>
+                            `;
+                        }
+                        return kpiHtml;
+                    })()}
                 </div>
                 
                 <div class="flex flex-wrap md:flex-nowrap items-center gap-4 border-t md:border-t-0 border-slate-200 pt-5 md:pt-0">
@@ -2106,19 +2451,21 @@
 
             <div class="mt-6 flex flex-col gap-4">
                 ${tabHeader}
-                <div class="flex flex-col gap-2 relative min-h-[250px] w-full pt-2">
+                <div class="flex flex-col gap-2 relative w-full pt-2">
                     ${paneEmployment}
+                    ${paneBusiness}
                     ${paneCapital}
                     ${paneCapitalGains}
-                    ${paneBusiness}
                     ${paneRealEstate}
+                    ${paneDonations}
+                    ${paneLiabilities}
                 </div>
             </div>
         `;
     };
 
     window.switchTaxDetailTab = function(tabId) {
-        const tabs = ['employment', 'capital', 'capital-gains', 'business', 'real-estate'];
+        const tabs = ['employment', 'business', 'capital', 'capital-gains', 'real-estate', 'donations', 'liabilities'];
         tabs.forEach(t => {
             const btn = document.getElementById(`btnTaxTab-${t}`);
             const pane = document.getElementById(`paneTaxTab-${t}`);

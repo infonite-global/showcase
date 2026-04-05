@@ -556,6 +556,8 @@ window.generateLeadSession = async function() {
         const completionPath = pathInput ? pathInput.value.trim() : '';
         const tokenizedAccessToggle = document.getElementById('generate-tokenized-access');
         const tokenizedAccess = tokenizedAccessToggle ? tokenizedAccessToggle.checked : true;
+        const sandboxToggle = document.getElementById('generate-sandbox-mode');
+        const isSandbox = sandboxToggle ? sandboxToggle.checked : false;
 
         // 2. Collect Features
         const checkboxes = document.querySelectorAll('#modulesGrid input.feature-checkbox:checked');
@@ -583,6 +585,7 @@ window.generateLeadSession = async function() {
         const payload = {
             customer_id: customerId,
             settings: {
+                sandbox: isSandbox,
                 tokenized_access: tokenizedAccess,
                 allowed_engines: allowedEngines,
                 executions_hooks_extra_data: {
