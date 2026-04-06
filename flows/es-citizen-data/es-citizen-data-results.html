@@ -2013,9 +2013,18 @@
                             <div class="w-14 h-14 rounded-2xl bg-[rgba(var(--primary-rgb),0.05)] border border-[rgba(var(--primary-rgb),0.1)] flex items-center justify-center text-xl shadow-inner shrink-0 group-hover:bg-[var(--primary)] group-hover:text-white transition-colors text-[var(--primary)]">
                                 <i class="fa-solid fa-file-signature"></i>
                             </div>
-                            <div class="flex flex-col">
-                                <span class="text-base font-black text-slate-800 tracking-tight">Fiscal Data ${yearStr}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">${tax.status || 'FILED'}</span>
+                            <div class="flex flex-col items-start">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base font-black text-slate-800 tracking-tight">Fiscal Data ${yearStr}</span>
+                                    <span class="text-[8px] font-bold px-1.5 py-0.5 rounded ${tax.status === 'submitted' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'} uppercase tracking-widest">${tax.status || 'FILED'}</span>
+                                </div>
+                                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                                    ${(tax.attachments && tax.attachments.length > 0) ? tax.attachments.map(att => `
+                                        <div class="flex items-center gap-1.5 rounded-md bg-slate-50 border border-slate-200/60 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest" title="${att.content_name || 'Attachment'}">
+                                            <i class="fa-solid fa-file-pdf text-red-400"></i> ${att.content_name || 'Document'}
+                                        </div>
+                                    `).join('') : '<span class="text-[9px] text-slate-300 italic font-medium">No attachments</span>'}
+                                </div>
                             </div>
                         </div>
                         
@@ -2057,32 +2066,8 @@
         const empIncome = parseFloat(tax.income?.employment?.total_gross?.amount || 0);
         const busIncome = parseFloat(tax.income?.business?.total_income?.amount || 0);
 
-        const tabHeader = `
-            <div class="flex items-center gap-2 p-1 bg-slate-100/80 rounded-xl w-full overflow-x-auto no-scrollbar">
-                <button onclick="window.switchTaxDetailTab('employment')" id="btnTaxTab-employment" class="px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-briefcase text-[var(--primary)]"></i> Employment
-                </button>
-                <button onclick="window.switchTaxDetailTab('business')" id="btnTaxTab-business" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-store"></i> Business
-                </button>
-                <button onclick="window.switchTaxDetailTab('capital')" id="btnTaxTab-capital" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-piggy-bank"></i> Capital
-                </button>
-                <button onclick="window.switchTaxDetailTab('capital-gains')" id="btnTaxTab-capital-gains" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-arrow-trend-up"></i> Capital Gains
-                </button>
-                <button onclick="window.switchTaxDetailTab('real-estate')" id="btnTaxTab-real-estate" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-building"></i> Real Estate
-                </button>
-                <button onclick="window.switchTaxDetailTab('donations')" id="btnTaxTab-donations" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-hand-holding-heart"></i> Donations
-                </button>
-                <button onclick="window.switchTaxDetailTab('liabilities')" id="btnTaxTab-liabilities" class="px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-file-invoice"></i> Liabilities
-                </button>
-            </div>
-        `;
-
+        // Tab header removed in favor of data affinity grouping
+        const tabHeader = '';
         // Building HTML Tables for Arrays
         let employmentTable = '';
         const empLines = tax.income?.employment?.lines || [];
@@ -2247,55 +2232,95 @@
         }
 
         const paneEmployment = `
-            <div id="paneTaxTab-employment" class="flex flex-col gap-4 animate-fade-in w-full">
-                <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Gross Remuneration', tax.income?.employment?.total_gross?.amount)}
-                    ${renderTaxDetailRow('Withholdings (IRPF)', tax.income?.employment?.total_withheld?.amount)}
-                    ${renderTaxDetailRow('Social Security', tax.income?.employment?.total_social_security?.amount)}
+            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${empLines.length > 0 ? 'open' : ''}>
+                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
+                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                        <i class="fa-solid fa-briefcase text-[var(--primary)] text-sm"></i> Employment Income
+                    </span>
+                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="flex flex-col gap-4 p-5 bg-white">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Gross Remuneration', tax.income?.employment?.total_gross?.amount)}
+                        ${renderTaxDetailRow('Withholdings (IRPF)', tax.income?.employment?.total_withheld?.amount)}
+                        ${renderTaxDetailRow('Social Security', tax.income?.employment?.total_social_security?.amount)}
+                    </div>
+                    ${employmentTable}
                 </div>
-                ${employmentTable}
-            </div>
+            </details>
         `;
         
         const paneCapital = `
-            <div id="paneTaxTab-capital" class="hidden flex-col gap-4 animate-fade-in w-full">
-                <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Total Gross', tax.income?.capital?.total_gross?.amount)}
-                    ${renderTaxDetailRow('Total Withheld', tax.income?.capital?.total_withheld?.amount)}
-                    ${renderTaxDetailRow('Total Deductible Expenses', tax.income?.capital?.total_expenses?.amount)}
+            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${capLines.length > 0 ? 'open' : ''}>
+                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
+                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                        <i class="fa-solid fa-piggy-bank text-[var(--primary)] text-sm"></i> Capital Income
+                    </span>
+                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="flex flex-col gap-4 p-5 bg-white">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Total Gross', tax.income?.capital?.total_gross?.amount)}
+                        ${renderTaxDetailRow('Total Withheld', tax.income?.capital?.total_withheld?.amount)}
+                        ${renderTaxDetailRow('Total Deductible Expenses', tax.income?.capital?.total_expenses?.amount)}
+                    </div>
+                    ${capitalTable}
                 </div>
-                ${capitalTable}
-            </div>
+            </details>
         `;
 
         const paneCapitalGains = `
-            <div id="paneTaxTab-capital-gains" class="hidden flex-col gap-4 animate-fade-in w-full">
-                ${capitalGainsTable}
-            </div>
+            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${capGainsLines.length > 0 ? 'open' : ''}>
+                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
+                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                        <i class="fa-solid fa-arrow-trend-up text-[var(--primary)] text-sm"></i> Capital Gains
+                    </span>
+                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="flex flex-col gap-4 p-5 bg-white">
+                    ${capitalGainsTable}
+                </div>
+            </details>
         `;
 
         const paneBusiness = `
-            <div id="paneTaxTab-business" class="hidden flex-col gap-4 animate-fade-in w-full">
-                 <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Total Income', tax.income?.business?.total_income?.amount)}
-                    ${renderTaxDetailRow('Total Withheld', tax.income?.business?.total_withheld?.amount)}
+            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${bisLines.length > 0 ? 'open' : ''}>
+                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
+                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                        <i class="fa-solid fa-store text-[var(--primary)] text-sm"></i> Business Income
+                    </span>
+                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="flex flex-col gap-4 p-5 bg-white">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Total Income', tax.income?.business?.total_income?.amount)}
+                        ${renderTaxDetailRow('Total Withheld', tax.income?.business?.total_withheld?.amount)}
+                    </div>
+                    ${businessTable}
                 </div>
-                ${businessTable}
-            </div>
+            </details>
         `;
 
         const paneRealEstate = `
-            <div id="paneTaxTab-real-estate" class="hidden flex-col gap-4 animate-fade-in w-full">
-                 <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Total Gross Income', tax.income?.real_estate?.total_gross_income?.amount)}
-                    ${renderTaxDetailRow('Total Net Income', tax.income?.real_estate?.total_net_income?.amount)}
+            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${reLines.length > 0 ? 'open' : ''}>
+                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
+                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                        <i class="fa-solid fa-building text-[var(--primary)] text-sm"></i> Real Estate Income
+                    </span>
+                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="flex flex-col gap-4 p-5 bg-white">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Total Gross Income', tax.income?.real_estate?.total_gross_income?.amount)}
+                        ${renderTaxDetailRow('Total Net Income', tax.income?.real_estate?.total_net_income?.amount)}
+                    </div>
+                    ${realEstateTable}
                 </div>
-                ${realEstateTable}
-            </div>
+            </details>
         `;
 
         let donationsTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-hand-holding-heart text-2xl mb-2 opacity-50"></i>No donations reported for this fiscal year.</div>`;
@@ -2329,14 +2354,22 @@
         }
 
         const paneDonations = `
-            <div id="paneTaxTab-donations" class="hidden flex-col gap-4 animate-fade-in w-full">
-                 <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Total Donations', tax.deductions?.total_donations?.amount)}
-                    ${renderTaxDetailRow('Total Deductions', tax.deductions?.total_deductions?.amount)}
+             <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${donLines.length > 0 ? 'open' : ''}>
+                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
+                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                        <i class="fa-solid fa-hand-holding-heart text-[var(--primary)] text-sm"></i> Donations
+                    </span>
+                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="flex flex-col gap-4 p-5 bg-white">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Total Donations', tax.deductions?.total_donations?.amount)}
+                        ${renderTaxDetailRow('Total Deductions', tax.deductions?.total_deductions?.amount)}
+                    </div>
+                    ${donationsTable}
                 </div>
-                ${donationsTable}
-            </div>
+            </details>
         `;
 
         let liabilitiesTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-file-invoice text-2xl mb-2 opacity-50"></i>No liabilities or loans reported for this fiscal year.</div>`;
@@ -2372,14 +2405,23 @@
         }
 
         const paneLiabilities = `
-            <div id="paneTaxTab-liabilities" class="hidden flex-col gap-4 animate-fade-in w-full pb-2">
-                 <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                    <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                    ${renderTaxDetailRow('Active Loans Count', liaLines.length, true)}
+            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${liaLines.length > 0 ? 'open' : ''}>
+                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
+                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                        <i class="fa-solid fa-file-invoice text-red-500 text-sm"></i> Real Estate Loans
+                    </span>
+                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="flex flex-col gap-4 p-5 bg-white">
+                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
+                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
+                        ${renderTaxDetailRow('Active Loans Count', liaLines.length, true)}
+                    </div>
+                    ${liabilitiesTable}
                 </div>
-                ${liabilitiesTable}
-            </div>
+            </details>
         `;
+
 
         // Check for attachmen
         let model100Doc = null;
@@ -2448,43 +2490,44 @@
                     </div>
                 </div>
             </div>
-
-            <div class="mt-6 flex flex-col gap-4">
-                ${tabHeader}
-                <div class="flex flex-col gap-2 relative w-full pt-2">
-                    ${paneEmployment}
-                    ${paneBusiness}
-                    ${paneCapital}
-                    ${paneCapitalGains}
-                    ${paneRealEstate}
-                    ${paneDonations}
-                    ${paneLiabilities}
+            <div class="mt-8 flex flex-col gap-10">
+                
+                <!-- INCOME SECTION -->
+                <div class="flex flex-col gap-6">
+                    <h3 class="text-sm font-black uppercase tracking-[0.1em] text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-3">
+                        <i class="fa-solid fa-money-bill-wave text-[var(--primary)]"></i> Incomes
+                    </h3>
+                    <div class="grid grid-cols-1 gap-8">
+                        ${paneEmployment}
+                        ${paneBusiness}
+                        ${paneCapital}
+                        ${paneCapitalGains}
+                        ${paneRealEstate}
+                    </div>
                 </div>
+
+                <!-- DEDUCTIONS SECTION -->
+                <div class="flex flex-col gap-6">
+                    <h3 class="text-sm font-black uppercase tracking-[0.1em] text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-3">
+                        <i class="fa-solid fa-hand-holding-heart text-[var(--primary)]"></i> Deductions
+                    </h3>
+                    <div class="grid grid-cols-1 gap-8">
+                        ${paneDonations}
+                    </div>
+                </div>
+
+                <!-- LIABILITIES SECTION -->
+                <div class="flex flex-col gap-6">
+                    <h3 class="text-sm font-black uppercase tracking-[0.1em] text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-3">
+                        <i class="fa-solid fa-file-invoice text-red-500"></i> Liabilities
+                    </h3>
+                    <div class="grid grid-cols-1 gap-8">
+                        ${paneLiabilities}
+                    </div>
+                </div>
+
             </div>
         `;
-    };
-
-    window.switchTaxDetailTab = function(tabId) {
-        const tabs = ['employment', 'business', 'capital', 'capital-gains', 'real-estate', 'donations', 'liabilities'];
-        tabs.forEach(t => {
-            const btn = document.getElementById(`btnTaxTab-${t}`);
-            const pane = document.getElementById(`paneTaxTab-${t}`);
-            if(!btn || !pane) return;
-
-            if (t === tabId) {
-                btn.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 whitespace-nowrap";
-                const icon = btn.querySelector('i');
-                if(icon) icon.classList.add('text-[var(--primary)]');
-                pane.classList.remove('hidden');
-                pane.classList.add('flex');
-            } else {
-                btn.className = "px-4 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap";
-                const icon = btn.querySelector('i');
-                if(icon) icon.classList.remove('text-[var(--primary)]');
-                pane.classList.add('hidden');
-                pane.classList.remove('flex');
-            }
-        });
     };
 
     function renderAuditLog(payload) {
