@@ -189,6 +189,13 @@ const INFONITE_FEATURES = {
         workMessage: 'Consulting your academic data',
         icon: 'fa-solid fa-graduation-cap',
         defaultConfig: {}
+    },
+    properties_data: {
+        code: 'properties_data',
+        name: 'Properties Data',
+        workMessage: 'Consulting your properties data',
+        icon: 'fa-solid fa-house',
+        defaultConfig: {}
     }
 };
 
@@ -224,7 +231,8 @@ const INFONITE_FLOWS = {
             'driver_data', 
             'labor_check', 
             'yearly_individual_tax',
-            'academic_data'
+            'academic_data',
+            'properties_data'
         ]
     }
 };
