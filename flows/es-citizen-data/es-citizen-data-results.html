@@ -245,11 +245,7 @@
               </button>
               
               <button onclick="switchDashboardView('work_life')" id="nav-work_life" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
-                  <i class="fa-solid fa-briefcase opacity-60"></i> Work Life
-              </button>
-              
-              <button onclick="switchDashboardView('state-pensions')" id="nav-state-pensions" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
-                  <i class="fa-solid fa-piggy-bank opacity-60"></i> State Pensions
+                  <i class="fa-solid fa-people-group opacity-60"></i> Social Security
               </button>
               
               <button onclick="switchDashboardView('taxes')" id="nav-taxes" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
@@ -920,8 +916,6 @@
                         break;
                     case 'work_life':
                         if(typeof renderEmploymentData === 'function') renderEmploymentData(window.currentResultData);
-                        break;
-                    case 'state-pensions':
                         if(typeof renderPensionsData === 'function') renderPensionsData(window.currentResultData);
                         break;
                     case 'taxes':
@@ -1161,29 +1155,25 @@
     };
 
     window.switchWorkLifeTab = function(tabId) {
-        const btnRelations = document.getElementById('btnTabRelations');
-        const btnBases = document.getElementById('btnTabBases');
-        const contRelations = document.getElementById('containerWorkRelations');
-        const contBases = document.getElementById('containerContributionBases');
-        
+        const tabs = ['relations', 'bases', 'pensions'];
         const activeClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2";
         const inactiveClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 flex-wrap";
 
-        if (tabId === 'relations') {
-            btnRelations.className = activeClass;
-            btnBases.className = inactiveClass;
-            contRelations.classList.remove('hidden');
-            contRelations.classList.add('flex');
-            contBases.classList.add('hidden');
-            contBases.classList.remove('flex');
-        } else {
-            btnBases.className = activeClass;
-            btnRelations.className = inactiveClass;
-            contBases.classList.remove('hidden');
-            contBases.classList.add('flex');
-            contRelations.classList.add('hidden');
-            contRelations.classList.remove('flex');
-        }
+        tabs.forEach(t => {
+            const btn = document.getElementById(`btnTab-${t}`);
+            const cont = document.getElementById(`container-${t}`);
+            if (!btn || !cont) return;
+
+            if (t === tabId) {
+                btn.className = activeClass;
+                cont.classList.remove('hidden');
+                cont.classList.add('flex');
+            } else {
+                btn.className = inactiveClass;
+                cont.classList.add('hidden');
+                cont.classList.remove('flex');
+            }
+        });
     };
 
     function renderEmploymentData(payload) {

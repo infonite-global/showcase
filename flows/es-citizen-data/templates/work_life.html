@@ -7,8 +7,8 @@
             <i class="fa-solid fa-briefcase"></i>
         </div>
         <div class="flex-1 min-w-0">
-            <h2 class="text-xl font-black text-slate-800 tracking-tight">Work Life</h2>
-            <p class="text-xs font-medium text-slate-500 mt-1 truncate">Social Security contribution history, labor check, and employment periods.</p>
+            <h2 class="text-xl font-black text-slate-800 tracking-tight">Social Security</h2>
+            <p class="text-xs font-medium text-slate-500 mt-1 truncate">Social Security contribution history, labor check, employment periods, and state pensions.</p>
         </div>
     </div>
 
@@ -68,27 +68,37 @@
         <div class="mt-2 pt-6 border-t border-slate-100 flex flex-col gap-6 relative z-10 w-full">
             
             <!-- Tabs Header -->
-            <div class="flex items-center gap-2 p-1 bg-slate-100 rounded-xl self-start">
-                <button onclick="switchWorkLifeTab('relations')" id="btnTabRelations" class="px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2">
+            <div class="flex items-center gap-2 p-1 bg-slate-100 rounded-xl self-start w-full overflow-x-auto no-scrollbar">
+                <button onclick="switchWorkLifeTab('relations')" id="btnTab-relations" class="px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-building-user text-[var(--primary)]"></i> Work Relations
                 </button>
-                <button onclick="switchWorkLifeTab('bases')" id="btnTabBases" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 flex-wrap">
+                <button onclick="switchWorkLifeTab('bases')" id="btnTab-bases" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
                     <i class="fa-solid fa-money-bill-trend-up"></i> Contribution Bases
+                </button>
+                <button onclick="switchWorkLifeTab('pensions')" id="btnTab-pensions" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-piggy-bank"></i> State Pensions
                 </button>
             </div>
 
             <!-- Tab Content: Work Relations History -->
-            <div id="containerWorkRelations" class="flex flex-col gap-4 animate-fade-in w-full">
+            <div id="container-relations" class="flex flex-col gap-4 animate-fade-in w-full">
                 <div class="flex flex-col gap-0" id="listWorkRelations">
                     <p class="text-sm text-slate-400 font-medium italic">No work relations data available.</p>
                 </div>
             </div>
 
             <!-- Tab Content: Contribution Bases History -->
-            <div id="containerContributionBases" class="hidden flex-col gap-4 animate-fade-in w-full">
+            <div id="container-bases" class="hidden flex-col gap-4 animate-fade-in w-full">
                 <!-- Grouped list layout for the months -->
                 <div class="flex flex-col gap-6" id="listContributionBases">
                     <p class="text-sm text-slate-400 font-medium italic">No contribution bases data available.</p>
+                </div>
+            </div>
+
+            <!-- Tab Content: Pensions -->
+            <div id="container-pensions" class="hidden flex-col gap-4 animate-fade-in w-full">
+                <div id="statePensionsList" class="flex flex-col gap-4 w-full">
+                    <div class="p-6 text-center text-slate-400 text-sm italic border border-slate-200 border-dashed rounded-xl">Loading pensions...</div>
                 </div>
             </div>
             
