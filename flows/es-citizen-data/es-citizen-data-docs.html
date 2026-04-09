@@ -265,6 +265,7 @@
         <pre><code class="language-json">{
   "customer_id": "customer-123", /* Optional tracking ID */
   "settings": {
+    "sandbox": true, /* Optional: Enables testing simulation */
     "aes_key": "MTExMTExMTExMTExMTExMTEx...", /* Base64 (32 bytes) */
     "completion_mode": "redirect",
     "completion_url": "https://callback.com/success",
@@ -274,10 +275,32 @@
       { "code": "labor_check" },
       { "code": "academic_data" },
       { "code": "public_pensions" },
-      { "code": "yearly_individual_tax" }
+      { "code": "yearly_individual_tax" },
+      { "code": "properties_data" }
     ]
   }
 }</code></pre>
+
+        <h4 class="mt-6 mb-3">Feature Mapping</h4>
+        <div class="overflow-x-auto mb-6 border border-slate-200 rounded-xl">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="p-4 font-bold text-slate-700">Feature Code</th>
+                        <th class="p-4 font-bold text-slate-700">Data Retrieved</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">customer_information_read</td><td class="p-4 text-slate-600">Basic profile, identification, addresses, and contact info</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">driver_data</td><td class="p-4 text-slate-600">Driver licenses, point balance, and registered vehicles (DGT)</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">labor_check</td><td class="p-4 text-slate-600">Work life history and social security participation (TGSS)</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">academic_data</td><td class="p-4 text-slate-600">University and non-university academic degrees</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">public_pensions</td><td class="p-4 text-slate-600">State pension history and current percepts</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">yearly_individual_tax</td><td class="p-4 text-slate-600">Income tax declarations and fiscal data (AEAT)</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">properties_data</td><td class="p-4 text-slate-600">Real estate properties and cadastral data</td></tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl mt-4 mb-2 shadow-sm">
             <h5 class="text-sm text-amber-900 font-bold mb-1"><i class="fa-solid fa-triangle-exclamation mr-1.5 text-amber-500"></i> Domain Authorization Required</h5>
@@ -299,6 +322,13 @@
                     <code class="text-xs text-indigo-900 bg-transparent p-0 font-mono">import os, base64; base64.b64encode(os.urandom(32)).decode()</code>
                 </div>
             </div>
+        </div>
+
+        <div class="bg-purple-50 border border-purple-100 p-4 rounded-xl mt-4 mb-6">
+            <h5 class="text-sm text-purple-800 font-bold mb-2"><i class="fa-solid fa-flask"></i> Sandbox Mode</h5>
+            <p class="text-[13px] text-purple-700 leading-relaxed mb-0">
+                You can optionally pass <code class="bg-black/10 px-1 rounded font-mono text-[12px]">"sandbox": true</code> inside the <code>settings</code> object. When enabled, this overrides the default behavior and generates a special interactive widget configured to simulate various scenarios. This allows you to test your integration without requiring real citizen credentials and safely view output examples.
+            </p>
         </div>
 
         <h4>Response Payload</h4>
