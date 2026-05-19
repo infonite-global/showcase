@@ -271,6 +271,7 @@
     "completion_url": "https://callback.com/success",
     "executions_features": [
       { "code": "customer_information_read" },
+      { "code": "vehicles_data" },
       { "code": "driver_data" },
       { "code": "labor_check" },
       { "code": "academic_data" },
@@ -292,7 +293,8 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white">
                     <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">customer_information_read</td><td class="p-4 text-slate-600">Basic profile, identification, addresses, and contact info</td></tr>
-                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">driver_data</td><td class="p-4 text-slate-600">Driver licenses, point balance, and registered vehicles (DGT)</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">vehicles_data</td><td class="p-4 text-slate-600">Registered vehicles and technical data (DGT)</td></tr>
+                    <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">driver_data</td><td class="p-4 text-slate-600">Driver licenses and point balance (DGT)</td></tr>
                     <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">labor_check</td><td class="p-4 text-slate-600">Work life history and social security participation (TGSS)</td></tr>
                     <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">academic_data</td><td class="p-4 text-slate-600">University and non-university academic degrees</td></tr>
                     <tr><td class="p-4 font-mono text-[11px] font-bold text-[#00a76f]">public_pensions</td><td class="p-4 text-slate-600">State pension history and current percepts</td></tr>
@@ -460,7 +462,7 @@
         <pre><code class="language-json">{
   "consent": {
     "accepted_date": "2026-03-15T14:46:36Z",
-    "accepted_features": ["customer_information_read", "driver_data", "labor_check", "academic_data"],
+    "accepted_features": ["customer_information_read", "vehicles_data", "driver_data", "labor_check", "academic_data"],
     "user_identification": {
       "type": "nif", "value": "12345678A", "validated": true, "country": "ES"
     }

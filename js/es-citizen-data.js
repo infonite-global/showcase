@@ -6,6 +6,7 @@
 const ALLOWED_MODULES = [
     'customer_information_read',
     'driver_data',
+    'vehicles_data',
     'academic_data',
     'properties_data',
     'labor_check',
@@ -16,6 +17,7 @@ const ALLOWED_MODULES = [
 const DEFAULT_SELECTED_MODULES = [
     'customer_information_read',
     'driver_data',
+    'vehicles_data',
     'academic_data',
     'properties_data'
 ];

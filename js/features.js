@@ -169,19 +169,19 @@ const INFONITE_FEATURES = {
         icon: 'fa-solid fa-file-invoice-dollar',
         defaultConfig: {}
     },
-    citizen_data: {
-        code: 'citizen_data',
-        name: 'Public Citizen Data',
-        workMessage: 'Consulting your citizen data',
-        icon: 'fa-solid fa-passport',
-        defaultConfig: {}
+    vehicles_data: {
+        code: 'vehicles_data',
+        name: 'Vehicles Data',
+        workMessage: 'Consulting your vehicles data',
+        icon: 'fa-solid fa-car-side',
+        defaultConfig: {"read_point_movements": true}
     },
     driver_data: {
         code: 'driver_data',
-        name: 'Driver & Vehicles Data',
+        name: 'Driver Data',
         workMessage: 'Consulting your driver data',
         icon: 'fa-solid fa-car',
-        defaultConfig: {}
+        defaultConfig: {"simple_vehicle_report": true}
     },
     academic_data: {
         code: 'academic_data',
@@ -227,8 +227,8 @@ const INFONITE_FLOWS = {
         route: '/citizen-data',
         defaultFeatures: [
             'customer_information_read', 
-            'citizen_data', 
             'driver_data', 
+            'vehicles_data', 
             'labor_check', 
             'yearly_individual_tax',
             'academic_data',
