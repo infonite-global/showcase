@@ -196,6 +196,15 @@ const INFONITE_FEATURES = {
         workMessage: 'Consulting your properties data',
         icon: 'fa-solid fa-house',
         defaultConfig: {}
+    },
+    credit_registry_data: {
+        code: 'credit_registry_data',
+        name: 'Credit Registry (CIRBE)',
+        workMessage: 'Consulting your credit registry information',
+        icon: 'fa-solid fa-money-check-dollar',
+        defaultConfig: {
+            "preferred_type": "credit_registry_data:es_cirbe_detailed"
+        }
     }
 };
 
@@ -232,7 +241,8 @@ const INFONITE_FLOWS = {
             'labor_check', 
             'yearly_individual_tax',
             'academic_data',
-            'properties_data'
+            'properties_data',
+            'credit_registry_data'
         ]
     }
 };

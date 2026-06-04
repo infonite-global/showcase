@@ -11,7 +11,8 @@ const ALLOWED_MODULES = [
     'properties_data',
     'labor_check',
     'public_pensions',
-    'yearly_individual_tax'
+    'yearly_individual_tax',
+    'credit_registry_data'
 ];
 
 const DEFAULT_SELECTED_MODULES = [

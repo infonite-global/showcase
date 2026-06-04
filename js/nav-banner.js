@@ -110,13 +110,14 @@
                 cleanAppName = cleanAppName.replace(/^\[(PRO|DEV|CSM)\]\s*/i, '');
             }
             
-            const positionClass = isHome ? 'fixed' : 'sticky';
+            const isMobile = window.innerWidth < 768;
+            const positionClass = isMobile ? 'relative' : (isHome ? 'fixed' : 'sticky');
             
             // Render regular top banner
             const bannerHtml = `
                 <div id="nav-banner-wrapper" class="${positionClass} top-0 z-[100] transition-all duration-500 overflow-hidden pt-2 px-2 pb-2 md:pt-4 md:px-4 md:pb-2 w-full pointer-events-none" style="max-height: 0px; opacity: 0; transform: translateY(-20px);">
-                    <div class="glass-panel rounded-[2rem] p-3 md:p-4 flex flex-col md:flex-row shadow-xl mx-auto max-w-7xl pointer-events-auto" 
-                         style="background: ${bannerColor}; border: 1px solid ${borderColor}; flex-wrap: wrap; backdrop-filter: blur(20px);">
+                    <div class="glass-panel rounded-[2rem] p-3 md:p-4 flex flex-row items-center shadow-xl mx-auto max-w-7xl pointer-events-auto" 
+                         style="background: ${bannerColor}; border: 1px solid ${borderColor}; backdrop-filter: blur(20px); flex-wrap: wrap;">
                          
                         <div class="flex items-center px-4 py-1 overflow-hidden shrink-0">
                           <a href="${homeLink}">
@@ -131,13 +132,14 @@
                         </nav>
                         
                         <!-- Mobile Menu Toggle -->
-                        <div class="md:hidden ml-auto pl-4" style="border-left: 1px solid ${borderColor}">
+                        <div class="md:hidden ml-auto pr-2">
                           <button class="w-8 h-8 flex items-center justify-center transition-colors rounded hover:bg-black/5" style="color: ${iconColor}" onclick="window.InfoniteNavBanner.toggleMobileMenu()">
-                            <i class="fa-solid fa-bars"></i>
+                            <i class="fa-solid fa-bars text-lg"></i>
                           </button>
                         </div>
                         
-                        <div class="flex items-center gap-4 px-4 w-full justify-between mt-4 md:mt-0 md:justify-end md:w-auto ml-auto border-t md:border-t-0 md:border-l border-[var(--nav-border-color)] pt-3 md:pt-0 pl-4" style="--nav-border-color: ${borderColor};">
+                        <!-- Desktop Status & Settings (Hidden on Mobile) -->
+                        <div class="hidden md:flex items-center gap-4 px-4 w-auto ml-auto border-l border-[var(--nav-border-color)] pl-4" style="--nav-border-color: ${borderColor};">
                           ${config && config.isMock ? `
                             <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mr-2" style="color: ${textColor}">
                               Select an App <i class="fa-solid fa-arrow-right-long ml-1"></i>
@@ -161,16 +163,48 @@
                           </button>
                         </div>
                         
-                        <!-- Mobile Menu Dropdown -->
-                        <div id="nav-banner-mobile-menu" class="w-full hidden mt-4 flex-col gap-2" style="border-top: 1px solid ${borderColor}; pt-4;">
-                            <a href="${homeLink}" class="block w-full text-center px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isHome ? hoverBg : 'transparent'}; border: 1px solid ${borderColor}">Home</a>
-                            <a href="${flowsHash}" class="block w-full text-center px-4 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isFlows ? hoverBg : 'transparent'}; border: 1px solid ${borderColor}">Flows</a>
+                        <!-- Mobile Menu Dropdown (Includes Navigation Links, Status, and Settings) -->
+                        <div id="nav-banner-mobile-menu" class="w-full hidden mt-3 flex-col gap-3 pt-3 border-t md:hidden" style="border-top-color: ${borderColor};">
+                            <a href="${homeLink}" class="block w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isHome ? hoverBg : 'transparent'}; border: 1px solid ${borderColor}">Home</a>
+                            <a href="${flowsHash}" class="block w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isFlows ? hoverBg : 'transparent'}; border: 1px solid ${borderColor}">Flows</a>
+                            
+                            ${config && !config.isMock ? `
+                              <div class="flex items-center justify-between px-4 py-2 rounded-xl border" style="border-color: ${borderColor}; background: ${hoverBg}">
+                                <div class="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.1em]" style="color: ${textColor}">
+                                  ${hostPill} <span>${cleanAppName}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md" style="border: 1px solid ${borderColor}">
+                                  <span class="w-1.5 h-1.5 rounded-full ${statusColor}"></span>
+                                  <span class="text-[9px] font-bold uppercase tracking-widest" style="color: ${textColor}">${statusText}</span>
+                                </div>
+                              </div>
+                            ` : ''}
+                            
+                            <button class="w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all font-bold text-[10px] uppercase tracking-widest" 
+                                    onclick="if(typeof openSettings === 'function') openSettings(); else window.location.href='${homeLink}'" 
+                                    style="background: ${hoverBg}; border: 1px solid ${borderColor}; color: ${textColor};">
+                              <i class="fa-solid fa-cog"></i> Settings
+                            </button>
                         </div>
                     </div>
                 </div>
             `;
             
             this.container.innerHTML = bannerHtml;
+            
+            // Add dynamic positioning class resize handler
+            const updatePositionClass = () => {
+                const wrapper = document.getElementById('nav-banner-wrapper');
+                if (wrapper) {
+                    const isMobile = window.innerWidth < 768;
+                    const newClass = isMobile ? 'relative' : (isHome ? 'fixed' : 'sticky');
+                    wrapper.classList.remove('relative', 'fixed', 'sticky');
+                    wrapper.classList.add(newClass);
+                }
+            };
+            window.removeEventListener('resize', window._infoniteNavResizeHandler);
+            window._infoniteNavResizeHandler = updatePositionClass;
+            window.addEventListener('resize', updatePositionClass);
             
             // Check initial visibility logic
             // On index.html, it's hidden unless hash is #flows

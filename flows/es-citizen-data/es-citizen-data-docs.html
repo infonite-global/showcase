@@ -530,6 +530,67 @@
           ]
         }
       ]
+    },
+    "credit": {
+      "registry": [
+        {
+          "product": "credit_registry_data",
+          "sub_family": "credit_registry_data:es_cirbe_detailed",
+          "fetch_date": "2026-06-04T00:33:10+00:00",
+          "country": "ES",
+          "holder_code": "ES12345678",
+          "holder_name": "MARTIN PLA AYUSO",
+          "identifier": {
+            "type": "es:dni",
+            "value": "44444444A",
+            "validated": true,
+            "country": "ES"
+          },
+          "report_month": "06-2026",
+          "consultation_date": "2026-06-04T00:33:10+00:00",
+          "total_drawn": { "amount": "1500.00", "currency": "EUR" },
+          "total_overdue": { "amount": "0.00", "currency": "EUR" },
+          "total_arrears": { "amount": "0.00", "currency": "EUR" },
+          "total_risk_available": { "amount": "3500.00", "currency": "EUR" },
+          "operations": [
+            {
+              "entity_name": "Banco Santander S.A.",
+              "entity_code": "0049",
+              "operation_code": "OP-SAN-1234",
+              "product_type": "V32",
+              "intervention_nature": "T11",
+              "collective_status": "Solidario",
+              "participants_number": 2,
+              "currency": "EUR",
+              "maturity_type": "L08",
+              "operation_status": "Al corriente",
+              "total_drawn": { "amount": "1500.00", "currency": "EUR" },
+              "risk_available": { "amount": "3500.00", "currency": "EUR" }
+            }
+          ],
+          "minor_risks": [
+            {
+              "entity_name": "Cofidis S.A. Sucursal en España",
+              "entity_code": "2000",
+              "limit_amount": { "amount": "1000.00", "currency": "EUR" }
+            }
+          ],
+          "attachments": [
+            {
+              "id": "6a20c7d23a9d458a7c5380ea",
+              "product": "attachment",
+              "sub_family": "attachment:es_cirbe_report",
+              "content_name": "cirbe_report_es_cirbe_detailed.pdf",
+              "content_type": "application/pdf",
+              "metadata": {
+                "document-type": "attachment:es_cirbe_report",
+                "document-date": "2026-06-04T02:33:22+02:00",
+                "signature-verified": true
+              }
+            }
+          ]
+        }
+      ]
     }
   }
 }</code></pre>

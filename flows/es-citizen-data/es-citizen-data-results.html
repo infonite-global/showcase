@@ -251,6 +251,10 @@
               <button onclick="switchDashboardView('taxes')" id="nav-taxes" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
                   <i class="fa-solid fa-file-invoice-dollar opacity-60"></i> Taxes
               </button>
+
+              <button onclick="switchDashboardView('credit_registry')" id="nav-credit_registry" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
+                  <i class="fa-solid fa-money-check-dollar opacity-60"></i> Credit Registry (CIRBE)
+              </button>
               
               <button onclick="switchDashboardView('properties')" id="nav-properties" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
                   <i class="fa-solid fa-house opacity-60"></i> Properties
@@ -886,6 +890,7 @@
                 else if (categoryId === 'work_life') featureAccepted = features.includes('labor_check');
                 else if (categoryId === 'state-pensions') featureAccepted = features.includes('public_pensions');
                 else if (categoryId === 'taxes') featureAccepted = features.includes('yearly_individual_tax');
+                else if (categoryId === 'credit_registry') featureAccepted = features.includes('credit_registry_data');
                 else if (categoryId === 'properties') featureAccepted = features.includes('properties_data');
                 
                 if (!featureAccepted && categoryId !== 'audit') {
@@ -920,6 +925,9 @@
                         break;
                     case 'taxes':
                         if(typeof renderTaxesData === 'function') renderTaxesData(window.currentResultData);
+                        break;
+                    case 'credit_registry':
+                        if(typeof renderCreditRegistryData === 'function') renderCreditRegistryData(window.currentResultData);
                         break;
                     case 'properties':
                         if(typeof renderPropertiesData === 'function') renderPropertiesData(window.currentResultData);
@@ -2057,6 +2065,256 @@
             </div>
             `;
         }).join('');
+    };
+
+    window.renderCreditRegistryData = function(payload) {
+        const totalDrawnEl = document.getElementById('cirbeTotalDrawn');
+        const totalOverdueEl = document.getElementById('cirbeTotalOverdue');
+        const totalArrearsEl = document.getElementById('cirbeTotalArrears');
+        const totalAvailableEl = document.getElementById('cirbeTotalAvailable');
+        const reportMonthEl = document.getElementById('cirbeReportMonth');
+        const holderNameEl = document.getElementById('cirbeHolderName');
+        const holderCodeEl = document.getElementById('cirbeHolderCode');
+        const holderIdentifierEl = document.getElementById('cirbeHolderIdentifier');
+        const signatureVerifiedBadge = document.getElementById('cirbeSignatureBadge');
+        const downloadPdfBtn = document.getElementById('cirbeDownloadPdfBtn');
+        const operationsTable = document.getElementById('cirbeOperationsTable');
+        const minorRisksSection = document.getElementById('cirbeMinorRisksSection');
+        const minorRisksList = document.getElementById('cirbeMinorRisksList');
+
+        const creditDataList = payload?.data?.credit?.registry;
+        const creditData = Array.isArray(creditDataList) ? creditDataList[0] : creditDataList;
+        if (!creditData) {
+            const wrapper = document.getElementById('credit-registry-wrapper');
+            if (wrapper) {
+                wrapper.innerHTML = `<div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl min-h-[300px]">
+                    <i class="fa-solid fa-money-check-dollar text-4xl text-slate-300 mb-3"></i>
+                    <h4 class="text-sm font-bold text-slate-600">No CIRBE Data Found</h4>
+                    <p class="text-xs text-slate-500 mt-1 max-w-sm">No Central Credit Registry records were found in this session's payload.</p>
+                </div>`;
+            }
+            return;
+        }
+
+        if (reportMonthEl) reportMonthEl.textContent = creditData.report_month || '--';
+        if (holderNameEl) holderNameEl.textContent = creditData.holder_name || '--';
+        if (holderCodeEl) holderCodeEl.textContent = creditData.holder_code || 'N/A';
+        if (holderIdentifierEl) {
+            holderIdentifierEl.textContent = creditData.identifier?.value || '--';
+        }
+
+        if (totalDrawnEl) totalDrawnEl.textContent = formatCurrency(parseFloat(creditData.total_drawn?.amount || 0));
+        if (totalOverdueEl) totalOverdueEl.textContent = formatCurrency(parseFloat(creditData.total_overdue?.amount || 0));
+        if (totalArrearsEl) totalArrearsEl.textContent = formatCurrency(parseFloat(creditData.total_arrears?.amount || 0));
+        if (totalAvailableEl) totalAvailableEl.textContent = formatCurrency(parseFloat(creditData.total_risk_available?.amount || 0));
+
+        const overdueVal = parseFloat(creditData.total_overdue?.amount || 0);
+        const arrearsVal = parseFloat(creditData.total_arrears?.amount || 0);
+        
+        const overdueCard = document.getElementById('cirbeOverdueCard');
+        const arrearsCard = document.getElementById('cirbeArrearsCard');
+        if (overdueCard) {
+            if (overdueVal > 0) {
+                overdueCard.className = "p-5 rounded-2xl bg-red-50 border border-red-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
+                document.getElementById('cirbeTotalOverdue').className = "text-xl font-black text-red-600 font-mono mt-2 tracking-tight";
+            } else {
+                overdueCard.className = "p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
+                document.getElementById('cirbeTotalOverdue').className = "text-xl font-black text-slate-800 font-mono mt-2 tracking-tight";
+            }
+        }
+        if (arrearsCard) {
+            if (arrearsVal > 0) {
+                arrearsCard.className = "p-5 rounded-2xl bg-red-50 border border-red-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
+                document.getElementById('cirbeTotalArrears').className = "text-xl font-black text-red-600 font-mono mt-2 tracking-tight";
+            } else {
+                arrearsCard.className = "p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
+                document.getElementById('cirbeTotalArrears').className = "text-xl font-black text-slate-800 font-mono mt-2 tracking-tight";
+            }
+        }
+
+        let isSigned = false;
+        let attachmentId = null;
+        let contentName = 'CIRBE_Report.pdf';
+        
+        if (creditData.attachments && creditData.attachments.length > 0) {
+            const att = creditData.attachments[0];
+            attachmentId = att.id;
+            contentName = att.content_name || 'CIRBE_Report.pdf';
+            isSigned = !!att.metadata?.['signature-verified'];
+        }
+
+        if (signatureVerifiedBadge) {
+            if (isSigned) {
+                signatureVerifiedBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider";
+                signatureVerifiedBadge.innerHTML = '<i class="fa-solid fa-signature"></i> Signature Verified (Banco de España CA)';
+            } else {
+                signatureVerifiedBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-500/20 bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider";
+                signatureVerifiedBadge.innerHTML = '<i class="fa-solid fa-signature-slash"></i> Unsigned / Self-Signed';
+            }
+        }
+
+        if (downloadPdfBtn) {
+            if (attachmentId) {
+                downloadPdfBtn.onclick = () => window.downloadCreditRegistryPDF(attachmentId, contentName);
+                downloadPdfBtn.disabled = false;
+                downloadPdfBtn.className = "px-4 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 cursor-pointer";
+                downloadPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf text-base"></i> View Original PDF';
+            } else {
+                downloadPdfBtn.disabled = true;
+                downloadPdfBtn.className = "px-4 py-2 border border-slate-200 bg-slate-100 text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 opacity-50 cursor-not-allowed";
+                downloadPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf text-base"></i> No PDF Available';
+            }
+        }
+
+        if (operationsTable) {
+            const ops = creditData.operations || [];
+            if (ops.length === 0) {
+                operationsTable.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs italic">No active operations reported in the registry.</td></tr>`;
+            } else {
+                const isAggregated = creditData.sub_family === 'credit_registry_data:es_cirbe_aggregated';
+                
+                const entityHeader = document.getElementById('cirbeEntityHeader');
+                const opCodeHeader = document.getElementById('cirbeOpCodeHeader');
+                if (entityHeader) entityHeader.style.display = isAggregated ? 'none' : '';
+                if (opCodeHeader) opCodeHeader.style.display = isAggregated ? 'none' : '';
+
+                operationsTable.innerHTML = ops.map(op => {
+                    const totalDrawnStr = formatCurrency(parseFloat(op.total_drawn?.amount || 0));
+                    const overdueVal = parseFloat(op.overdue?.amount || 0);
+                    const overdueStr = overdueVal > 0 ? `<span class="text-red-600 font-bold">${formatCurrency(overdueVal)}</span>` : '--';
+                    const arrearsVal = parseFloat(op.arrears?.amount || 0);
+                    const arrearsStr = arrearsVal > 0 ? `<span class="text-red-500 font-medium">${formatCurrency(arrearsVal)}</span>` : '--';
+                    const riskAvailableVal = parseFloat(op.risk_available?.amount || 0);
+                    const riskAvailableStr = riskAvailableVal > 0 ? formatCurrency(riskAvailableVal) : '--';
+                    
+                    const pNum = op.participants_number ? `<span class="text-[9px] bg-slate-100 text-slate-500 border border-slate-200/60 px-1.5 py-0.5 rounded font-medium mt-1">Partícipes: ${op.participants_number}</span>` : '';
+                    const colStatus = op.collective_status ? `<span class="text-[9px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded font-bold uppercase mt-1">${op.collective_status}</span>` : '';
+                    const maturity = op.maturity_type ? `<span class="text-[10px] text-slate-500 border border-slate-200 bg-slate-50 px-2 py-0.5 rounded-md font-mono">${op.maturity_type}</span>` : '--';
+                    
+                    let guaranteeHtml = '--';
+                    if (op.real_guarantee_type || op.personal_guarantee_type) {
+                        let parts = [];
+                        if (op.real_guarantee_type) {
+                            parts.push(`Real: ${op.real_guarantee_type}`);
+                        }
+                        if (op.personal_guarantee_type) {
+                            parts.push(`Pers: ${op.personal_guarantee_type}`);
+                        }
+                        guaranteeHtml = `<div class="flex flex-col gap-1 font-mono text-[9px] text-slate-500">${parts.join('<br/>')}</div>`;
+                    }
+
+                    return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                        ${!isAggregated ? `
+                            <td class="p-4 pl-6 align-middle">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold text-slate-800">${op.entity_name || 'Declaring Entity'}</span>
+                                    <span class="text-[9px] font-mono text-slate-400 mt-0.5">${op.entity_code || 'Code: --'}</span>
+                                </div>
+                            </td>
+                            <td class="p-4 align-middle font-mono text-xs text-slate-600">${op.operation_code || '--'}</td>
+                        ` : ''}
+                        <td class="p-4 align-middle">
+                            <div class="flex flex-col items-start gap-1">
+                                <span class="text-xs font-bold text-slate-700">${op.product_type || '--'}</span>
+                                <span class="text-[9px] text-slate-400 font-mono">Nat: ${op.intervention_nature || '--'}</span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    ${pNum}
+                                    ${colStatus}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 align-middle">${maturity}</td>
+                        <td class="p-4 align-middle">${guaranteeHtml}</td>
+                        <td class="p-4 align-middle font-mono text-xs text-right font-bold text-slate-800">${totalDrawnStr}</td>
+                        <td class="p-4 align-middle font-mono text-xs text-right">${overdueStr}</td>
+                        <td class="p-4 align-middle font-mono text-xs text-right">${arrearsStr}</td>
+                        <td class="p-4 pr-6 align-middle font-mono text-xs text-right text-slate-500">${riskAvailableStr}</td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+
+        const mr = creditData.minor_risks || [];
+        if (minorRisksSection) {
+            if (mr.length === 0) {
+                minorRisksSection.classList.add('hidden');
+            } else {
+                minorRisksSection.classList.remove('hidden');
+                if (minorRisksList) {
+                    minorRisksList.innerHTML = mr.map(r => `
+                    <div class="p-4 rounded-xl bg-slate-50/70 border border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold text-slate-700">${r.entity_name}</span>
+                                <span class="text-[9px] font-mono text-slate-400 mt-0.5">Entity Code: ${r.entity_code || '--'}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col text-right">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Accumulation Limit</span>
+                            <span class="text-xs font-black text-slate-800 font-mono mt-0.5">${formatCurrency(parseFloat(r.limit_amount?.amount || 0))}</span>
+                        </div>
+                    </div>`).join('');
+                }
+            }
+        }
+    };
+
+    window.downloadCreditRegistryPDF = async function(attachmentId, contentName) {
+        if (!currentSessionData || !currentSessionData.session_id) {
+            console.error("No active session found.");
+            return;
+        }
+
+        const sessionId = currentSessionData.session_id;
+        const configObj = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
+        
+        if (!configObj || !configObj.secret || !configObj.widgetUrl) {
+            alert("Application Secret or Widget URL is missing. Cannot download the document.");
+            return;
+        }
+
+        const url = `${configObj.widgetUrl}/api/flows/attachments?session_id=${sessionId}&attachment_id=${attachmentId}`;
+        const btn = document.getElementById('cirbeDownloadPdfBtn');
+        const originalHtml = btn ? btn.innerHTML : '';
+        
+        try {
+            if (btn) {
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Downloading...`;
+                btn.disabled = true;
+            }
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-APP-SECRET': configObj.secret,
+                    'Accept': 'application/pdf'
+                }
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`HTTP error ${response.status}: ${errText}`);
+            }
+
+            const blob = await response.blob();
+            currentPdfBlobUrl = URL.createObjectURL(blob);
+            currentPdfFilename = contentName || "CIRBE_Report.pdf";
+            
+            window.openPdfModal(currentPdfBlobUrl, currentPdfFilename);
+
+        } catch (error) {
+            console.error("Error downloading PDF:", error);
+            alert("Failed to download the CIRBE Report.");
+        } finally {
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
     };
 
     window.renderTaxesData = function(payload) {
