@@ -1032,7 +1032,7 @@
             return;
         }
 
-        const url = `${configObj.widgetUrl}/api/flows/attachments?session_id=${sessionId}&attachment_id=${attachmentId}`;
+        const url = `${configObj.widgetUrl}/api/flows/attachments/${sessionId}/${attachmentId}`;
         const btn = document.getElementById('btnDownloadWorkLife');
         const originalHtml = btn ? btn.innerHTML : '';
         
@@ -1083,7 +1083,7 @@
             return;
         }
 
-        const url = `${configObj.widgetUrl}/api/flows/attachments?session_id=${sessionId}&attachment_id=${attachmentId}`;
+        const url = `${configObj.widgetUrl}/api/flows/attachments/${sessionId}/${attachmentId}`;
         const btn = document.getElementById(`btnDownloadTaxModel-${yearStr}`);
         const originalHtml = btn ? btn.innerHTML : '';
         
@@ -2277,7 +2277,7 @@
             return;
         }
 
-        const url = `${configObj.widgetUrl}/api/flows/attachments?session_id=${sessionId}&attachment_id=${attachmentId}`;
+        const url = `${configObj.widgetUrl}/api/flows/attachments/${sessionId}/${attachmentId}`;
         const btn = document.getElementById('cirbeDownloadPdfBtn');
         const originalHtml = btn ? btn.innerHTML : '';
         
