@@ -563,7 +563,7 @@ window.generateLeadSession = async function() {
             customer_id: customerId,
             settings: {
                 sandbox: isSandbox,
-                executions_hooks_extra_data: {
+                hooks_extra_data: {
                     "session": "{session_id}",
                     "customer": "{customer_id}"
                 },

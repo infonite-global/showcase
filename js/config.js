@@ -1,4 +1,4 @@
-const INFONITE_VERSION = "2026.6.1600";
+const INFONITE_VERSION = "2026.6.2500";
 
 const DEFAULT_CONFIG_ITEM = {
     id: "default",
