@@ -704,3 +704,140 @@ window.viewSession = function(sid) {
     if (!sid) return;
     window.location.href = `es-public-administration-results.html?session_id=${sid}`;
 };
+
+// --------------------------------------------------------------------------------
+// Import External Session Functionality
+// --------------------------------------------------------------------------------
+
+window.openImportModal = function() {
+    const modal = document.getElementById('importSessionModal');
+    if (modal) {
+        document.getElementById('import-session-id').value = '';
+        showImportFormView();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.closeImportSessionModal = function() {
+    const modal = document.getElementById('importSessionModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+function showImportFormView() {
+    document.getElementById('import-form-view').classList.remove('hidden');
+    document.getElementById('import-form-view').classList.add('flex');
+    document.getElementById('import-loading-view').classList.add('hidden');
+    document.getElementById('import-success-view').classList.add('hidden');
+    document.getElementById('import-error-view').classList.add('hidden');
+}
+
+window.showImportFormView = showImportFormView; // Expose to global scope for retry button
+
+window.submitImportSession = async function() {
+    const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
+    if (!config) {
+        alert("Configuration is not loaded yet.");
+        return;
+    }
+
+    const sessionId = document.getElementById('import-session-id').value.trim();
+
+    if (!sessionId) {
+        alert("Please enter a valid Session ID.");
+        return;
+    }
+
+    // Switch to Loading View
+    document.getElementById('import-form-view').classList.add('hidden');
+    document.getElementById('import-loading-view').classList.remove('hidden');
+    document.getElementById('import-loading-view').classList.add('flex');
+
+    try {
+        // Fetch session state (first fetch to check existence)
+        const stateData = await window.InfoniteFlowsManager.pollSessionState(
+            config.widgetUrl,
+            config.secret,
+            'es-public-administration',
+            sessionId
+        );
+
+        if (!stateData) {
+            throw new Error("Invalid or empty response from server.");
+        }
+
+        // Customer ID is predefined within the session state
+        let resolvedCustomerId = stateData.customer_id;
+        
+        // If not directly present in stateData, try session settings as a fallback, otherwise default to 'Imported'
+        if (!resolvedCustomerId) {
+            try {
+                const settings = await window.InfoniteFlowsManager.fetchSessionSettings(
+                    config.widgetUrl,
+                    config.secret,
+                    'es-public-administration',
+                    sessionId
+                );
+                if (settings) {
+                    resolvedCustomerId = settings.customer_id || settings.customer;
+                }
+            } catch (e) {
+                console.warn("Could not retrieve customer settings, using default:", e);
+            }
+        }
+
+        if (!resolvedCustomerId) {
+            resolvedCustomerId = 'Imported';
+        }
+
+        // Add to Session History locally
+        const sessions = window.InfoniteFlowsManager.getSessions(config.appId, 'es-public-administration', config.widgetUrl) || [];
+        
+        // Remove if duplicate exists (updates with latest)
+        const existingIdx = sessions.findIndex(s => s.session_id === sessionId);
+        const newSession = {
+            session_id: sessionId,
+            app_id: config.appId,
+            customer_id: resolvedCustomerId,
+            widget_url: '', // widget URL is unknown as session was not generated here
+            infonite_state: stateData,
+            date_created: stateData.date_created || new Date().toISOString()
+        };
+
+        if (existingIdx !== -1) {
+            sessions[existingIdx] = newSession;
+        } else {
+            sessions.unshift(newSession);
+        }
+
+        window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', sessions, config.widgetUrl);
+
+        // Switch to Success View
+        document.getElementById('import-loading-view').classList.add('hidden');
+        document.getElementById('import-success-view').classList.remove('hidden');
+        document.getElementById('import-success-view').classList.add('flex');
+
+        // Re-render table
+        if (typeof renderHistory === 'function') {
+            renderHistory();
+        }
+
+    } catch (err) {
+        console.error("Import failed:", err);
+        let errorMsg = "Could not fetch the session state. Make sure the Session ID is correct and belongs to the active environment.";
+        if (err.statusText) {
+            errorMsg = `Server response: ${err.status} ${err.statusText}`;
+        } else if (err.message) {
+            errorMsg = err.message;
+        }
+        document.getElementById('import-error-msg').textContent = errorMsg;
+
+        // Switch to Error View
+        document.getElementById('import-loading-view').classList.add('hidden');
+        document.getElementById('import-error-view').classList.remove('hidden');
+        document.getElementById('import-error-view').classList.add('flex');
+    }
+};
