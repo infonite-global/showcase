@@ -250,3 +250,45 @@ const INFONITE_FLOWS = {
 
 window.INFONITE_FEATURES = INFONITE_FEATURES;
 window.INFONITE_FLOWS = INFONITE_FLOWS;
+
+const INFONITE_CURSOR_MAP = {
+    'es-public-administration:welcome:init': {
+        text: 'Initializing',
+        icon: 'fa-solid fa-hourglass-start',
+        color: 'slate',
+        description: 'Widget not opened yet.'
+    },
+    'es-public-administration:welcome:consent': {
+        text: 'Consent Form',
+        icon: 'fa-solid fa-file-contract',
+        color: 'amber',
+        description: 'User is reviewing and accepting the consent form.'
+    },
+    'es-public-administration:connect:source': {
+        text: 'Retrieving Data',
+        icon: 'fa-solid fa-database',
+        color: 'blue',
+        description: 'Widget is connecting with public sources.'
+    },
+    'es-public-administration:connect:wait': {
+        text: 'Processing (Async)',
+        icon: 'fa-solid fa-spinner',
+        spin: true,
+        color: 'emerald',
+        description: 'Sources connected. Retrieving and decrypting documents.'
+    },
+    'es-public-administration:bye:completed': {
+        text: 'Completed',
+        icon: 'fa-solid fa-circle-check',
+        color: 'emerald',
+        description: 'Session completed successfully.'
+    },
+    'es-public-administration:bye:failure': {
+        text: 'Failed',
+        icon: 'fa-solid fa-circle-xmark',
+        color: 'red',
+        description: 'Session closed with failure.'
+    }
+};
+
+window.INFONITE_CURSOR_MAP = INFONITE_CURSOR_MAP;

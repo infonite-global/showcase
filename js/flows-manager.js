@@ -196,21 +196,36 @@ class FlowSessionManager {
     async fetchSessionResults(widgetUrl, appSecret, kind, sessionId) {
         if (!sessionId || !appSecret || !widgetUrl) throw new Error("Missing parameters");
         
-        const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}/results`, {
-            method: "GET",
-            headers: { "X-APP-SECRET": appSecret }
-        });
-        
-        if (!response.ok) {
-            let errorDetail = `Results not available ${response.status}`;
-            try {
-                const err = await response.json();
-                errorDetail = err.detail || errorDetail;
-            } catch (e) {}
-            throw new Error(errorDetail);
+        while (true) {
+            const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}/results`, {
+                method: "GET",
+                headers: { "X-APP-SECRET": appSecret }
+            });
+            
+            if (response.status === 429) {
+                const descEl = document.getElementById('stateDesc');
+                const originalText = descEl ? descEl.innerHTML : "";
+                if (descEl) {
+                    descEl.innerHTML = "Rate limited by server. Retrying in 5 seconds...";
+                }
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                if (descEl && originalText) {
+                    descEl.innerHTML = originalText;
+                }
+                continue;
+            }
+            
+            if (!response.ok) {
+                let errorDetail = `Results not available ${response.status}`;
+                try {
+                    const err = await response.json();
+                    errorDetail = err.detail || errorDetail;
+                } catch (e) {}
+                throw new Error(errorDetail);
+            }
+            
+            return response.json();
         }
-        
-        return response.json();
     }
 
     /**

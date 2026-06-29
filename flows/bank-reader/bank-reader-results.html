@@ -156,7 +156,7 @@
       <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-2.5 px-4 shadow-sm w-full xl:w-auto xl:flex-1" id="techSessionCard">
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-2.5">
-                <div class="w-2.5 h-2.5 rounded-full bg-slate-300 transition-colors" id="techStatusIndicator"></div>
+                <i class="fa-solid fa-circle-notch text-[11px] transition-colors shrink-0" id="techStatusIndicator"></i>
                 <div class="flex flex-col leading-tight pt-0.5">
                     <span class="text-[10px] font-black uppercase text-slate-800 tracking-wider" id="techStatusCode">CONNECTING</span>
                     <span class="text-[10px] font-medium text-slate-500" id="techStatusDesc">Initializing session info</span>
@@ -493,7 +493,6 @@
 <script src="../../js/features.js?v=5"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
 <script src="../../js/flows-manager.js?v=5"></script>
-<script src="../../js/status.js?v=5"></script>
 <script>
     let pollTimer = null;
     let configObj = null;
@@ -719,15 +718,31 @@
             tDesc.textContent = token.detail || "Waiting for synchronization";
         }
         if (tInd) {
-            tInd.className = `w-2 h-2 rounded-full transition-colors`;
-            if (animateClass) tInd.classList.add(animateClass);
-            tInd.style.backgroundColor = colorHex;
+            let statusIcon = 'fa-solid fa-circle-notch';
+            if (trackingState === 'COMPLETED') statusIcon = 'fa-solid fa-circle-check';
+            else if (trackingState === 'FAILED' || trackingState === 'ERROR') statusIcon = 'fa-solid fa-circle-xmark';
+            else if (trackingState === 'CLIENT_CANCELLED' || trackingState === 'SYSTEM_CANCELLED') statusIcon = 'fa-solid fa-ban';
+            else if (animateClass === 'animate-pulse') statusIcon = 'fa-solid fa-circle-notch animate-spin';
+            else statusIcon = 'fa-solid fa-hourglass';
+            
+            tInd.className = `${statusIcon} text-[11px] transition-colors shrink-0`;
+            tInd.style.color = colorHex;
         }
 
         if (btnJson) {
-            if (trackingState === 'COMPLETED') {
+            const dateStarted = session.infonite_state?.date_started || session.date_started;
+            if (dateStarted) {
                 btnJson.classList.remove('hidden');
                 btnJson.classList.add('flex');
+                
+                const isClosed = session.infonite_state?.is_closed === true || session.is_closed === true || trackingState === 'COMPLETED';
+                if (isClosed) {
+                    btnJson.className = "flex bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary-container)] px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm items-center gap-2";
+                    btnJson.innerHTML = `<i class="fa-solid fa-code text-[var(--primary)]"></i> VIEW RAW JSON (FINAL)`;
+                } else {
+                    btnJson.className = "flex bg-amber-50/50 border border-amber-300 text-amber-700 hover:text-amber-800 hover:border-amber-500 hover:bg-amber-100/50 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-[0_0_8px_rgba(245,158,11,0.25)] items-center gap-2 animate-pulse";
+                    btnJson.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-500"></i> VIEW RAW JSON (PARTIAL)`;
+                }
             } else {
                 btnJson.classList.add('hidden');
                 btnJson.classList.remove('flex');
@@ -801,8 +816,11 @@
     
     // --- Data Fetching Logic ---
     window.currentResultData = null;
+    let isFetchingResults = false;
     
     async function fetchDashboardResults(session) {
+        if (isFetchingResults) return;
+        isFetchingResults = true;
         try {
             const resultData = await window.InfoniteFlowsManager.fetchSessionResults(
                 configObj.widgetUrl,
@@ -831,6 +849,8 @@
                 "Data Unreachable", 
                 `The session completed successfully, but the final data payload could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Decryption or Networking Error'}</span>`
             );
+        } finally {
+            isFetchingResults = false;
         }
     }
     
@@ -2407,7 +2427,28 @@
     }
 
     // --- JSON Viewer Modal Logic ---
-    window.openJsonModal = function() {
+    window.openJsonModal = async function() {
+        if (!window.currentResultData && currentSessionData) {
+            const btn = document.getElementById('btnViewJson');
+            const originalHtml = btn ? btn.innerHTML : "";
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-500"></i> Loading...`;
+            try {
+                const data = await window.InfoniteFlowsManager.fetchSessionResults(
+                    configObj.widgetUrl,
+                    configObj.secret,
+                    'bank_reader',
+                    currentSessionData.session_id
+                );
+                window.currentResultData = data;
+            } catch (err) {
+                console.error("Failed to fetch partial results for JSON view:", err);
+                alert("Partial results are not yet available to fetch: " + err.message);
+                if (btn) btn.innerHTML = originalHtml;
+                return;
+            }
+            if (btn) btn.innerHTML = originalHtml;
+        }
+
         if (!window.currentResultData) return;
         const modal = document.getElementById('jsonModal');
         const content = document.getElementById('jsonModalContent');

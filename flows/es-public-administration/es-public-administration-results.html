@@ -156,14 +156,20 @@
       <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-2.5 px-4 shadow-sm w-full xl:w-auto xl:flex-1" id="techSessionCard">
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-2.5">
-                <div class="w-2.5 h-2.5 rounded-full bg-slate-300 transition-colors" id="techStatusIndicator"></div>
-                <div class="flex flex-col leading-tight pt-0.5">
+                <i class="fa-solid fa-circle-notch text-[11px] transition-colors shrink-0" id="techStatusIndicator"></i>
+                <div class="flex flex-col leading-tight">
                     <span class="text-[10px] font-black uppercase text-slate-800 tracking-wider" id="techStatusCode">CONNECTING</span>
                     <span class="text-[10px] font-medium text-slate-500" id="techStatusDesc">Initializing session info</span>
+                    
+                    <!-- Current Step (Cursor) -->
+                    <span class="text-[9px] font-bold text-slate-400 mt-1 flex items-center gap-1 hidden" id="techCursorContainer">
+                        <i class="fa-solid fa-compass text-[9px]" id="techCursorIcon"></i>
+                        <span>Step: <span id="techCursorName">Detecting...</span></span>
+                    </span>
                 </div>
             </div>
             
-            <div class="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
+            <div class="w-px h-8 bg-slate-200 mx-2 hidden md:block shrink-0"></div>
             
             <div class="flex flex-col justify-center hidden md:flex">
                 <span class="text-[9px] font-medium uppercase text-slate-400 tracking-widest leading-none mb-0.5">Session ID</span>
@@ -171,7 +177,8 @@
             </div>
         </div>
         
-        <div class="flex items-center gap-2">
+        <!-- Right Side: Actions -->
+        <div class="flex items-center gap-2 ml-4 shrink-0">
             <!-- Active Session Action Buttons -->
             <div class="flex items-center gap-2" id="subheader-actions">
                 <button id="btnCancelSession" class="hidden bg-white border border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50 w-8 h-8 rounded-lg text-xs flex items-center justify-center transition-colors shadow-sm shrink-0" title="Cancel Session" onclick="cancelSession()">
@@ -228,7 +235,7 @@
       <!-- Left Sidebar: Lateral Menu -->
       <div class="col-span-12 md:col-span-3 lg:col-span-3 flex flex-col gap-2 relative">
           <!-- Sticky Wrapper -->
-          <div class="sticky top-24 bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col gap-1.5">
+          <div class="sticky top-24 bg-white rounded-3xl p-4 shadow-sm border border-slate-100 flex flex-col gap-1.5" id="sidebarMenuContainer">
               <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 px-3">Categories</h3>
               
               <!-- Menu Items -->
@@ -488,7 +495,6 @@
 <script src="../../js/features.js?v=5"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
 <script src="../../js/flows-manager.js?v=5"></script>
-<script src="../../js/status.js?v=5"></script>
 <script>
     let pollTimer = null;
     let configObj = null;
@@ -709,20 +715,73 @@
         const tInd = document.getElementById('techStatusIndicator');
         const btnJson = document.getElementById('btnViewJson');
         
+        // Setup Cursor Step Indicator
+        const cContainer = document.getElementById('techCursorContainer');
+        const cursorVal = session.infonite_state?.cursor;
+        
+        if (cursorVal && window.INFONITE_CURSOR_MAP && window.INFONITE_CURSOR_MAP[cursorVal]) {
+            const cursorInfo = window.INFONITE_CURSOR_MAP[cursorVal];
+            if (cContainer) {
+                cContainer.classList.remove('hidden');
+                cContainer.classList.add('flex');
+            }
+            
+            const cIcon = document.getElementById('techCursorIcon');
+            const cName = document.getElementById('techCursorName');
+            
+            let iconClass = cursorInfo.icon || 'fa-solid fa-compass';
+            if (cursorInfo.spin) iconClass += ' animate-spin';
+            
+            if (cIcon) cIcon.className = `${iconClass} text-[9px]`;
+            
+            let stepColorHex = '#64748b';
+            if (cursorInfo.color === 'amber') stepColorHex = '#f59e0b';
+            else if (cursorInfo.color === 'blue') stepColorHex = '#3b82f6';
+            else if (cursorInfo.color === 'emerald') stepColorHex = '#10b981';
+            else if (cursorInfo.color === 'red') stepColorHex = '#ef4444';
+            
+            if (cIcon) cIcon.style.color = stepColorHex;
+            if (cName) {
+                cName.textContent = cursorInfo.text;
+                cName.style.color = stepColorHex;
+            }
+        } else {
+            if (cContainer) {
+                cContainer.classList.add('hidden');
+                cContainer.classList.remove('flex');
+            }
+        }
+
         if (tCode) tCode.textContent = token.text || trackingState;
         if (tDesc) {
             tDesc.textContent = token.detail || "Waiting for synchronization";
         }
         if (tInd) {
-            tInd.className = `w-2 h-2 rounded-full transition-colors`;
-            if (animateClass) tInd.classList.add(animateClass);
-            tInd.style.backgroundColor = colorHex;
+            let statusIcon = 'fa-solid fa-circle-notch';
+            if (trackingState === 'COMPLETED') statusIcon = 'fa-solid fa-circle-check';
+            else if (trackingState === 'FAILED' || trackingState === 'ERROR') statusIcon = 'fa-solid fa-circle-xmark';
+            else if (trackingState === 'CLIENT_CANCELLED' || trackingState === 'SYSTEM_CANCELLED') statusIcon = 'fa-solid fa-ban';
+            else if (animateClass === 'animate-pulse') statusIcon = 'fa-solid fa-circle-notch animate-spin';
+            else statusIcon = 'fa-solid fa-hourglass';
+            
+            tInd.className = `${statusIcon} text-[11px] transition-colors shrink-0`;
+            tInd.style.color = colorHex;
         }
 
         if (btnJson) {
-            if (trackingState === 'COMPLETED') {
+            const dateStarted = session.infonite_state?.date_started || session.date_started;
+            if (dateStarted) {
                 btnJson.classList.remove('hidden');
                 btnJson.classList.add('flex');
+                
+                const isClosed = session.infonite_state?.is_closed === true || session.is_closed === true || trackingState === 'COMPLETED';
+                if (isClosed) {
+                    btnJson.className = "flex bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary-container)] px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm items-center gap-2";
+                    btnJson.innerHTML = `<i class="fa-solid fa-code text-[var(--primary)]"></i> VIEW RAW JSON (FINAL)`;
+                } else {
+                    btnJson.className = "flex bg-amber-50/50 border border-amber-300 text-amber-700 hover:text-amber-800 hover:border-amber-500 hover:bg-amber-100/50 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-[0_0_8px_rgba(245,158,11,0.25)] items-center gap-2 animate-pulse";
+                    btnJson.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-500"></i> VIEW RAW JSON (PARTIAL)`;
+                }
             } else {
                 btnJson.classList.add('hidden');
                 btnJson.classList.remove('flex');
@@ -741,6 +800,10 @@
         document.getElementById('stateTitle').textContent = token.text || trackingState;
         
         let detailHtml = token.detail || "Waiting for synchronization.";
+        if (cursorVal && window.INFONITE_CURSOR_MAP && window.INFONITE_CURSOR_MAP[cursorVal]) {
+            const cursorInfo = window.INFONITE_CURSOR_MAP[cursorVal];
+            detailHtml = `<strong>Current Position:</strong> ${cursorInfo.description}<br/>` + detailHtml;
+        }
         
         detailHtml += `<br/>
             <div class="flex flex-col items-center gap-1 mt-3">
@@ -781,9 +844,11 @@
                 dsContainer.classList.remove('hidden');
                 dsContainer.classList.add('flex', 'flex-col', 'md:grid');
                 
-                // If the root container is still showing the preloader raw HTML, inject the customer view
+                renderSidebarMenu();
+                
+                // If the root container is still showing the preloader raw HTML, inject the first active view
                 if(document.getElementById('dashboard-view-root').innerHTML.includes('Loading module...')) {
-                    switchDashboardView('customer');
+                    switchDashboardView(getFirstActiveCategory());
                 }
             }
         } else {
@@ -796,8 +861,95 @@
     
     // --- Data Fetching Logic ---
     window.currentResultData = null;
+    let isFetchingResults = false;
     
+    const MENU_MAPPING = [
+        {
+            id: 'customer',
+            name: 'Customer Info',
+            icon: 'fa-solid fa-user-astronaut',
+            dependsOn: ['customer_information_read']
+        },
+        {
+            id: 'work_life',
+            name: 'Social Security',
+            icon: 'fa-solid fa-people-group',
+            dependsOn: ['labor_check', 'public_pensions']
+        },
+        {
+            id: 'driver',
+            name: 'Driver Data',
+            icon: 'fa-solid fa-car',
+            dependsOn: ['driver_data', 'vehicles_data']
+        },
+        {
+            id: 'taxes',
+            name: 'Taxes',
+            icon: 'fa-solid fa-file-invoice-dollar',
+            dependsOn: ['yearly_individual_tax']
+        },
+        {
+            id: 'credit_registry',
+            name: 'Credit Registry (CIRBE)',
+            icon: 'fa-solid fa-money-check-dollar',
+            dependsOn: ['credit_registry_data']
+        },
+        {
+            id: 'academic',
+            name: 'Academic & Formation',
+            icon: 'fa-solid fa-graduation-cap',
+            dependsOn: ['academic_data']
+        },
+        {
+            id: 'properties',
+            name: 'Properties',
+            icon: 'fa-solid fa-house',
+            dependsOn: ['properties_data']
+        }
+    ];
+
+    function getFirstActiveCategory() {
+        if (!window.currentResultData) return 'customer';
+        const retrieved = window.currentResultData.retrieved_features || window.currentResultData.consent?.accepted_features || [];
+        const firstActive = MENU_MAPPING.find(item => item.dependsOn.some(feature => retrieved.includes(feature)));
+        return firstActive ? firstActive.id : 'audit';
+    }
+
+    function renderSidebarMenu() {
+        if (!window.currentResultData) return;
+        const retrieved = window.currentResultData.retrieved_features || window.currentResultData.consent?.accepted_features || [];
+        const container = document.getElementById('sidebarMenuContainer');
+        if (!container) return;
+
+        let html = `<h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 px-3">Categories</h3>`;
+
+        MENU_MAPPING.forEach(item => {
+            const isRequested = item.dependsOn.some(feature => retrieved.includes(feature));
+            if (isRequested) {
+                html += `
+                  <button onclick="switchDashboardView('${item.id}')" id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
+                      <i class="${item.icon} opacity-60"></i> ${item.name}
+                  </button>`;
+            } else {
+                html += `
+                  <div id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold text-slate-400 opacity-60 flex items-center gap-3 cursor-not-allowed select-none" title="Not requested in this session">
+                      <i class="${item.icon} opacity-60"></i> ${item.name}
+                  </div>`;
+            }
+        });
+
+        html += `
+          <div class="h-px bg-slate-100 w-full my-2"></div>
+          <button onclick="switchDashboardView('audit')" id="nav-audit" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
+              <i class="fa-solid fa-shield-halved opacity-60"></i> Audit Log
+          </button>`;
+
+        container.innerHTML = html;
+    }
+
     async function fetchDashboardResults(session) {
+        if (isFetchingResults) return;
+        isFetchingResults = true;
         try {
             const resultData = await window.InfoniteFlowsManager.fetchSessionResults(
                 configObj.widgetUrl,
@@ -816,8 +968,8 @@
             dsContainer.classList.remove('hidden');
             dsContainer.classList.add('flex', 'flex-col', 'md:grid');
             
-            // Auto-load first category
-            switchDashboardView('customer');
+            renderSidebarMenu();
+            switchDashboardView(getFirstActiveCategory());
             
         } catch (error) {
             console.error("Failed to retrieve dashboard results payload:", error);
@@ -826,6 +978,8 @@
                 "Data Unreachable", 
                 `The session completed successfully, but the final data payload could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Decryption or Networking Error'}</span>`
             );
+        } finally {
+            isFetchingResults = false;
         }
     }
     
@@ -834,17 +988,19 @@
         // 1. Reset all button styles to inactive
         const navBtns = document.querySelectorAll('.dashboard-nav-btn');
         navBtns.forEach(btn => {
-            btn.className = "dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3";
-            const icon = btn.querySelector('i');
-            if (icon) {
-                icon.classList.remove('opacity-80', 'text-white');
-                icon.classList.add('opacity-60');
+            if (btn.tagName === 'BUTTON') {
+                btn.className = "dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3";
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('opacity-80', 'text-white');
+                    icon.classList.add('opacity-60');
+                }
             }
         });
         
         // 2. Set Active Button Styles
         const activeBtn = document.getElementById(`nav-${categoryId}`);
-        if(activeBtn) {
+        if(activeBtn && activeBtn.tagName === 'BUTTON') {
             activeBtn.className = "dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all bg-[var(--primary)] text-white shadow-md flex items-center gap-3";
             const icon = activeBtn.querySelector('i');
             if(icon) {
@@ -2994,7 +3150,28 @@
     }
 
     // --- JSON Viewer Modal Logic ---
-    window.openJsonModal = function() {
+    window.openJsonModal = async function() {
+        if (!window.currentResultData && currentSessionData) {
+            const btn = document.getElementById('btnViewJson');
+            const originalHtml = btn ? btn.innerHTML : "";
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-amber-500"></i> Loading...`;
+            try {
+                const data = await window.InfoniteFlowsManager.fetchSessionResults(
+                    configObj.widgetUrl,
+                    configObj.secret,
+                    'es-public-administration',
+                    currentSessionData.session_id
+                );
+                window.currentResultData = data;
+            } catch (err) {
+                console.error("Failed to fetch partial results for JSON view:", err);
+                alert("Partial results are not yet available to fetch: " + err.message);
+                if (btn) btn.innerHTML = originalHtml;
+                return;
+            }
+            if (btn) btn.innerHTML = originalHtml;
+        }
+
         if (!window.currentResultData) return;
         const modal = document.getElementById('jsonModal');
         const content = document.getElementById('jsonModalContent');

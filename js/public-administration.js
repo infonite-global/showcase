@@ -424,6 +424,23 @@
                   `;
               }
 
+              if (iState.cursor && window.INFONITE_CURSOR_MAP && window.INFONITE_CURSOR_MAP[iState.cursor]) {
+                  const cursorInfo = window.INFONITE_CURSOR_MAP[iState.cursor];
+                  let stepColor = '#64748b';
+                  if (cursorInfo.color === 'amber') stepColor = '#f59e0b';
+                  else if (cursorInfo.color === 'blue') stepColor = '#3b82f6';
+                  else if (cursorInfo.color === 'emerald') stepColor = '#10b981';
+                  else if (cursorInfo.color === 'red') stepColor = '#ef4444';
+                  
+                  let iconClass = cursorInfo.icon || 'fa-solid fa-compass';
+                  if (cursorInfo.spin) iconClass += ' animate-spin';
+                  
+                  statusBadge += `<div class="mt-1 flex items-center gap-1 text-[9px] font-bold" style="color: ${stepColor};">
+                      <i class="${iconClass}"></i>
+                      <span>${cursorInfo.text}</span>
+                  </div>`;
+              }
+
               return `
               <tr class="hover:bg-black/[0.02] transition-colors cursor-pointer group" onclick="restoreSession('${sId}', '${s.widget_url}', '${s.environment_name || ""}')">
                   <td class="p-4 first:pl-6 border-b border-black/5 w-1/3">
