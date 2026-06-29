@@ -800,12 +800,43 @@
         document.getElementById('stateTitle').textContent = token.text || trackingState;
         
         let detailHtml = token.detail || "Waiting for synchronization.";
+        
+        let cursorBadgeHtml = "";
         if (cursorVal && window.INFONITE_CURSOR_MAP && window.INFONITE_CURSOR_MAP[cursorVal]) {
             const cursorInfo = window.INFONITE_CURSOR_MAP[cursorVal];
-            detailHtml = `<strong>Current Position:</strong> ${cursorInfo.description}<br/>` + detailHtml;
+            let badgeBg = 'bg-slate-50 border-slate-200/60 text-slate-700';
+            let iconColor = 'text-slate-400';
+            
+            if (cursorInfo.color === 'amber') {
+                badgeBg = 'bg-amber-50/50 border-amber-200/60 text-amber-800';
+                iconColor = 'text-amber-500';
+            } else if (cursorInfo.color === 'blue') {
+                badgeBg = 'bg-blue-50 border-blue-200/60 text-blue-800';
+                iconColor = 'text-blue-500';
+            } else if (cursorInfo.color === 'emerald') {
+                badgeBg = 'bg-emerald-50 border-emerald-200/60 text-emerald-800';
+                iconColor = 'text-emerald-500';
+            } else if (cursorInfo.color === 'red') {
+                badgeBg = 'bg-red-50 border-red-200/60 text-red-800';
+                iconColor = 'text-red-500';
+            }
+            
+            let iconClass = cursorInfo.icon || 'fa-solid fa-compass';
+            if (cursorInfo.spin || cursorVal.includes('wait') || cursorVal.includes('source')) {
+                iconClass += ' animate-pulse';
+            }
+            
+            cursorBadgeHtml = `
+                <div class="flex justify-center my-3">
+                    <div class="inline-flex items-center gap-2 border px-3 py-1 rounded-full text-[10px] font-bold shadow-sm transition-all ${badgeBg}">
+                        <i class="${iconClass} ${iconColor}"></i>
+                        <span>Step: ${cursorInfo.text}</span>
+                    </div>
+                </div>
+            `;
         }
         
-        detailHtml += `<br/>
+        document.getElementById('stateDesc').innerHTML = cursorBadgeHtml + detailHtml + `<br/>
             <div class="flex flex-col items-center gap-1 mt-3">
                 <span class="inline-block font-mono font-bold px-2 py-0.5 rounded tracking-widest text-[11px] shadow-sm bg-white border border-black/5" style="color: ${colorHex};">
                     ${session.session_id}
@@ -814,8 +845,6 @@
                     ${session.customer_id || 'Unknown Customer'}
                 </span>
             </div>`;
-            
-        document.getElementById('stateDesc').innerHTML = detailHtml;
         
         // --- Dashboard Visibility Toggling ---
         const dsContainer = document.getElementById('dashboardContainer');
