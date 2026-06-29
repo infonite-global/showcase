@@ -35,7 +35,7 @@
             let flowIndex = parts.indexOf('flows');
             if (flowIndex !== -1) {
                 // If the path is /path/to/project/flows/file.html, depth is 1. -> ../
-                // If it is /path/to/project/flows/es-citizen-data/file.html, depth is 2. -> ../../
+                // If it is /path/to/project/flows/es-public-administration/file.html, depth is 2. -> ../../
                 depth = parts.length - flowIndex - 1; // -1 to exclude the filename itself
             } else {
                 // Fallback if not strictly in /flows/ but deep: assuming 1 level down for safety

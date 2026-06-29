@@ -1,10 +1,10 @@
 const HomeView = { template: '#home-template' };
 const FlowsView = { template: '#flows-template' };
-// CitizenDataView and BankReaderView are defined globally in their respective files.
+// PublicAdministrationView and BankReaderView are defined globally in their respective files.
 const routes = [
   { path: '/', component: HomeView, name: 'home' },
   { path: '/flows', component: FlowsView, name: 'flows' },
-  { path: '/citizen-data', component: CitizenDataView, name: 'citizen-data' },
+  { path: '/es-public-administration', component: PublicAdministrationView, name: 'es-public-administration' },
   { path: '/bank-reader', component: BankReaderView, name: 'bank-reader' },
 ];
 

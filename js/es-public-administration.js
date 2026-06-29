@@ -1,6 +1,6 @@
 /**
- * es-citizen-data.js
- * Clean UI logic integration for the Spain Citizen Data flow.
+ * es-public-administration.js
+ * Clean UI logic integration for the Spain Public Administration flow.
  */
 
 const ALLOWED_MODULES = [
@@ -172,7 +172,7 @@ window.renderHistory = function() {
     const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
     if (!config) return;
     
-    const sessions = window.InfoniteFlowsManager ? window.InfoniteFlowsManager.getSessions(config.appId, 'es_citizen_data', config.widgetUrl) : [];
+    const sessions = window.InfoniteFlowsManager ? window.InfoniteFlowsManager.getSessions(config.appId, 'es-public-administration', config.widgetUrl) : [];
     const emptyState = document.getElementById('dashboardEmptyState');
     const tableState = document.getElementById('dashboardTableState');
     const tbody = document.getElementById('sessionHistory');
@@ -309,7 +309,7 @@ window.syncActiveSession = async function(sid) {
     if (!config) return;
     try {
         if (window.InfoniteFlowsManager) {
-            await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es_citizen_data', sid, config.appId);
+            await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', sid, config.appId);
             renderHistory();
         }
     } catch (e) {
@@ -334,9 +334,9 @@ window.deleteLocalSession = function(sid) {
                 }
                 
                 if (window.InfoniteFlowsManager) {
-                    let sessions = window.InfoniteFlowsManager.getSessions(config.appId, 'es_citizen_data', config.widgetUrl) || [];
+                    let sessions = window.InfoniteFlowsManager.getSessions(config.appId, 'es-public-administration', config.widgetUrl) || [];
                     sessions = sessions.filter(s => s.session_id !== sid);
-                    window.InfoniteFlowsManager.saveSessions(config.appId, 'es_citizen_data', sessions, config.widgetUrl);
+                    window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', sessions, config.widgetUrl);
                     
                     if (typeof renderHistory === 'function') {
                         renderHistory();
@@ -353,7 +353,7 @@ async function pollLoop(sid, config) {
     if (!window.activePollers[sid]) return; // Stop if cancelled/cleared
     try {
         if (window.InfoniteFlowsManager) {
-            const state = await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es_citizen_data', sid, config.appId);
+            const state = await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', sid, config.appId);
             
             // Re-render immediately to reflect realtime changes (like ping_date updating USER_ONLINE indicator)
             if (typeof renderHistory === 'function') {
@@ -387,7 +387,7 @@ window.cancelActiveSession = function(sid) {
     if (typeof showConfirmModal === 'function') {
         showConfirmModal(
             "Cancel Session",
-            "Are you sure you want to cancel this session? The citizen will no longer be able to complete the verification process.",
+            "Are you sure you want to cancel this session? The user will no longer be able to complete the verification process.",
             "Cancel Session",
             async () => {
                 const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
@@ -395,9 +395,9 @@ window.cancelActiveSession = function(sid) {
                 delete window.activePollers[sid]; // stop local
                 try {
                     if (window.InfoniteFlowsManager) {
-                        await window.InfoniteFlowsManager.cancelSession(config.widgetUrl, config.secret, 'es_citizen_data', sid);
+                        await window.InfoniteFlowsManager.cancelSession(config.widgetUrl, config.secret, 'es-public-administration', sid);
                         // Re-poll immediately to update UI
-                        await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es_citizen_data', sid, config.appId);
+                        await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', sid, config.appId);
                         renderHistory();
                     }
                 } catch (e) {
@@ -423,7 +423,7 @@ window.clearHistory = function() {
                 window.activePollers = {};
                 const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
                 if (config && window.InfoniteFlowsManager) {
-                    window.InfoniteFlowsManager.saveSessions(config.appId, 'es_citizen_data', [], config.widgetUrl);
+                    window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', [], config.widgetUrl);
                     renderHistory();
                 }
             }
@@ -433,7 +433,7 @@ window.clearHistory = function() {
         window.activePollers = {};
         const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
         if (config && window.InfoniteFlowsManager) {
-            window.InfoniteFlowsManager.saveSessions(config.appId, 'es_citizen_data', [], config.widgetUrl);
+            window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', [], config.widgetUrl);
             renderHistory();
         }
     }
@@ -450,7 +450,7 @@ window.openNewLeadModal = function() {
         const cidField = document.getElementById('generate-customer-id');
         if (cidField && !cidField.value) {
             const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 8);
-            cidField.value = `ES-CITIZEN-DATA-${randomDigits}`;
+            cidField.value = `ES-PUBLIC-ADMINISTRATION-${randomDigits}`;
         }
 
         // Setup completion URLs dropdown correctly
@@ -595,18 +595,18 @@ window.generateLeadSession = async function() {
             config.widgetUrl,
             config.secret,
             config.appId,
-            "es_citizen_data",
+            "es-public-administration",
             payload
         );
 
         if (result && result.widget_url) {
             // Store token actively locally as current
-            localStorage.setItem(`active_session_es_citizen_data`, result.session_token);
+            localStorage.setItem(`active_session_es-public-administration`, result.session_token);
             
             // Poll session status once IMMEDIATELY to update the underlying session state from Infonite
             if(window.InfoniteFlowsManager && window.InfoniteFlowsManager.pollSessionState) {
                try {
-                   await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es_citizen_data', result.session_id, config.appId);
+                    await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', result.session_id, config.appId);
                } catch (e) {
                    console.error("Initial polling failed:", e);
                }
@@ -691,5 +691,5 @@ window.generateLeadSession = async function() {
 
 window.viewSession = function(sid) {
     if (!sid) return;
-    window.location.href = `es-citizen-data-results.html?session_id=${sid}`;
+    window.location.href = `es-public-administration-results.html?session_id=${sid}`;
 };

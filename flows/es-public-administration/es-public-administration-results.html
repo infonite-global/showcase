@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Session Results - Citizen Data | Infonite</title>
+<title>Session Results - Spain Public Administration | Infonite</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
@@ -143,12 +143,12 @@
       
       <!-- Icon & Title -->
       <div class="flex items-center gap-4 shrink-0">
-        <a href="es-citizen-data.html" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 border border-black/5 text-slate-400 hover:text-[var(--brand-dark)] hover:bg-white transition-all shadow-sm shrink-0" title="Back to Sessions">
+        <a href="es-public-administration.html" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 border border-black/5 text-slate-400 hover:text-[var(--brand-dark)] hover:bg-white transition-all shadow-sm shrink-0" title="Back to Spain Public Administration">
             <i class="fa-solid fa-chevron-left text-lg"></i>
         </a>
         <div>
-          <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Spain Citizen Data <span class="text-slate-400 font-medium text-lg ml-2">/ Results</span></h1>
-          <p class="text-xs md:text-sm font-medium text-slate-500">Spain citizen identity verification widget demo</p>
+          <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Spain Public Administration <span class="text-slate-400 font-medium text-lg ml-2">/ Results</span></h1>
+          <p class="text-xs md:text-sm font-medium text-slate-500">Spain public administration data extraction widget demo</p>
         </div>
       </div>
       
@@ -270,7 +270,7 @@
 
       <!-- Right Content: Dynamic View Root -->
       <div class="col-span-12 md:col-span-9 lg:col-span-9 relative" id="dashboard-view-root">
-          <!-- The content from flows/es-citizen-data/templates/*.html will be injected here via Fetch -->
+          <!-- The content from flows/es-public-administration/templates/*.html will be injected here via Fetch -->
           <div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center text-slate-400">
               <div class="flex flex-col items-center gap-4">
                   <i class="fa-solid fa-circle-notch animate-spin text-2xl text-[var(--primary)]"></i>
@@ -513,7 +513,7 @@
         }
 
         // 1. Read immediate cached state
-        const sessions = window.InfoniteFlowsManager.getSessions(configObj.appId, 'es_citizen_data', configObj.widgetUrl) || [];
+        const sessions = window.InfoniteFlowsManager.getSessions(configObj.appId, 'es-public-administration', configObj.widgetUrl) || [];
         let session = sessions.find(s => s.session_id === sessionId);
 
         if (!session) {
@@ -535,7 +535,7 @@
             const liveState = await window.InfoniteFlowsManager.pollSessionState(
                 configObj.widgetUrl, 
                 configObj.secret, 
-                'es_citizen_data', 
+                'es-public-administration', 
                 cachedSession.session_id, 
                 configObj.appId
             );
@@ -802,7 +802,7 @@
             const resultData = await window.InfoniteFlowsManager.fetchSessionResults(
                 configObj.widgetUrl,
                 configObj.secret,
-                'es_citizen_data',
+                'es-public-administration',
                 session.session_id
             );
             
@@ -868,9 +868,9 @@
 
         try {
             // Support both direct HTML access and root Vue Router SPA access
-            const templateBase = window.location.pathname.includes('/flows/es-citizen-data/') 
+            const templateBase = window.location.pathname.includes('/flows/es-public-administration/') 
                 ? 'templates/' 
-                : 'flows/es-citizen-data/templates/';
+                : 'flows/es-public-administration/templates/';
                 
             const result = await fetch(`${templateBase}${categoryId}.html?v=${Date.now()}`);
             if (!result.ok) throw new Error("Template not found or unreachable");
@@ -977,7 +977,7 @@
             await window.InfoniteFlowsManager.cancelSession(
                 configObj.widgetUrl, 
                 configObj.secret, 
-                'es_citizen_data', 
+                'es-public-administration', 
                 currentSessionData.session_id
             );
             
@@ -1648,7 +1648,7 @@
                     `;
                 }).join('');
             } else {
-                vehiclesGrid.innerHTML = '<div class="p-8 text-center bg-slate-50 text-slate-400 text-sm italic border border-dashed rounded-2xl border-slate-200">No vehicles registered for this citizen.</div>';
+                vehiclesGrid.innerHTML = '<div class="p-8 text-center bg-slate-50 text-slate-400 text-sm italic border border-dashed rounded-2xl border-slate-200">No vehicles registered for this user.</div>';
             }
         }
     }
@@ -1676,7 +1676,7 @@
                 <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
                     <i class="fa-solid fa-file-circle-xmark text-4xl text-slate-300 mb-3"></i>
                     <h4 class="text-sm font-bold text-slate-600">No Certifications Found</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no academic certifications visible for this citizen in the analyzed payload.</p>
+                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no academic certifications visible for this user in the analyzed payload.</p>
                 </div>`;
             if (secondaryWrapper) {
                 secondaryWrapper.classList.add('hidden');
@@ -1923,7 +1923,7 @@
                 <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
                     <i class="fa-solid fa-piggy-bank text-4xl text-slate-300 mb-3"></i>
                     <h4 class="text-sm font-bold text-slate-600">No Pensions Found</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no public pensions registered for this citizen in the analyzed payload.</p>
+                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no public pensions registered for this user in the analyzed payload.</p>
                 </div>`;
             return;
         }
@@ -1979,7 +1979,7 @@
                 <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
                     <i class="fa-solid fa-house-circle-xmark text-4xl text-slate-300 mb-3"></i>
                     <h4 class="text-sm font-bold text-slate-600">No Properties Found</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no real estate properties registered for this citizen in the analyzed payload.</p>
+                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no real estate properties registered for this user in the analyzed payload.</p>
                 </div>`;
             return;
         }
@@ -3074,7 +3074,7 @@
     // --- Iframe Event Listeners ---
     window.addEventListener('message', (event) => {
         if (event.data) {
-            if (event.data.type === 'engine_completed' || event.data.event === "es_citizen_data:ended") {
+            if (event.data.type === 'engine_completed' || event.data.event === "es-public-administration:ended") {
                 closeWidget();
                 setTimeout(() => {
                     window.location.reload();
@@ -3100,7 +3100,7 @@
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#252526] shrink-0">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-code text-slate-400"></i>
-                <h3 class="text-sm font-bold text-slate-200 tracking-wide font-mono">es_citizen_data_results.json</h3>
+                <h3 class="text-sm font-bold text-slate-200 tracking-wide font-mono">es-public-administration-results.json</h3>
             </div>
             <div class="flex items-center gap-3">
                 <button id="btnCopyJson" onclick="copyJsonData()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-600/50 hover:bg-white/10 text-slate-300 text-xs font-bold transition-colors">

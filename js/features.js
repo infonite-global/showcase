@@ -1,7 +1,7 @@
 /**
  * Centralized definition of Infonite Features and Flows.
  * These orchestrate the behavior, configuration defaults, and semantic UI data
- * for all interactive demos like Bank Reader and Citizen Data.
+ * for all interactive demos like Bank Reader and Spain Public Administration.
  */
 
 // -------------------------------------------------------------
@@ -227,13 +227,13 @@ const INFONITE_FLOWS = {
             'cards_read'
         ]
     },
-    es_citizen_data: {
-        kind: 'es_citizen_data',
-        name: 'Spain Citizen Data',
-        shortName: 'Citizen Data',
+    'es-public-administration': {
+        kind: 'es-public-administration',
+        name: 'Spain Public Administration',
+        shortName: 'Spain Public Administration',
         icon: 'fa-solid fa-id-card-clip',
         description: 'Access and retrieve verified public administration data including labor, driving, and tax records instantly.',
-        route: '/citizen-data',
+        route: '/es-public-administration',
         defaultFeatures: [
             'customer_information_read', 
             'driver_data', 

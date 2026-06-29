@@ -266,7 +266,7 @@
         frame.src = ""; // Clear iframe to stop processes/media inside
       }
 
-      const MANAGER_ENDPOINT = "/api/flows/es_citizen_data/v1/manager";
+      const MANAGER_ENDPOINT = "/api/flows/es-public-administration/v1/manager";
       let pollingInterval = null;
 
       // Flow configuration is now managed via INFONITE_FLOWS within features.js
@@ -280,9 +280,9 @@
       function getSessionStorageKey() {
         const config = getConfig();
         if (config && window.InfoniteFlowsManager) {
-            return window.InfoniteFlowsManager._getStorageKey(config.appId, 'es_citizen_data', config.widgetUrl);
+             return window.InfoniteFlowsManager._getStorageKey(config.appId, 'es-public-administration', config.widgetUrl);
         }
-        return "infonite_sessions_es_citizen_data_unknown";
+        return "infonite_sessions_es-public-administration_unknown";
       }
 
       function getSessions() {
@@ -335,8 +335,8 @@
       }
 
       function goToDashboard() {
-          if (window.location.hash !== "#/citizen-data" && window.location.hash !== "#/citizen-data/") {
-              window.location.hash = "#/citizen-data";
+          if (window.location.hash !== "#/es-public-administration" && window.location.hash !== "#/es-public-administration/") {
+              window.location.hash = "#/es-public-administration";
           }
           const smv = document.getElementById("sessionMainView");
           const dbv = document.getElementById("dashboardView");
@@ -569,7 +569,7 @@
             // Only show delete/cancel button if it's pending/active
             if (cancelBtn) cancelBtn.classList.remove("hidden");
             if (!window.location.hash.includes(`session=${sessionId}`)) {
-                window.location.hash = `#/citizen-data?session=${sessionId}`;
+                 window.location.hash = `#/es-public-administration?session=${sessionId}`;
             }
         }
       }
@@ -649,9 +649,9 @@
         document.getElementById("errorBox").classList.add("hidden");
 
         // Prepare Request using Central Configuration
-        const requestBody = JSON.parse(JSON.stringify(INFONITE_FLOWS.es_citizen_data.defaultPayload));
+        const requestBody = JSON.parse(JSON.stringify(INFONITE_FLOWS['es-public-administration'].defaultPayload));
         const overrideId = document.getElementById("customerIdInput")?.value?.trim();
-        requestBody.customer_id = overrideId || `${INFONITE_FLOWS.es_citizen_data.id}-test-${Math.random().toString(36).substr(2, 10)}`;
+        requestBody.customer_id = overrideId || `${INFONITE_FLOWS['es-public-administration'].id}-test-${Math.random().toString(36).substr(2, 10)}`;
         requestBody.settings.executions_features = selectedFeatures;
 
         const completionMode = document.getElementById("completionModeSelect")?.value || "redirect";
@@ -779,7 +779,7 @@
         const messageListener = async (event) => {
              // In a real scenario, you'd check event.origin against config.widgetUrl
              if (event.data) {
-                 if (event.data.type === 'engine_completed' || event.data.event === "es_citizen_data:ended") {
+                 if (event.data.type === 'engine_completed' || event.data.event === "es-public-administration:ended") {
                       // Try to close widget modal if open
                       closeWidgetModal();
                       stopPolling();
@@ -1155,7 +1155,7 @@
              // Feature Mapping (Must match selection menu)
              const featureMap = {
                  "customer_information_read": { label: "Info Cliente", icon: "fa-circle-check" },
-                 "citizen_data": { label: "Carpeta Ciudadana", icon: "fa-building-columns" },
+                 "es-public-administration": { label: "Spain Public Administration", icon: "fa-building-columns" },
                  "driver_data": { label: "Datos DGT", icon: "fa-car-side" },
                  "labor_check": { label: "Vida Laboral", icon: "fa-briefcase" },
                  "academic_data": { label: "Datos Académicos", icon: "fa-graduation-cap" }
@@ -1911,7 +1911,7 @@
               // We are inside a session detail, so "back" means go back to dashboard table
               goToDashboard();
           } else {
-              // We are in the dashboard table, so "back" means leave Citizen Data completely and go to /flows
+              // We are in the dashboard table, so "back" means leave Spain Public Administration completely and go to /flows
               if (typeof router !== 'undefined') {
                   router.push('/flows');
               } else {
@@ -2016,7 +2016,7 @@
           
           // Set filename using session ID
           const originalTitle = document.title;
-          const sessionId = currentSessionId || 'Citizen-Data-Report';
+          const sessionId = currentSessionId || 'Public-Administration-Report';
           document.title = sessionId;
           
           // Use onafterprint to restore title reliably after print dialog closes
@@ -2139,8 +2139,8 @@
          // but we keep it empty to prevent errors if something calls it.
       }
 
-const CitizenDataView = {
-  template: '#citizen-data-template',
+const PublicAdministrationView = {
+  template: '#es-public-administration-template',
   mounted() {
       if (typeof initConfig === 'function') initConfig();
       if (typeof renderHistory === 'function') renderHistory();

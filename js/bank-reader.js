@@ -1,6 +1,6 @@
 /**
  * bank-reader.js
- * Clean UI logic integration for the Spain Citizen Data flow.
+ * Clean UI logic integration for the Spain Bank Reader flow.
  */
 
 const ALLOWED_MODULES = [
@@ -386,7 +386,7 @@ window.cancelActiveSession = function(sid) {
     if (typeof showConfirmModal === 'function') {
         showConfirmModal(
             "Cancel Session",
-            "Are you sure you want to cancel this session? The citizen will no longer be able to complete the verification process.",
+            "Are you sure you want to cancel this session? The user will no longer be able to complete the verification process.",
             "Cancel Session",
             async () => {
                 const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
