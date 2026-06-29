@@ -5,22 +5,20 @@
 
 const ALLOWED_MODULES = [
     'customer_information_read',
-    'driver_data',
-    'vehicles_data',
-    'academic_data',
-    'properties_data',
     'labor_check',
     'public_pensions',
-    'yearly_individual_tax',
-    'credit_registry_data'
+    'vehicles_data',
+    'driver_data',
+    'credit_registry_data',
+    'academic_data',
+    'properties_data',
+    'yearly_individual_tax'
 ];
 
 const DEFAULT_SELECTED_MODULES = [
     'customer_information_read',
-    'driver_data',
-    'vehicles_data',
-    'academic_data',
-    'properties_data'
+    'labor_check',
+    'public_pensions'
 ];
 
 document.addEventListener("DOMContentLoaded", () => {

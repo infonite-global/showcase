@@ -174,14 +174,14 @@ const INFONITE_FEATURES = {
         name: 'Vehicles Data',
         workMessage: 'Consulting your vehicles data',
         icon: 'fa-solid fa-car-side',
-        defaultConfig: {"read_point_movements": true}
+        defaultConfig: {"simple_vehicle_report": true}
     },
     driver_data: {
         code: 'driver_data',
         name: 'Driver Data',
         workMessage: 'Consulting your driver data',
         icon: 'fa-solid fa-car',
-        defaultConfig: {"simple_vehicle_report": true}
+        defaultConfig: {"read_point_movements": true}
     },
     academic_data: {
         code: 'academic_data',
@@ -235,14 +235,15 @@ const INFONITE_FLOWS = {
         description: 'Access and retrieve verified public administration data including labor, driving, and tax records instantly.',
         route: '/es-public-administration',
         defaultFeatures: [
-            'customer_information_read', 
-            'driver_data', 
-            'vehicles_data', 
-            'labor_check', 
-            'yearly_individual_tax',
+            'customer_information_read',
+            'labor_check',
+            'public_pensions',
+            'vehicles_data',
+            'driver_data',
+            'credit_registry_data',
             'academic_data',
             'properties_data',
-            'credit_registry_data'
+            'yearly_individual_tax'
         ]
     }
 };
