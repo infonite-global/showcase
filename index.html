@@ -30,6 +30,39 @@
         --motion-duration-short: 150ms;
         --motion-duration-medium: 300ms;
         --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+        --primary-rgb: 0, 167, 111;
+      }
+
+      @keyframes activeRowPulse {
+          0% { opacity: 0.35; }
+          50% { opacity: 0.95; }
+          100% { opacity: 0.35; }
+      }
+
+      .active-session-row {
+          border-left: 3px solid var(--primary) !important;
+      }
+
+      .active-session-row td:first-child {
+          position: relative;
+      }
+
+      .active-session-row td:first-child::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(to right, rgba(var(--primary-rgb), 0.14) 0%, transparent 100%) !important;
+          pointer-events: none;
+          z-index: 0;
+          animation: activeRowPulse 3s ease-in-out infinite !important;
+      }
+
+      .active-session-row td:first-child > * {
+          position: relative;
+          z-index: 1;
       }
 
       [data-theme="light"] {

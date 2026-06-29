@@ -200,7 +200,13 @@ window.renderHistory = function() {
         const isClosed = session.infonite_state?.is_closed;
         const needsPolling = isClosed === false;
         const isErrorState = isClosed !== false && isClosed !== true;
-        const rowBorder = isErrorState ? 'border-l-[4px] border-l-red-500' : 'border-l-[4px] border-l-transparent';
+        
+        let rowBorder = 'border-l-[4px] border-l-transparent';
+        if (isErrorState) {
+            rowBorder = 'border-l-[4px] border-l-red-500';
+        } else if (needsPolling) {
+            rowBorder = 'active-session-row';
+        }
         
         if (needsPolling && session.infonite_state?.ping_date) {
              let rawDate = session.infonite_state.ping_date;

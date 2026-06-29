@@ -48,28 +48,35 @@ function renderModulesGrid() {
     ALLOWED_MODULES.forEach(moduleCode => {
         const featureDef = window.INFONITE_FEATURES[moduleCode];
         if (!featureDef) return; // Fallback if missing
-
-        const isChecked = DEFAULT_SELECTED_MODULES.includes(moduleCode) ? 'checked' : '';
+ 
+        const isSoon = featureDef.soon === true;
+        const isChecked = !isSoon && DEFAULT_SELECTED_MODULES.includes(moduleCode) ? 'checked' : '';
+        const isDisabled = isSoon ? 'disabled' : '';
+        const labelClass = isSoon ? 'opacity-40 cursor-not-allowed select-none pointer-events-none' : 'cursor-pointer';
         const opc = isChecked ? 'opacity-100' : 'opacity-0';
         const bgc = isChecked ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white text-slate-300 border-black/10';
-
+ 
         htmlContent += `
-        <label class="cursor-pointer block relative group h-full">
-            <input class="feature-checkbox sr-only" type="checkbox" value="${featureDef.code}" ${isChecked} onchange="toggleFeatureVisual(this)"/>
-            <div class="feature-card border border-black/10 rounded-2xl p-4 flex flex-col items-center text-center transition-all hover:bg-black/5 hover:border-black/20 group-hover:shadow-md h-full gap-3 bg-white relative">
-                <div class="w-12 h-12 rounded-xl bg-slate-50 border border-black/5 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-[var(--primary-container)] transition-all">
+        <label class="${labelClass} block relative group h-full">
+            <input class="feature-checkbox sr-only" type="checkbox" value="${featureDef.code}" ${isChecked} ${isDisabled} onchange="toggleFeatureVisual(this)"/>
+            <div class="feature-card border border-black/10 rounded-2xl p-4 flex flex-col items-center text-center transition-all hover:bg-slate-50 hover:border-black/20 group-hover:shadow-md h-full gap-3 bg-white relative">
+                <div class="w-12 h-12 rounded-xl bg-slate-50 border border-black/5 flex items-center justify-center shrink-0 transition-all">
                     <i class="${featureDef.icon} text-[var(--primary)] text-lg"></i>
                 </div>
                 <div class="flex-1 flex flex-col justify-center">
-                    <h4 class="font-black text-slate-900 text-[10px] uppercase tracking-widest leading-tight mb-1.5 group-hover:text-[var(--primary)] transition-colors">
+                    <h4 class="font-black text-slate-900 text-[10px] uppercase tracking-widest leading-tight mb-1.5">
                       ${featureDef.name}
                     </h4>
                     <p class="text-[9px] text-slate-500 font-medium leading-tight">${featureDef.workMessage.replace('Consulting your', '').replace('Retrieving your', '').trim()}</p>
                 </div>
                 <div class="absolute top-3 right-3 transition-opacity">
-                     <div class="indicator w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${bgc}">
-                        <i class="fa-solid fa-check text-[10px] ${opc} transition-opacity check-icon"></i>
-                     </div>
+                     ${isSoon ? `
+                        <span class="bg-amber-100 text-amber-800 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-200 shadow-sm shrink-0">Soon</span>
+                     ` : `
+                        <div class="indicator w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${bgc}">
+                           <i class="fa-solid fa-check text-[10px] ${opc} transition-opacity check-icon"></i>
+                        </div>
+                     `}
                 </div>
             </div>
         </label>
@@ -199,7 +206,13 @@ window.renderHistory = function() {
         const isClosed = session.infonite_state?.is_closed;
         const needsPolling = isClosed === false;
         const isErrorState = isClosed !== false && isClosed !== true;
-        const rowBorder = isErrorState ? 'border-l-[4px] border-l-red-500' : 'border-l-[4px] border-l-transparent';
+        
+        let rowBorder = 'border-l-[4px] border-l-transparent';
+        if (isErrorState) {
+            rowBorder = 'border-l-[4px] border-l-red-500';
+        } else if (needsPolling) {
+            rowBorder = 'active-session-row';
+        }
         
         if (needsPolling && session.infonite_state?.ping_date) {
              let rawDate = session.infonite_state.ping_date;

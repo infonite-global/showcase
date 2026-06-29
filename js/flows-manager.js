@@ -120,29 +120,46 @@ class FlowSessionManager {
             throw new Error("Missing widgetUrl, appSecret, or sessionId required for polling.");
         }
 
-        const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-APP-SECRET': appSecret
+        let stateData = null;
+        while (true) {
+            const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-APP-SECRET': appSecret
+                }
+            });
+
+            if (response.status === 429) {
+                const descEl = document.getElementById('stateDesc');
+                const originalText = descEl ? descEl.innerHTML : "";
+                if (descEl) {
+                    descEl.innerHTML = "Rate limited by server. Retrying in 5 seconds...";
+                }
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                if (descEl && originalText) {
+                    descEl.innerHTML = originalText;
+                }
+                continue;
             }
-        });
 
-        if (!response.ok) {
-            let errorDetail = `State fetch failed`;
-            let errorBody = null;
-            try {
-                errorBody = await response.json();
-            } catch (e) {}
-            
-            const err = new Error(errorDetail);
-            err.status = response.status;
-            err.statusText = response.statusText;
-            err.responseBody = errorBody;
-            throw err;
+            if (!response.ok) {
+                let errorDetail = `State fetch failed`;
+                let errorBody = null;
+                try {
+                    errorBody = await response.json();
+                } catch (e) {}
+                
+                const err = new Error(errorDetail);
+                err.status = response.status;
+                err.statusText = response.statusText;
+                err.responseBody = errorBody;
+                throw err;
+            }
+
+            stateData = await response.json();
+            break;
         }
-
-        const stateData = await response.json();
         
         if (appId) {
             const sessions = this.getSessions(appId, kind, widgetUrl);

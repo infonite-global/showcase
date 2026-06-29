@@ -36,6 +36,23 @@
         --motion-duration-short: 150ms;
         --motion-duration-medium: 300ms;
         --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+        --primary-rgb: 0, 167, 111;
+      }
+      @keyframes borderGlowPulse {
+          0% {
+              box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.1);
+          }
+          50% {
+              box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.35);
+          }
+          100% {
+              box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.1);
+          }
+      }
+
+      .active-processing-border {
+          border-color: rgba(var(--primary-rgb), 0.25) !important;
+          animation: borderGlowPulse 2.5s ease-in-out infinite !important;
       }
 
       [data-theme="light"] {
@@ -125,21 +142,30 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 12px rgba(var(--brand-dark-rgb), 0.2);
       }
+      #app-body {
+        background-color: #f8fafc;
+        background-image: 
+          radial-gradient(at 0% 0%, rgba(var(--primary-rgb), 0.08) 0px, transparent 50%),
+          radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+          radial-gradient(rgba(15, 23, 42, 0.04) 1.5px, transparent 1.5px) !important;
+        background-size: 100% 100%, 100% 100%, 24px 24px !important;
+        background-attachment: fixed !important;
+      }
 </style>
 </head>
-<body class="bg-slate-50 min-h-screen custom-scrollbar font-sans antialiased text-slate-800 selection:bg-[var(--primary)] selection:text-white flex flex-col" id="app-body">
+<body class="bg-slate-50 min-h-screen custom-scrollbar font-sans antialiased text-slate-800 selection:bg-[var(--primary)] selection:text-white flex flex-col relative overflow-x-hidden" id="app-body">
 
 <!-- Universal Navigation Header -->
-<div class="mx-auto px-0 pt-10 md:px-8 md:pt-4 w-full">
+<div class="mx-auto px-0 pt-10 md:px-8 md:pt-4 w-full relative z-[10]">
   <div id="app-nav-container"></div>
 </div>
 
 <!-- Sticky Flow Subheader -->
-<div class="w-full border-b border-black/5 bg-white/50 backdrop-blur-md sticky top-0 z-[40] transition-colors" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
-  <div class="max-w-6xl mx-auto px-4 md:px-8 relative">
+<div class="w-full border-b border-black/5 bg-white/60 backdrop-blur-xl sticky top-0 z-[40] transition-colors" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
+  <div class="max-w-6xl mx-auto px-4 md:px-8 relative py-3">
     
     <!-- Default Subheader (Visible on Dashboard) -->
-    <div id="nl-header-default" class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 fade-in w-full">
+    <div id="nl-header-default" class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in w-full mb-3 relative z-[10]">
       
       <!-- Icon & Title -->
       <div class="flex items-center gap-4 shrink-0">
@@ -152,60 +178,62 @@
         </div>
       </div>
       
-      <!-- Technical Session Info Card -->
-      <div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-2.5 px-4 shadow-sm w-full xl:w-auto xl:flex-1" id="techSessionCard">
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2.5">
-                <i class="fa-solid fa-circle-notch text-[11px] transition-colors shrink-0" id="techStatusIndicator"></i>
-                <div class="flex flex-col leading-tight">
-                    <span class="text-[10px] font-black uppercase text-slate-800 tracking-wider" id="techStatusCode">CONNECTING</span>
-                    <span class="text-[10px] font-medium text-slate-500" id="techStatusDesc">Initializing session info</span>
-                    
-                    <!-- Current Step (Cursor) -->
-                    <span class="text-[9px] font-bold text-slate-400 mt-1 flex items-center gap-1 hidden" id="techCursorContainer">
-                        <i class="fa-solid fa-compass text-[9px]" id="techCursorIcon"></i>
-                        <span>Step: <span id="techCursorName">Detecting...</span></span>
-                    </span>
-                </div>
-            </div>
-            
-            <div class="w-px h-8 bg-slate-200 mx-2 hidden md:block shrink-0"></div>
-            
-            <div class="flex flex-col justify-center hidden md:flex">
-                <span class="text-[9px] font-medium uppercase text-slate-400 tracking-widest leading-none mb-0.5">Session ID</span>
-                <span class="text-[11px] font-black text-slate-600 tracking-wider font-mono leading-none" id="techSessionId">LOADING...</span>
-            </div>
-        </div>
-        
-        <!-- Right Side: Actions -->
-        <div class="flex items-center gap-2 ml-4 shrink-0">
-            <!-- Active Session Action Buttons -->
-            <div class="flex items-center gap-2" id="subheader-actions">
-                <button id="btnCancelSession" class="hidden bg-white border border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50 w-8 h-8 rounded-lg text-xs flex items-center justify-center transition-colors shadow-sm shrink-0" title="Cancel Session" onclick="cancelSession()">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-                
-                <button id="btnCopyUrl" class="bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-600 hover:bg-indigo-50 w-8 h-8 rounded-lg text-xs flex items-center justify-center transition-colors shadow-sm shrink-0" title="Copy URL" onclick="copyWidgetUrl()">
-                    <i class="fa-regular fa-copy"></i>
-                </button>
-                
-                <button id="btnLaunchWidget" class="bg-[var(--primary)] text-white hover:bg-[var(--brand-dark)] px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center transition-colors shadow-sm shrink-0 gap-2" onclick="launchWidget()">
-                    LAUNCH <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                </button>
-            </div>
-            
-            <!-- Completed Session Action Buttons -->
-            <button id="btnViewJson" class="hidden bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary-container)] px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm items-center gap-2" onclick="openJsonModal()">
-                <i class="fa-solid fa-code text-[var(--primary)]"></i> VIEW RAW JSON
-            </button>
-        </div>
-      </div>
+    </div>
 
+    <!-- Technical Session Info Card -->
+    <div class="flex items-center justify-between bg-white/30 backdrop-blur-xl border border-white/50 rounded-xl p-2.5 px-4 shadow-sm w-full fade-in relative z-[10]" id="techSessionCard">
+      <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0 transition-colors" id="techStatusIndicatorFrame">
+                  <i class="fa-solid fa-circle-notch text-xs transition-colors" id="techStatusIndicator"></i>
+              </div>
+              <div class="flex flex-col leading-tight">
+                  <span class="text-[10px] font-black uppercase text-slate-800 tracking-wider" id="techStatusCode">CONNECTING</span>
+                  <span class="text-[10px] font-medium text-slate-500" id="techStatusDesc">Initializing session info</span>
+                  
+                  <!-- Current Step (Cursor) -->
+                  <span class="text-[9px] font-bold text-slate-400 mt-1 flex items-center gap-1 hidden" id="techCursorContainer">
+                      <i class="fa-solid fa-compass text-[9px]" id="techCursorIcon"></i>
+                      <span>Step: <span id="techCursorName">Detecting...</span></span>
+                  </span>
+              </div>
+          </div>
+          
+          <div class="w-px h-8 bg-slate-200 mx-2 hidden md:block shrink-0"></div>
+          
+          <div class="flex flex-col justify-center hidden md:flex">
+              <span class="text-[9px] font-medium uppercase text-slate-400 tracking-widest leading-none mb-0.5">Session ID</span>
+              <span class="text-[11px] font-black text-slate-600 tracking-wider font-mono leading-none" id="techSessionId">LOADING...</span>
+          </div>
+      </div>
+      
+      <!-- Right Side: Actions -->
+      <div class="flex items-center gap-2 ml-4 shrink-0">
+          <!-- Active Session Action Buttons -->
+          <div class="flex items-center gap-2" id="subheader-actions">
+              <button id="btnCancelSession" class="hidden bg-white border border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50 w-8 h-8 rounded-lg text-xs flex items-center justify-center transition-colors shadow-sm shrink-0" title="Cancel Session" onclick="cancelSession()">
+                  <i class="fa-solid fa-times"></i>
+              </button>
+              
+              <button id="btnCopyUrl" class="bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-600 hover:bg-indigo-50 w-8 h-8 rounded-lg text-xs flex items-center justify-center transition-colors shadow-sm shrink-0" title="Copy URL" onclick="copyWidgetUrl()">
+                  <i class="fa-regular fa-copy"></i>
+              </button>
+              
+              <button id="btnLaunchWidget" class="bg-[var(--primary)] text-white hover:bg-[var(--brand-dark)] px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center transition-colors shadow-sm shrink-0 gap-2" onclick="launchWidget()">
+                  LAUNCH <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </button>
+          </div>
+          
+          <!-- Completed Session Action Buttons -->
+          <button id="btnViewJson" class="hidden bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary-container)] px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm items-center gap-2" onclick="openJsonModal()">
+              <i class="fa-solid fa-code text-[var(--primary)]"></i> VIEW RAW JSON
+          </button>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="max-w-6xl mx-auto p-4 md:p-8 w-full">
+<div class="max-w-6xl mx-auto p-4 md:p-8 w-full relative z-[10]">
   <!-- Dynamic State Container -->
   <div class="fade-in space-y-6 lg:col-span-12" id="stateContainer">
     <div class="p-8 rounded-3xl min-h-[400px] flex flex-col items-center justify-center text-center transition-opacity" id="stateCard">
@@ -499,6 +527,7 @@
     let pollTimer = null;
     let configObj = null;
     let currentSessionData = null;
+    let currentActiveCategory = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -559,6 +588,16 @@
             }
 
             renderSessionState(cachedSession);
+
+            if (window.currentResultData) {
+                renderSidebarMenu();
+                const isCirbeLoading = currentActiveCategory === 'credit_registry' && 
+                                       cachedSession.infonite_state?.status_code === 'WAITING' &&
+                                       (window.currentResultData.consent?.accepted_features || []).includes('credit_registry_data');
+                if (currentActiveCategory === 'credit_registry' && !isCirbeLoading) {
+                    switchDashboardView('credit_registry');
+                }
+            }
 
             // Halt polling if backend closed the session
             if (cachedSession.infonite_state?.is_closed === true) {
@@ -625,6 +664,16 @@
         let trackingState = session.infonite_state?.status_code || 'READY';
         
         const isClosed = session.infonite_state?.is_closed;
+        const isSessionFinished = isClosed === true || session.is_closed === true || trackingState === 'COMPLETED';
+        
+        const techCard = document.getElementById('techSessionCard');
+        if (techCard) {
+            if (!isSessionFinished) {
+                techCard.classList.add('active-processing-border');
+            } else {
+                techCard.classList.remove('active-processing-border');
+            }
+        }
         
         // Dynamically toggle CANCEL button based on session closure
         const btnCancel = document.getElementById('btnCancelSession');
@@ -751,10 +800,15 @@
                 cContainer.classList.remove('flex');
             }
         }
-
-        if (tCode) tCode.textContent = token.text || trackingState;
+        if (tCode) {
+            let statusText = token.text || trackingState;
+            if (!isSessionFinished) statusText += ' (PARTIAL)';
+            tCode.textContent = statusText;
+        }
         if (tDesc) {
-            tDesc.textContent = token.detail || "Waiting for synchronization";
+            let descText = token.detail || "Waiting for synchronization";
+            if (!isSessionFinished) descText = "Session is in progress (partial results). " + descText;
+            tDesc.textContent = descText;
         }
         if (tInd) {
             let statusIcon = 'fa-solid fa-circle-notch';
@@ -764,8 +818,14 @@
             else if (animateClass === 'animate-pulse') statusIcon = 'fa-solid fa-circle-notch animate-spin';
             else statusIcon = 'fa-solid fa-hourglass';
             
-            tInd.className = `${statusIcon} text-[11px] transition-colors shrink-0`;
+            tInd.className = `${statusIcon} text-xs transition-colors`;
             tInd.style.color = colorHex;
+
+            const tIndFrame = document.getElementById('techStatusIndicatorFrame');
+            if (tIndFrame) {
+                tIndFrame.style.backgroundColor = `color-mix(in srgb, ${colorHex} 10%, transparent)`;
+                tIndFrame.style.borderColor = `color-mix(in srgb, ${colorHex} 20%, transparent)`;
+            }
         }
 
         if (btnJson) {
@@ -774,8 +834,7 @@
                 btnJson.classList.remove('hidden');
                 btnJson.classList.add('flex');
                 
-                const isClosed = session.infonite_state?.is_closed === true || session.is_closed === true || trackingState === 'COMPLETED';
-                if (isClosed) {
+                if (isSessionFinished) {
                     btnJson.className = "flex bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--primary-container)] px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm items-center gap-2";
                     btnJson.innerHTML = `<i class="fa-solid fa-code text-[var(--primary)]"></i> VIEW RAW JSON (FINAL)`;
                 } else {
@@ -851,20 +910,30 @@
         const stContainer = document.getElementById('stateContainer');
         const subActions = document.getElementById('subheader-actions');
         
-        // Toggle Action Button suite vs JSON Button
-        if (trackingState === 'COMPLETED') {
-            if (subActions) subActions.classList.add('hidden');
-            if (subActions) subActions.classList.remove('flex');
+        const isShowResultsState = (trackingState === 'COMPLETED' || cursorVal === 'es-public-administration:connect:wait');
+        
+        if (isShowResultsState) {
+            if (isSessionFinished) {
+                if (subActions) {
+                    subActions.classList.add('hidden');
+                    subActions.classList.remove('flex');
+                }
+            } else {
+                if (subActions) {
+                    subActions.classList.remove('hidden');
+                    subActions.classList.add('flex');
+                }
+            }
             
             if (btnJson) {
                 btnJson.classList.remove('hidden');
                 btnJson.classList.add('flex');
             }
             
-            // If we don't have the data yet, go fetch it and let the async callback reveal the dashboard
-            if (!window.currentResultData) {
+            // If we don't have the data yet OR we have partial data but the session is now closed, fetch it!
+            if (!window.currentResultData || (isSessionFinished && !window.currentResultDataIsFinal)) {
                 // Change UI to fetching status momentarily
-                document.getElementById('stateTitle').textContent = "Downloading Files...";
+                document.getElementById('stateTitle').textContent = isSessionFinished ? "Downloading Final Files..." : "Downloading Partial Files...";
                 document.getElementById('stateDesc').innerHTML = "Securely retrieving decrypted records from Infonite servers.";
                 fetchDashboardResults(session);
             } else {
@@ -884,12 +953,16 @@
             stContainer.classList.remove('hidden');
             dsContainer.classList.add('hidden');
             dsContainer.classList.remove('flex', 'flex-col', 'md:grid');
-            if (subActions) subActions.classList.remove('hidden');
+            if (subActions) {
+                subActions.classList.remove('hidden');
+                subActions.classList.add('flex');
+            }
         }
     }
     
     // --- Data Fetching Logic ---
     window.currentResultData = null;
+    window.currentResultDataIsFinal = false;
     let isFetchingResults = false;
     
     const MENU_MAPPING = [
@@ -939,14 +1012,20 @@
 
     function getFirstActiveCategory() {
         if (!window.currentResultData) return 'customer';
-        const retrieved = window.currentResultData.retrieved_features || window.currentResultData.consent?.accepted_features || [];
+        const retrieved = [
+            ...(window.currentResultData.consent?.accepted_features || []),
+            ...(window.currentResultData.retrieved_features || [])
+        ];
         const firstActive = MENU_MAPPING.find(item => item.dependsOn.some(feature => retrieved.includes(feature)));
         return firstActive ? firstActive.id : 'audit';
     }
 
     function renderSidebarMenu() {
         if (!window.currentResultData) return;
-        const retrieved = window.currentResultData.retrieved_features || window.currentResultData.consent?.accepted_features || [];
+        const retrieved = [
+            ...(window.currentResultData.consent?.accepted_features || []),
+            ...(window.currentResultData.retrieved_features || [])
+        ];
         const container = document.getElementById('sidebarMenuContainer');
         if (!container) return;
 
@@ -955,23 +1034,81 @@
         MENU_MAPPING.forEach(item => {
             const isRequested = item.dependsOn.some(feature => retrieved.includes(feature));
             if (isRequested) {
-                html += `
-                  <button onclick="switchDashboardView('${item.id}')" id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
-                      <i class="${item.icon} opacity-60"></i> ${item.name}
-                  </button>`;
+                const isCirbeLoading = item.id === 'credit_registry' && 
+                                       currentSessionData?.infonite_state?.status_code === 'WAITING';
+                const isActive = item.id === currentActiveCategory;
+                
+                if (isActive) {
+                    if (isCirbeLoading) {
+                        html += `
+                          <button onclick="switchDashboardView('${item.id}')" id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all bg-amber-500 text-white shadow-md flex items-center justify-between gap-3 min-w-0">
+                              <span class="flex items-center gap-3 min-w-0 truncate">
+                                  <i class="${item.icon} text-white shrink-0"></i>
+                                  <span class="truncate">${item.name}</span>
+                              </span>
+                              <i class="fa-solid fa-spinner animate-spin text-xs text-white shrink-0"></i>
+                          </button>`;
+                    } else {
+                        html += `
+                          <button onclick="switchDashboardView('${item.id}')" id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all bg-[var(--primary)] text-white shadow-md flex items-center gap-3 min-w-0">
+                              <span class="flex items-center gap-3 min-w-0 truncate">
+                                  <i class="${item.icon} opacity-80 text-white shrink-0"></i>
+                                  <span class="truncate">${item.name}</span>
+                              </span>
+                          </button>`;
+                    }
+                } else {
+                    if (isCirbeLoading) {
+                        html += `
+                          <button onclick="switchDashboardView('${item.id}')" id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-amber-600 bg-amber-50/50 border border-amber-200/50 hover:bg-amber-100/50 flex items-center justify-between gap-3 min-w-0 animate-pulse">
+                              <span class="flex items-center gap-3 min-w-0 truncate">
+                                  <i class="${item.icon} shrink-0"></i>
+                                  <span class="truncate">${item.name}</span>
+                              </span>
+                              <i class="fa-solid fa-spinner animate-spin text-xs text-amber-500 shrink-0"></i>
+                          </button>`;
+                    } else {
+                        html += `
+                          <button onclick="switchDashboardView('${item.id}')" id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3 min-w-0">
+                              <span class="flex items-center gap-3 min-w-0 truncate">
+                                  <i class="${item.icon} opacity-60 shrink-0"></i>
+                                  <span class="truncate">${item.name}</span>
+                              </span>
+                          </button>`;
+                    }
+                }
             } else {
                 html += `
-                  <div id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold text-slate-400 opacity-60 flex items-center gap-3 cursor-not-allowed select-none" title="Not requested in this session">
-                      <i class="${item.icon} opacity-60"></i> ${item.name}
+                  <div id="nav-${item.id}" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold text-slate-400 opacity-60 flex items-center gap-3 cursor-not-allowed select-none min-w-0" title="Not requested in this session">
+                      <span class="flex items-center gap-3 min-w-0 truncate">
+                          <i class="${item.icon} opacity-60 shrink-0"></i>
+                          <span class="truncate">${item.name}</span>
+                      </span>
                   </div>`;
             }
         });
 
         html += `
-          <div class="h-px bg-slate-100 w-full my-2"></div>
-          <button onclick="switchDashboardView('audit')" id="nav-audit" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3">
-              <i class="fa-solid fa-shield-halved opacity-60"></i> Audit Log
-          </button>`;
+          <div class="h-px bg-slate-100 w-full my-2"></div>`;
+          
+        const isAuditActive = currentActiveCategory === 'audit';
+        if (isAuditActive) {
+            html += `
+              <button onclick="switchDashboardView('audit')" id="nav-audit" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all bg-[var(--primary)] text-white shadow-md flex items-center gap-3 min-w-0">
+                  <span class="flex items-center gap-3 min-w-0 truncate">
+                      <i class="fa-solid fa-shield-halved opacity-80 text-white shrink-0"></i>
+                      <span class="truncate">Audit Log</span>
+                  </span>
+              </button>`;
+        } else {
+            html += `
+              <button onclick="switchDashboardView('audit')" id="nav-audit" class="dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3 min-w-0">
+                  <span class="flex items-center gap-3 min-w-0 truncate">
+                      <i class="fa-solid fa-shield-halved opacity-60 shrink-0"></i>
+                      <span class="truncate">Audit Log</span>
+                  </span>
+              </button>`;
+        }
 
         container.innerHTML = html;
     }
@@ -989,6 +1126,9 @@
             
             window.currentResultData = resultData;
             
+            const isClosed = session.infonite_state?.is_closed === true || session.is_closed === true;
+            window.currentResultDataIsFinal = isClosed;
+            
             // Data acquired, transition into dashboard mode
             const dsContainer = document.getElementById('dashboardContainer');
             const stContainer = document.getElementById('stateContainer');
@@ -997,8 +1137,8 @@
             dsContainer.classList.remove('hidden');
             dsContainer.classList.add('flex', 'flex-col', 'md:grid');
             
-            renderSidebarMenu();
-            switchDashboardView(getFirstActiveCategory());
+            currentActiveCategory = getFirstActiveCategory();
+            await switchDashboardView(currentActiveCategory);
             
         } catch (error) {
             console.error("Failed to retrieve dashboard results payload:", error);
@@ -1014,32 +1154,40 @@
     
     // --- Dashboard View Switching Logic ---
     async function switchDashboardView(categoryId) {
-        // 1. Reset all button styles to inactive
-        const navBtns = document.querySelectorAll('.dashboard-nav-btn');
-        navBtns.forEach(btn => {
-            if (btn.tagName === 'BUTTON') {
-                btn.className = "dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all text-slate-500 hover:bg-slate-50 hover:text-slate-800 flex items-center gap-3";
-                const icon = btn.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('opacity-80', 'text-white');
-                    icon.classList.add('opacity-60');
-                }
-            }
-        });
+        currentActiveCategory = categoryId;
         
-        // 2. Set Active Button Styles
-        const activeBtn = document.getElementById(`nav-${categoryId}`);
-        if(activeBtn && activeBtn.tagName === 'BUTTON') {
-            activeBtn.className = "dashboard-nav-btn w-full text-left px-4 py-3 rounded-2xl text-sm font-semibold transition-all bg-[var(--primary)] text-white shadow-md flex items-center gap-3";
-            const icon = activeBtn.querySelector('i');
-            if(icon) {
-                icon.classList.remove('opacity-60');
-                icon.classList.add('opacity-80', 'text-white');
-            }
-        }
+        // Render menu buttons to set the active/loading style
+        renderSidebarMenu();
         
-        // 3. Load Template Content Async
+        // Load Template Content Async
         const rootContainer = document.getElementById('dashboard-view-root');
+        
+        // Check if CIRBE is currently loading
+        const isCirbeLoading = categoryId === 'credit_registry' && 
+                               currentSessionData?.infonite_state?.status_code === 'WAITING' &&
+                               (window.currentResultData?.consent?.accepted_features || []).includes('credit_registry_data');
+        
+        if (isCirbeLoading) {
+            rootContainer.innerHTML = `
+                <div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center fade-in min-h-[400px]">
+                    <div class="flex flex-col items-center gap-5 max-w-md">
+                        <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/50 flex items-center justify-center mb-2 animate-bounce">
+                            <i class="fa-solid fa-hourglass-half text-3xl text-amber-500"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-slate-800 tracking-tight">CIRBE Data Retrieval In Progress</h3>
+                        <p class="text-sm font-medium text-slate-500 leading-relaxed">
+                            We are currently communicating with the Bank of Spain to retrieve your official Credit Registry files (CIRBE). 
+                            This process is in progress. Please wait for the session synchronization to finish.
+                        </p>
+                        <div class="flex items-center gap-2.5 bg-amber-50/50 border border-amber-200/40 rounded-xl px-4 py-2 text-xs font-semibold text-amber-700 animate-pulse mt-1">
+                            <i class="fa-solid fa-spinner animate-spin text-amber-500"></i>
+                            <span>Retrieving CIRBE financial history...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
         
         // Show spinning preloader
         rootContainer.innerHTML = `
