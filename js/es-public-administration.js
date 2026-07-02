@@ -186,6 +186,8 @@ window.renderHistory = function() {
         if (emptyState) emptyState.classList.remove('hidden');
         if (tableState) tableState.classList.add('hidden');
         if (tbody) tbody.innerHTML = '';
+        const mBody = document.getElementById('sessionHistoryMobile');
+        if (mBody) mBody.innerHTML = '';
         return;
     }
     
@@ -194,6 +196,7 @@ window.renderHistory = function() {
     if (!tbody) return;
     
     let html = '';
+    let mobileHtml = '';
     sessions.forEach(session => {
         const sid = session.session_id || 'Unknown';
         const cid = session.customer_id || '--';
@@ -230,8 +233,6 @@ window.renderHistory = function() {
         let secBg = config.app_settings?.color_secondary?.main || '#3b82f6';
         let secText = config.app_settings?.color_secondary?.contrastText || '#ffffff';
         
-        // Ensure the tracking calculation uses the raw mapped status instead
-        // The displayStatus is pushed to getStatusBadge().
         const badgeHtml = getStatusBadge(displayStatus);
             
         let timeUi = timeData.isRecent ? 
@@ -262,6 +263,7 @@ window.renderHistory = function() {
             </button>
         ` : '';
         
+        // Desktop HTML Row
         html += `
         <tr class="border-b border-black/5 hover:bg-black/[0.02] transition-colors group ${rowBorder}">
             <td class="p-4 pl-4 align-top">
@@ -306,6 +308,60 @@ window.renderHistory = function() {
         </tr>
         `;
         
+        // Mobile HTML Stacked Divider layout
+        const dateStr = formatDate(session.date_created);
+        const timeStrFormatted = timeData.isRecent ? timeData.relStr : `${dateStr} (${timeData.timeStr})`;
+        
+        mobileHtml += `
+        <div class="p-4 flex flex-col gap-3">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                    <div class="w-7 h-7 rounded-lg bg-[var(--primary-container)] flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-fingerprint text-[var(--primary)] text-[10px]"></i>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-slate-900 truncate" title="${sid}">${sid}</span>
+                    <button onclick="navigator.clipboard.writeText('${sid}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors shrink-0">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>
+                </div>
+                <div class="shrink-0">
+                    <button class="bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors shadow-sm" onclick="viewSession('${sid}')">
+                        <i class="fa-regular fa-eye text-[10px]"></i> View
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex flex-col gap-1 pl-9">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Customer:</span>
+                    <span class="text-[10px] font-bold text-slate-600 truncate" title="${cid}">${cid}</span>
+                    ${cid !== '--' ? `
+                    <button onclick="navigator.clipboard.writeText('${cid}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[9px] text-slate-400 hover:text-[var(--primary)] transition-colors shrink-0">
+                        <i class="fa-regular fa-copy"></i>
+                    </button>` : ''}
+                </div>
+                <div class="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
+                    <i class="fa-regular fa-clock"></i>
+                    <span>${timeStrFormatted}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100/60 mt-1">
+                <!-- Left side utilities -->
+                <div class="flex items-center gap-1.5">
+                    ${syncActionUi}
+                    ${cancelActionUi}
+                    ${deleteActionUi}
+                    ${copyActionUi}
+                </div>
+                <!-- Right side status badge -->
+                <div class="shrink-0">
+                    ${badgeHtml}
+                </div>
+            </div>
+        </div>
+        `;
+        
         // Start polling if needed
         if (needsPolling && !window.activePollers[sid]) {
             window.activePollers[sid] = true;
@@ -313,6 +369,11 @@ window.renderHistory = function() {
         }
     });
     tbody.innerHTML = html;
+    
+    const mContainer = document.getElementById('sessionHistoryMobile');
+    if (mContainer) {
+        mContainer.innerHTML = mobileHtml;
+    }
 };
 
 window.syncActiveSession = async function(sid) {

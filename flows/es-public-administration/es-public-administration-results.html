@@ -161,7 +161,7 @@
 </div>
 
 <!-- Sticky Flow Subheader -->
-<div class="w-full border-b border-black/5 bg-white/60 backdrop-blur-xl sticky top-0 z-[40] transition-colors" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
+<div class="w-full border-b border-transparent bg-transparent sticky top-0 z-[40] transition-all duration-300" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
   <div class="max-w-6xl mx-auto px-4 md:px-8 relative py-3">
     
     <!-- Default Subheader (Visible on Dashboard) -->
@@ -181,7 +181,7 @@
     </div>
 
     <!-- Technical Session Info Card -->
-    <div class="flex items-center justify-between bg-white/30 backdrop-blur-xl border border-white/50 rounded-xl p-2.5 px-4 shadow-sm w-full fade-in relative z-[10]" id="techSessionCard">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white/30 backdrop-blur-xl border border-white/50 rounded-xl p-3 px-4 gap-3 shadow-sm w-full fade-in relative z-[10]" id="techSessionCard">
       <div class="flex items-center gap-4">
           <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0 transition-colors" id="techStatusIndicatorFrame">
@@ -208,7 +208,7 @@
       </div>
       
       <!-- Right Side: Actions -->
-      <div class="flex items-center gap-2 ml-4 shrink-0">
+      <div class="flex items-center gap-2 sm:ml-4 shrink-0 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
           <!-- Active Session Action Buttons -->
           <div class="flex items-center gap-2" id="subheader-actions">
               <button id="btnCancelSession" class="hidden bg-white border border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50 w-8 h-8 rounded-lg text-xs flex items-center justify-center transition-colors shadow-sm shrink-0" title="Cancel Session" onclick="cancelSession()">
@@ -530,6 +530,24 @@
     let currentActiveCategory = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
+        // Sticky Header scroll listener
+        const header = document.getElementById('nl-header');
+        if (header) {
+            const updateHeaderClass = () => {
+                const prev = header.previousElementSibling;
+                const threshold = prev ? (prev.offsetTop + prev.offsetHeight - 10) : 80;
+                if (window.scrollY > threshold) {
+                    header.classList.remove('bg-transparent', 'border-transparent');
+                    header.classList.add('bg-white/70', 'backdrop-blur-xl', 'border-black/5', 'shadow-sm');
+                } else {
+                    header.classList.add('bg-transparent', 'border-transparent');
+                    header.classList.remove('bg-white/70', 'backdrop-blur-xl', 'border-black/5', 'shadow-sm');
+                }
+            };
+            window.addEventListener('scroll', updateHeaderClass);
+            updateHeaderClass();
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session_id');
         const displayIdEl = document.getElementById('displaySessionId');
@@ -1351,58 +1369,29 @@
     let currentPdfBlobUrl = null;
     let currentPdfFilename = "Document.pdf";
 
-    window.downloadWorkLifeReport = async function(attachmentId, contentName) {
-        if (!currentSessionData || !currentSessionData.session_id) {
-            console.error("No active session found.");
-            return;
-        }
-
-        const sessionId = currentSessionData.session_id;
-        const configObj = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
-        
-        if (!configObj || !configObj.secret || !configObj.widgetUrl) {
-            alert("Application Secret or Widget URL is missing. Cannot download the document.");
-            return;
-        }
-
-        const url = `${configObj.widgetUrl}/api/flows/attachments/${sessionId}/${attachmentId}`;
-        const btn = document.getElementById('btnDownloadWorkLife');
-        const originalHtml = btn ? btn.innerHTML : '';
-        
-        try {
-            // Set loading state
-            btn.innerHTML = `<div class="w-7 h-7 rounded-md bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="flex flex-col items-start leading-tight"><span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Please Wait</span><span class="text-xs font-bold text-red-600">Downloading...</span></div>`;
-            btn.disabled = true;
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'X-APP-SECRET': configObj.secret,
-                    'Accept': 'application/pdf'
-                }
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`HTTP error ${response.status}: ${errText}`);
-            }
-
-            const blob = await response.blob();
-            currentPdfBlobUrl = URL.createObjectURL(blob);
-            currentPdfFilename = contentName || "Work_Life_Report.pdf";
-            
-            window.openPdfModal(currentPdfBlobUrl, currentPdfFilename);
-
-        } catch (error) {
-            console.error("Error downloading PDF:", error);
-            alert("Failed to download the Work Life Report.");
-        } finally {
-            btn.innerHTML = originalHtml;
-            btn.disabled = false;
-        }
+    window.formatContentType = function(contentType) {
+        if (!contentType) return 'PDF Document';
+        if (contentType === 'application/pdf') return 'PDF Document';
+        if (contentType.startsWith('image/')) return 'Image File';
+        if (contentType.startsWith('text/')) return 'Text Document';
+        const parts = contentType.split('/');
+        return parts[1] ? parts[1].toUpperCase() + ' Document' : 'Document';
     };
 
-    window.downloadTaxModelPDF = async function(attachmentId, contentName, yearStr) {
+    window.getAttachmentMeta = function(subFamily) {
+        const map = {
+            'attachment:attachment': { name: 'Attachment', icon: 'fa-file-lines', color: 'slate' },
+            'attachment:supplier_invoice': { name: 'Supplier Invoice', icon: 'fa-file-invoice-dollar', color: 'indigo' },
+            'attachment:client_invoice': { name: 'Client Invoice', icon: 'fa-file-invoice-dollar', color: 'emerald' },
+            'attachment:es-tgss-life-report': { name: 'Work Life Report', icon: 'fa-briefcase', color: 'red' },
+            'attachment:es-tgss-contribution-base-report': { name: 'Contribution Base Report', icon: 'fa-receipt', color: 'blue' },
+            'attachment:es-aeat-model-100': { name: 'Model 100 Tax Declaration', icon: 'fa-file-signature', color: 'red' },
+            'attachment:es-cirbe-report': { name: 'CIRBE Credit Report', icon: 'fa-building-columns', color: 'amber' }
+        };
+        return map[subFamily] || { name: subFamily, icon: 'fa-file', color: 'slate' };
+    };
+
+    window.downloadAttachment = async function(attachmentId, contentName, btnId) {
         if (!currentSessionData || !currentSessionData.session_id) {
             console.error("No active session found.");
             return;
@@ -1417,12 +1406,15 @@
         }
 
         const url = `${configObj.widgetUrl}/api/flows/attachments/${sessionId}/${attachmentId}`;
-        const btn = document.getElementById(`btnDownloadTaxModel-${yearStr}`);
+        const btn = document.getElementById(btnId);
         const originalHtml = btn ? btn.innerHTML : '';
         
         try {
             if (btn) {
-                btn.innerHTML = `<div class="w-6 h-6 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-spinner fa-spin"></i></div><div class="flex flex-col items-start leading-tight"><span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Please Wait</span><span class="text-xs font-bold text-red-600">Downloading...</span></div>`;
+                const iconContainer = btn.querySelector('.attachment-icon-container');
+                if (iconContainer) {
+                    iconContainer.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-red-500"></i>';
+                }
                 btn.disabled = true;
             }
 
@@ -1441,13 +1433,13 @@
 
             const blob = await response.blob();
             currentPdfBlobUrl = URL.createObjectURL(blob);
-            currentPdfFilename = contentName || `Model_100_${yearStr}.pdf`;
+            currentPdfFilename = contentName || "Document.pdf";
             
             window.openPdfModal(currentPdfBlobUrl, currentPdfFilename);
 
         } catch (error) {
             console.error("Error downloading PDF:", error);
-            alert("Failed to download the Model 100 Report. Please check the network connectivity or try reloading.");
+            alert("Failed to download the document.");
         } finally {
             if (btn) {
                 btn.innerHTML = originalHtml;
@@ -1706,18 +1698,40 @@
 
         // 4. Report Download Button Setup
         const btnWrapper = document.getElementById('btnDownloadWorkLifeWrapper');
-        const btnDownload = document.getElementById('btnDownloadWorkLife');
-        
-        let workLifeReportAtt = null;
-        if (laborCheck.attachments && Array.isArray(laborCheck.attachments)) {
-            workLifeReportAtt = laborCheck.attachments.find(att => att.sub_family === 'attachment:es-tgss-life-report');
-        }
+        if (btnWrapper) {
+            btnWrapper.innerHTML = '';
+            if (laborCheck.attachments && Array.isArray(laborCheck.attachments) && laborCheck.attachments.length > 0) {
+                btnWrapper.classList.remove('hidden');
+                
+                let html = `<span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 xl:text-right">Supporting Documents</span>`;
+                
+                laborCheck.attachments.forEach((att, idx) => {
+                    const meta = window.getAttachmentMeta(att.sub_family);
+                    const btnId = `btnDownloadWorkLife-${idx}`;
+                    
+                    let colorBgClass = 'bg-slate-50 text-slate-500 hover:bg-slate-100';
+                    if (meta.color === 'red') colorBgClass = 'bg-red-50 text-red-500 hover:bg-red-100';
+                    else if (meta.color === 'blue') colorBgClass = 'bg-blue-50 text-blue-500 hover:bg-blue-100';
+                    else if (meta.color === 'emerald') colorBgClass = 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100';
+                    else if (meta.color === 'indigo') colorBgClass = 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100';
+                    else if (meta.color === 'amber') colorBgClass = 'bg-amber-50 text-amber-500 hover:bg-amber-100';
 
-        if (btnWrapper && btnDownload && workLifeReportAtt && workLifeReportAtt.content_name) {
-            btnWrapper.classList.remove('hidden');
-            btnDownload.onclick = () => {
-                window.downloadWorkLifeReport(workLifeReportAtt.id, workLifeReportAtt.content_name);
-            };
+                    html += `
+                    <button id="${btnId}" onclick="window.downloadAttachment('${att.id}', '${att.content_name || meta.name + '.pdf'}', '${btnId}')" class="w-full sm:w-auto flex items-center gap-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 group">
+                        <div class="w-8 h-8 rounded-lg ${colorBgClass} flex items-center justify-center shrink-0 transition-colors attachment-icon-container">
+                            <i class="fa-solid ${meta.icon} text-sm"></i>
+                        </div>
+                        <div class="flex flex-col items-start leading-tight">
+                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">${meta.name}</span>
+                            <span class="text-xs font-bold text-slate-800 text-left truncate max-w-[160px]">${window.formatContentType(att.content_type)}</span>
+                        </div>
+                    </button>
+                    `;
+                });
+                btnWrapper.innerHTML = html;
+            } else {
+                btnWrapper.classList.add('hidden');
+            }
         }
     }
 
@@ -2713,11 +2727,14 @@
                                     <span class="text-[8px] font-bold px-1.5 py-0.5 rounded ${tax.status === 'submitted' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'} uppercase tracking-widest">${tax.status || 'FILED'}</span>
                                 </div>
                                 <div class="flex items-center gap-2 mt-1.5 flex-wrap">
-                                    ${(tax.attachments && tax.attachments.length > 0) ? tax.attachments.map(att => `
+                                    ${(tax.attachments && tax.attachments.length > 0) ? tax.attachments.map(att => {
+                                        const meta = window.getAttachmentMeta(att.sub_family);
+                                        return `
                                         <div class="flex items-center gap-1.5 rounded-md bg-slate-50 border border-slate-200/60 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest" title="${att.content_name || 'Attachment'}">
-                                            <i class="fa-solid fa-file-pdf text-red-400"></i> ${att.content_name || 'Document'}
+                                            <i class="fa-solid ${meta.icon} text-red-400"></i> ${meta.name}
                                         </div>
-                                    `).join('') : '<span class="text-[9px] text-slate-300 italic font-medium">No attachments</span>'}
+                                        `;
+                                    }).join('') : '<span class="text-[9px] text-slate-300 italic font-medium">No attachments</span>'}
                                 </div>
                             </div>
                         </div>
@@ -3117,23 +3134,35 @@
         `;
 
 
-        // Check for attachmen
-        let model100Doc = null;
-        if (tax.attachments && Array.isArray(tax.attachments)) {
-            model100Doc = tax.attachments.find(a => a.sub_family === 'attachment:es-aeat-model-100');
-        }
+        // Check for attachments
+        let taxAttachmentsHtml = '';
+        if (tax.attachments && Array.isArray(tax.attachments) && tax.attachments.length > 0) {
+            taxAttachmentsHtml = tax.attachments.map((att, idx) => {
+                const meta = window.getAttachmentMeta(att.sub_family);
+                const btnId = `btnDownloadTaxModel-${yearStr}-${idx}`;
+                
+                let colorBgClass = 'bg-slate-50 text-slate-500 hover:bg-slate-100';
+                if (meta.color === 'red') colorBgClass = 'bg-red-50 text-red-500 hover:bg-red-100';
+                else if (meta.color === 'blue') colorBgClass = 'bg-blue-50 text-blue-500 hover:bg-blue-100';
+                else if (meta.color === 'emerald') colorBgClass = 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100';
+                else if (meta.color === 'indigo') colorBgClass = 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100';
+                else if (meta.color === 'amber') colorBgClass = 'bg-amber-50 text-amber-500 hover:bg-amber-100';
 
-        const model100ButtonHtml = (model100Doc && model100Doc.id) ? `
-            <button id="btnDownloadTaxModel-${yearStr}" onclick="window.downloadTaxModelPDF('${model100Doc.id}', '${model100Doc.content_name}', '${yearStr}')" class="w-full md:w-auto flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl transition-colors shadow-sm text-xs font-bold group mt-1">
-                <div class="w-6 h-6 rounded bg-red-50 text-red-500 flex items-center justify-center shrink-0 group-hover:bg-red-100 transition-colors">
-                    <i class="fa-solid fa-file-pdf"></i>
-                </div>
-                <div class="flex flex-col items-start leading-tight">
-                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Official Document</span>
-                    <span class="text-xs font-bold">${model100Doc.content_name || 'Download Receipt'}</span>
-                </div>
-            </button>
-        ` : `<span class="text-[8px] font-bold uppercase tracking-widest text-slate-400 text-center md:text-right px-2 mt-2">Unavailable for incomplete expedient</span>`;
+                return `
+                <button id="${btnId}" onclick="window.downloadAttachment('${att.id}', '${att.content_name || meta.name + '.pdf'}', '${btnId}')" class="w-full md:w-auto flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm text-xs font-bold group mt-1">
+                    <div class="w-6 h-6 rounded ${colorBgClass} flex items-center justify-center shrink-0 transition-colors attachment-icon-container">
+                        <i class="fa-solid ${meta.icon} text-[10px]"></i>
+                    </div>
+                    <div class="flex flex-col items-start leading-tight">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">${meta.name}</span>
+                        <span class="text-xs font-bold text-slate-800 text-left truncate max-w-[140px]">${window.formatContentType(att.content_type)}</span>
+                    </div>
+                </button>
+                `;
+            }).join('');
+        } else {
+            taxAttachmentsHtml = `<span class="text-[8px] font-bold uppercase tracking-widest text-slate-400 text-center md:text-right px-2 mt-2">No attachments available</span>`;
+        }
 
 
         container.innerHTML = `
@@ -3180,7 +3209,10 @@
                 <div class="flex flex-wrap md:flex-nowrap items-center gap-4 border-t md:border-t-0 border-slate-200 pt-5 md:pt-0">
                     <!-- PDF Download Action -->
                     <div class="flex flex-col items-center md:items-end gap-1 w-full md:w-auto">
-                        ${model100ButtonHtml}
+                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Supporting Documents</span>
+                        <div class="flex flex-col md:flex-row gap-2">
+                            ${taxAttachmentsHtml}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3440,15 +3472,15 @@
 
 <!-- Iframe LAUNCH Modal -->
 <div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeWidget()">
-    <div class="relative w-full max-w-[480px] h-[750px] max-h-[90vh] bg-white rounded-3xl shadow-2xl mx-4 overflow-hidden" onclick="event.stopPropagation()">
+    <div class="relative w-full md:max-w-[480px] h-full md:h-[750px] max-h-full md:max-h-[90vh] bg-white rounded-none md:rounded-3xl shadow-2xl mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <!-- Optional skeleton loading could go here, but an empty white screen is fine -->
         <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 bg-white" src="about:blank"></iframe>
     </div>
 </div>
 
 <!-- JSON Data Viewer Modal -->
-<div id="jsonModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-4" onclick="closeJsonModal()">
-    <div class="relative w-full max-w-4xl h-[80vh] flex flex-col bg-[#1e1e1e] rounded-3xl shadow-2xl overflow-hidden border border-slate-700/50" onclick="event.stopPropagation()">
+<div id="jsonModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-0 pt-6 md:p-4" onclick="closeJsonModal()">
+    <div class="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] md:h-[80vh] flex flex-col bg-[#1e1e1e] rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden border border-slate-700/50 border-b-0 md:border-b" onclick="event.stopPropagation()">
         
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#252526] shrink-0">
@@ -3475,8 +3507,8 @@
 </div>
 
 <!-- PDF Viewer Modal -->
-<div id="pdfModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-4" onclick="closePdfModal()">
-    <div class="relative w-full max-w-4xl h-[85vh] flex flex-col bg-[#1e1e1e] rounded-3xl shadow-2xl overflow-hidden border border-slate-700/50" onclick="event.stopPropagation()">
+<div id="pdfModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-0 pt-6 md:p-4" onclick="closePdfModal()">
+    <div class="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] md:h-[85vh] flex flex-col bg-[#1e1e1e] rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden border border-slate-700/50 border-b-0 md:border-b" onclick="event.stopPropagation()">
         
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#252526] shrink-0">

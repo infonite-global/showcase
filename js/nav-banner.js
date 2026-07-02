@@ -225,6 +225,11 @@
             wrapper.style.maxHeight = '500px'; 
             wrapper.style.opacity = '1';
             wrapper.style.transform = 'translateY(0)';
+
+            // Remove overflow-hidden after transition to prevent shadow clipping
+            setTimeout(() => {
+                wrapper.classList.remove('overflow-hidden');
+            }, 500);
         },
         
         toggleMobileMenu: function() {

@@ -161,7 +161,7 @@
 </div>
 
 <!-- Sticky Flow Subheader -->
-<div class="w-full border-b border-black/5 bg-white/60 backdrop-blur-xl sticky top-0 z-[40] transition-colors" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
+<div class="w-full border-b border-transparent bg-transparent sticky top-0 z-[40] transition-all duration-300" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
   <div class="max-w-6xl mx-auto px-4 md:px-8 relative py-3">
     
     <!-- Default Subheader (Visible on Dashboard) -->
@@ -181,7 +181,7 @@
     </div>
 
     <!-- Technical Session Info Card -->
-    <div class="flex items-center justify-between bg-white/30 backdrop-blur-xl border border-white/50 rounded-xl p-2.5 px-4 shadow-sm w-full fade-in relative z-[10]" id="techSessionCard">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-white/30 backdrop-blur-xl border border-white/50 rounded-xl p-3 px-4 gap-3 shadow-sm w-full fade-in relative z-[10]" id="techSessionCard">
       <div class="flex items-center gap-4">
           <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center shrink-0 transition-colors" id="techStatusIndicatorFrame">
@@ -201,7 +201,8 @@
           </div>
       </div>
       
-      <div class="flex items-center gap-2">
+      <!-- Right Side: Actions -->
+      <div class="flex items-center gap-2 sm:ml-4 shrink-0 w-full sm:w-auto justify-start sm:justify-end mt-2 sm:mt-0">
           <!-- Active Session Action Buttons -->
           <div class="flex items-center gap-2" id="subheader-actions">
               <button id="btnCancelSession" class="hidden bg-white border border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50 w-8 h-8 rounded-lg text-xs flex items-center justify-center transition-colors shadow-sm shrink-0" title="Cancel Session" onclick="cancelSession()">
@@ -527,6 +528,24 @@
     let currentSessionData = null;
 
     document.addEventListener("DOMContentLoaded", async () => {
+        // Sticky Header scroll listener
+        const header = document.getElementById('nl-header');
+        if (header) {
+            const updateHeaderClass = () => {
+                const prev = header.previousElementSibling;
+                const threshold = prev ? (prev.offsetTop + prev.offsetHeight - 10) : 80;
+                if (window.scrollY > threshold) {
+                    header.classList.remove('bg-transparent', 'border-transparent');
+                    header.classList.add('bg-white/70', 'backdrop-blur-xl', 'border-black/5', 'shadow-sm');
+                } else {
+                    header.classList.add('bg-transparent', 'border-transparent');
+                    header.classList.remove('bg-white/70', 'backdrop-blur-xl', 'border-black/5', 'shadow-sm');
+                }
+            };
+            window.addEventListener('scroll', updateHeaderClass);
+            updateHeaderClass();
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session_id');
         const displayIdEl = document.getElementById('displaySessionId');
@@ -2589,15 +2608,15 @@
 
 <!-- Iframe LAUNCH Modal -->
 <div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeWidget()">
-    <div class="relative w-full max-w-[480px] h-[750px] max-h-[90vh] bg-white rounded-3xl shadow-2xl mx-4 overflow-hidden" onclick="event.stopPropagation()">
+    <div class="relative w-full md:max-w-[480px] h-full md:h-[750px] max-h-full md:max-h-[90vh] bg-white rounded-none md:rounded-3xl shadow-2xl mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <!-- Optional skeleton loading could go here, but an empty white screen is fine -->
         <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 bg-white" src="about:blank"></iframe>
     </div>
 </div>
 
 <!-- JSON Data Viewer Modal -->
-<div id="jsonModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-4" onclick="closeJsonModal()">
-    <div class="relative w-full max-w-4xl h-[80vh] flex flex-col bg-[#1e1e1e] rounded-3xl shadow-2xl overflow-hidden border border-slate-700/50" onclick="event.stopPropagation()">
+<div id="jsonModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-0 pt-6 md:p-4" onclick="closeJsonModal()">
+    <div class="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] md:h-[80vh] flex flex-col bg-[#1e1e1e] rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden border border-slate-700/50 border-b-0 md:border-b" onclick="event.stopPropagation()">
         
         <!-- Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-[#252526] shrink-0">

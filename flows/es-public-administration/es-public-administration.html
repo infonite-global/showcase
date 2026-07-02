@@ -430,14 +430,14 @@
         </div>
       </div>
       <!-- Actions -->
-      <div class="flex items-center gap-3">
-        <a href="https://infonite.dev/es-public-administration" target="_blank" class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center gap-2">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+        <a href="https://infonite.dev/es-public-administration" target="_blank" class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto">
           <i class="fa-solid fa-code text-slate-400"></i> Docs
         </a>
-        <button class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center gap-2" onclick="openImportModal();">
+        <button class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto" onclick="openImportModal();">
           <i class="fa-solid fa-file-import text-slate-400"></i> Import Session
         </button>
-        <button class="btn-brand px-5 py-2 text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2" onclick="openNewLeadModal();">
+        <button class="btn-brand px-5 py-2 text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto" onclick="openNewLeadModal();">
           <i class="fa-solid fa-plus"></i> New Lead
         </button>
       </div>
@@ -484,7 +484,8 @@
           </button>
         </div>
       </div>
-      <div class="overflow-x-auto">
+      <!-- Desktop view (Table) -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full text-left border-collapse min-w-[600px]">
           <thead>
             <tr class="bg-black/[0.03] uppercase text-[9px] font-black tracking-widest text-slate-400 border-b border-black/5">
@@ -498,6 +499,11 @@
             <!-- Populated dynamically by js/es-public-administration.js -> renderHistory() -->
           </tbody>
         </table>
+      </div>
+
+      <!-- Mobile view (Cardless list with dividers) -->
+      <div id="sessionHistoryMobile" class="block md:hidden divide-y divide-slate-100 bg-white select-none">
+          <!-- Populated dynamically by js/es-public-administration.js -> renderHistory() -->
       </div>
     </div>
   </div>
@@ -705,25 +711,37 @@
 </div>
 </div>
 
-<div class="fixed inset-0 bg-black/95 backdrop-blur-md z-[120] hidden flex-col p-4 md:p-8 fade-in cursor-pointer" id="pdfModal" onclick="if(event.target === this) closePdfModal()">
-<div class="flex justify-between items-center mb-4 max-w-5xl mx-auto w-full">
-<h3 class="font-black text-xs uppercase tracking-[0.2em] text-white flex items-center gap-2">
-<i class="fa-solid fa-file-pdf text-[var(--primary)]"></i> Work Life
-          Report
-        </h3>
-<button class="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white hover:bg-red-500 hover:text-white transition-all shadow-lg" onclick="closePdfModal()" title="Close">
-<i class="fa-solid fa-xmark"></i>
-</button>
-</div>
-<div class="flex-1 max-w-5xl mx-auto w-full bg-white rounded-2xl overflow-hidden shadow-2xl relative cursor-default">
-<div class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-center" id="pdfLoading">
-<div class="w-12 h-12 border-4 border[rgba(var(--primary-rgb),0.10)] border-t-[var(--primary)] rounded-full animate-spin mb-4"></div>
-<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            Retrieving secure document...
-          </p>
-</div>
-<iframe class="w-full h-full border-none hidden" id="pdfFrame" src=""></iframe>
-</div>
+<div id="pdfModal" class="fixed inset-0 z-[120] hidden flex-col items-center justify-end md:justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-0 pt-6 md:p-4 cursor-pointer" onclick="if(event.target === this) closePdfModal()">
+  <div class="relative w-full max-w-5xl h-[calc(100vh-1.5rem)] md:h-[85vh] flex flex-col bg-white rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden cursor-default" onclick="event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="p-5 md:p-6 border-b border-black/5 bg-slate-50 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
+          <i class="fa-solid fa-file-pdf text-[var(--primary)] text-sm"></i>
+        </div>
+        <div class="flex flex-col text-left">
+          <h3 class="font-black text-[13px] uppercase tracking-widest text-slate-900 leading-tight">Work Life Report</h3>
+          <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">Secure Document Viewer</p>
+        </div>
+      </div>
+      <button class="w-10 h-10 rounded-xl bg-white/10 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm" onclick="closePdfModal()" title="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    
+    <!-- Content -->
+    <div class="flex-grow relative bg-slate-900">
+      <div class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-center" id="pdfLoading">
+        <div class="w-12 h-12 border-4 border-slate-700 border-t-[var(--primary)] rounded-full animate-spin mb-4"></div>
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+          Retrieving secure document...
+        </p>
+      </div>
+      <iframe class="w-full h-full border-none hidden" id="pdfFrame" src=""></iframe>
+    </div>
+    
+  </div>
 </div>
 
 <div class="fixed inset-0 bg-black/95 backdrop-blur-md z-[120] hidden flex-col p-4 md:p-8 fade-in" id="debugModal">
