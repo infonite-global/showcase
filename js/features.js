@@ -146,7 +146,7 @@ const INFONITE_FEATURES = {
         name: 'Labor Check',
         workMessage: 'Consulting your labor information',
         icon: 'fa-solid fa-briefcase',
-        defaultConfig: {}
+        defaultConfig: {"work_life_report": true, "contribution_base_report": true}
     },
     public_pensions: {
         code: 'public_pensions',

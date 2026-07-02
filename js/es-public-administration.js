@@ -594,6 +594,29 @@ window.toggleAccordion = function(id) {
     }
 };
 
+function validateSpanishDocument(doc) {
+    doc = doc.trim().toUpperCase();
+    if (!doc) return true;
+    
+    const dniRegex = /^[0-9]{8}[A-Z]$/;
+    const nieRegex = /^[XYZ][0-9]{7}[A-Z]$/;
+    
+    if (!dniRegex.test(doc) && !nieRegex.test(doc)) {
+        return false;
+    }
+    
+    let value = doc;
+    if (value.startsWith('X')) value = '0' + value.substring(1);
+    else if (value.startsWith('Y')) value = '1' + value.substring(1);
+    else if (value.startsWith('Z')) value = '2' + value.substring(1);
+    
+    const num = parseInt(value.substring(0, 8), 10);
+    const letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+    const calculatedLetter = letters.charAt(num % 23);
+    
+    return value.charAt(8) === calculatedLetter;
+}
+
 window.generateLeadSession = async function() {
     const btn = document.getElementById('generateLeadBtn');
     const originalContent = btn.innerHTML;
@@ -615,6 +638,9 @@ window.generateLeadSession = async function() {
         const completionPath = pathInput ? pathInput.value.trim() : '';
         const sandboxToggle = document.getElementById('generate-sandbox-mode');
         const isSandbox = sandboxToggle ? sandboxToggle.checked : false;
+
+        const userDocInput = document.getElementById('generate-fixed-user-document');
+        const userDoc = userDocInput ? userDocInput.value.trim().toUpperCase() : '';
 
         // 2. Collect Features
         const checkboxes = document.querySelectorAll('#modulesGrid input.feature-checkbox:checked');
@@ -648,6 +674,15 @@ window.generateLeadSession = async function() {
                 executions_features: selectedFeatures
             }
         };
+
+        if (userDoc !== "") {
+            if (!validateSpanishDocument(userDoc)) {
+                throw new Error("The specified User Document is not a valid Spanish DNI or NIE.");
+            }
+            payload.fixed_parameters = {
+                user_identification: userDoc
+            };
+        }
 
         if (aesKey !== "") {
             payload.settings.aes_key = aesKey;
