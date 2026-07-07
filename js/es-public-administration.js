@@ -641,6 +641,8 @@ window.generateLeadSession = async function() {
 
         const userDocInput = document.getElementById('generate-fixed-user-document');
         const userDoc = userDocInput ? userDocInput.value.trim().toUpperCase() : '';
+        const userEmailInput = document.getElementById('generate-fixed-user-email');
+        const userEmail = userEmailInput ? userEmailInput.value.trim() : '';
 
         // 2. Collect Features
         const checkboxes = document.querySelectorAll('#modulesGrid input.feature-checkbox:checked');
@@ -679,9 +681,17 @@ window.generateLeadSession = async function() {
             if (!validateSpanishDocument(userDoc)) {
                 throw new Error("The specified User Document is not a valid Spanish DNI or NIE.");
             }
-            payload.fixed_parameters = {
-                user_identification: userDoc
-            };
+            payload.fixed_parameters = payload.fixed_parameters || {};
+            payload.fixed_parameters.user_identification = userDoc;
+        }
+
+        if (userEmail !== "") {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(userEmail)) {
+                throw new Error("The specified User Email is not a valid email address.");
+            }
+            payload.fixed_parameters = payload.fixed_parameters || {};
+            payload.fixed_parameters.user_email = userEmail;
         }
 
         if (aesKey !== "") {

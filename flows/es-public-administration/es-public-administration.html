@@ -870,15 +870,28 @@
           <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300" id="acc-fixed-parameters-icon"></i>
         </button>
         
-        <div id="acc-fixed-parameters" class="hidden mt-2 bg-white border border-black/5 rounded-2xl p-4 shadow-sm flex flex-col gap-2">
-            <label for="generate-fixed-user-document" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-              <i class="fa-solid fa-id-card text-indigo-500"></i> User Document (DNI/NIE)
-            </label>
-            <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Optional Spanish NIF/NIE to enforce during authentication. The widget will restrict access to this user.</p>
-            <input type="text" id="generate-fixed-user-document" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors uppercase" placeholder="e.g. 12345678Z or Y1234567Z" />
-            <p class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
-              If specified, the resulting widget will restrict authentication strictly to the provided Spanish NIF/NIE, preventing the end user from modifying or inputting a different document number.
-            </p>
+        <div id="acc-fixed-parameters" class="hidden mt-2 bg-white border border-black/5 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+              <label for="generate-fixed-user-document" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-id-card text-indigo-500"></i> User Document (DNI/NIE)
+              </label>
+              <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Optional Spanish NIF/NIE to enforce during authentication. The widget will restrict access to this user.</p>
+              <input type="text" id="generate-fixed-user-document" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors uppercase" placeholder="e.g. 12345678Z or Y1234567Z" />
+              <p class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
+                If specified, the resulting widget will restrict authentication strictly to the provided Spanish NIF/NIE, preventing the end user from modifying or inputting a different document number.
+              </p>
+            </div>
+
+            <div class="flex flex-col gap-2 border-t border-slate-100 pt-4">
+              <label for="generate-fixed-user-email" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-envelope text-indigo-500"></i> User Email
+              </label>
+              <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Optional fallback email address for the customer.</p>
+              <input type="email" id="generate-fixed-user-email" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="e.g. customer@example.com" />
+              <p class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
+                Optional customer email used as a fallback (e.g. for CIRBE notifications) if no email is found in the user's public administration profile.
+              </p>
+            </div>
         </div>
       </div>
       
