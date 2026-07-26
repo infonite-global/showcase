@@ -12,11 +12,10 @@ window.INFONITE_ENUMS = {
   WORK_RELATION_TYPES: {
     'employee': { label: 'Employee', icon: 'fa-building' },
     'self_employed': { label: 'Self Employed', icon: 'fa-user-tie' },
+    'public_employee': { label: 'Public Employee', icon: 'fa-landmark' },
     'vacations': { label: 'Paid Vacations', icon: 'fa-umbrella-beach' },
     'unemployment_benefits': { label: 'Unemployment Benefits', icon: 'fa-hand-holding-dollar' },
-    'public_servant': { label: 'Public Servant', icon: 'fa-landmark' },
-    'domestic_worker': { label: 'Domestic Worker', icon: 'fa-house-user' },
-    'trainee': { label: 'Trainee', icon: 'fa-user-graduate' },
-    'professional_practices': { label: 'Professional Practices', icon: 'fa-chalkboard-user' }
+    'other': { label: 'Other', icon: 'fa-briefcase' },
+    'unknown': { label: 'Unknown', icon: 'fa-circle-question' }
   }
 };

@@ -34,7 +34,10 @@
                         <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Total Accumulated Time</span>
                     </div>
                     <p class="text-xs sm:text-sm font-semibold text-slate-500 mb-2.5" id="lblTotalTimeHuman">--</p>
-                    <span id="lblLaborActiveBadge" class="hidden self-start px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-widest"></span>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span id="lblLaborActiveBadge" class="hidden px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-widest"></span>
+                        <span id="lblCurrentWorkTypes" class="hidden flex-wrap items-center gap-1.5"></span>
+                    </div>
                 </div>
             </div>
 
@@ -56,8 +59,12 @@
             </div>
         </div>
 
+        <!-- Guaranteed Income Floor Card -->
+        <div id="incomeFloorCard" class="hidden bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        </div>
+
         <div class="mt-2 pt-6 border-t border-slate-100 flex flex-col gap-6 relative z-10 w-full">
-            
+
             <!-- Tabs Header -->
             <div class="flex items-center gap-2 p-1 bg-slate-100 rounded-xl self-start w-full overflow-x-auto no-scrollbar">
                 <button onclick="switchWorkLifeTab('relations')" id="btnTab-relations" class="px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 whitespace-nowrap">

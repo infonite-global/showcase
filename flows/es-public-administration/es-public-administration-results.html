@@ -518,7 +518,7 @@
 </div>
 </div>
 <script src="../../js/config.js?v=5"></script>
-<script src="../../js/enums.js?v=6"></script>
+<script src="../../js/enums.js?v=7"></script>
 <script src="../../js/status.js"></script>
 <script src="../../js/features.js?v=5"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
@@ -1533,17 +1533,40 @@
         const badgeContainer = document.getElementById('laborStatusBadge');
 
         if (activeBadge) {
-            activeBadge.classList.remove('hidden', 'text-emerald-700', 'border-emerald-200', 'bg-emerald-50', 'text-slate-500', 'border-slate-200', 'bg-slate-100');
+            activeBadge.classList.remove('hidden', 'text-emerald-700', 'border-emerald-200', 'bg-emerald-50', 'text-slate-500', 'border-slate-200', 'bg-slate-100', 'text-amber-600', 'border-amber-200', 'bg-amber-50');
             if (isActive) {
-                activeBadge.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i> Currently Active';
+                activeBadge.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i> Currently Working';
                 activeBadge.classList.add('text-emerald-700', 'border-emerald-200', 'bg-emerald-50');
                 if (statusIcon) statusIcon.className = 'fa-solid fa-user-check text-3xl text-emerald-500 mb-1';
                 if (badgeContainer) badgeContainer.className = 'w-20 h-20 rounded-2xl bg-emerald-50 border border-emerald-100 flex flex-col items-center justify-center shadow-sm shrink-0';
-            } else {
-                activeBadge.innerHTML = '<i class="fa-solid fa-pause-circle mr-1"></i> Inactive';
+            } else if (isActive === false) {
+                activeBadge.innerHTML = '<i class="fa-solid fa-pause-circle mr-1"></i> Not Working';
                 activeBadge.classList.add('text-slate-500', 'border-slate-200', 'bg-slate-100');
                 if (statusIcon) statusIcon.className = 'fa-solid fa-user-slash text-3xl text-slate-400 mb-1';
                 if (badgeContainer) badgeContainer.className = 'w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center shadow-sm shrink-0 grayscale opacity-80';
+            } else {
+                // currently_active is null: the source did not state it either way
+                activeBadge.innerHTML = '<i class="fa-solid fa-circle-question mr-1"></i> Activity Unknown';
+                activeBadge.classList.add('text-amber-600', 'border-amber-200', 'bg-amber-50');
+                if (statusIcon) statusIcon.className = 'fa-solid fa-user-clock text-3xl text-amber-400 mb-1';
+                if (badgeContainer) badgeContainer.className = 'w-20 h-20 rounded-2xl bg-amber-50/50 border border-amber-100 flex flex-col items-center justify-center shadow-sm shrink-0';
+            }
+        }
+
+        // Current work types: one chip per ongoing relation (repeats = simultaneous jobs)
+        const workTypesWrap = document.getElementById('lblCurrentWorkTypes');
+        if (workTypesWrap) {
+            const types = laborCheck.current_work_types;
+            if (Array.isArray(types) && types.length > 0) {
+                workTypesWrap.classList.remove('hidden');
+                workTypesWrap.classList.add('flex');
+                workTypesWrap.innerHTML = types.map(t => {
+                    const meta = (window.INFONITE_ENUMS && window.INFONITE_ENUMS.WORK_RELATION_TYPES && window.INFONITE_ENUMS.WORK_RELATION_TYPES[t]) || { label: t.replace(/_/g, ' '), icon: 'fa-briefcase' };
+                    return `<span class="px-2 py-0.5 rounded border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1"><i class="fa-solid ${meta.icon}"></i> ${meta.label}</span>`;
+                }).join('');
+            } else {
+                workTypesWrap.classList.add('hidden');
+                workTypesWrap.innerHTML = '';
             }
         }
 
@@ -1557,7 +1580,7 @@
             relationsList.innerHTML = laborCheck.work_relations_history.map((rel, index) => {
                 const daysHuman = rel.social_security_days ? ` • ${formatDaysToYearsMonthsDays(rel.social_security_days)}` : '';
                 
-                const isSpecial = rel.work_type === 'vacations' || rel.work_type === 'unemployment_benefits';
+                const isSpecial = rel.assimilated || rel.work_type === 'vacations' || rel.work_type === 'unemployment_benefits';
                 const isCurrentlyActive = !rel.activity_end;
                 const isLastItem = index === laborCheck.work_relations_history.length - 1;
 
@@ -1616,6 +1639,7 @@
                             ${contractHtml}
                             <div class="flex flex-wrap items-center gap-2 mt-2">
                                  <span class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">${rel.regime || 'General'}</span>
+                                 ${rel.ccc ? `<span class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest font-mono" title="Employer contribution account (CCC)">CCC ${rel.ccc}</span>` : ''}
                                  ${rel.contribution_group ? `<span class="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest max-w-[200px] truncate" title="${rel.contribution_group}">${rel.contribution_group}</span>` : ''}
                             </div>
                         </div>
@@ -1633,68 +1657,72 @@
             relationsList.innerHTML = '<p class="text-sm text-slate-400 font-medium italic">No work relations data available.</p>';
         }
 
-        // 3. Contribution Bases Grouped List
+        // 3. Contribution Bases, grouped per employer account (contribution_base_by_company)
         const basesGrid = document.getElementById('listContributionBases');
-        if (basesGrid && laborCheck.contribution_base_history && laborCheck.contribution_base_history.length > 0) {
-            
-            // Group by Month-Year
-            const groupedBases = {};
-            laborCheck.contribution_base_history.forEach(baseItem => {
-                const d = new Date(baseItem.date);
-                const monthName = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
-                const yearNum = d.getFullYear();
-                const groupKey = `${monthName} ${yearNum}`;
-                
-                if (!groupedBases[groupKey]) {
-                    groupedBases[groupKey] = [];
-                }
-                groupedBases[groupKey].push(baseItem);
-            });
-
-            // Render groups
-            basesGrid.innerHTML = Object.entries(groupedBases).map(([groupName, items]) => {
-                const itemsHtml = items.map(baseItem => {
-                    let amountHtml = '';
-                    if (baseItem.base === 'pending') {
-                        amountHtml = `<span class="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md border border-amber-100 flex items-center gap-1.5"><i class="fa-solid fa-hourglass-half"></i> PENDING</span>`;
-                    } else if (baseItem.base && baseItem.base.amount) {
-                        const formatted = new Intl.NumberFormat('es-ES', { style: 'currency', currency: baseItem.base.currency || 'EUR' }).format(baseItem.base.amount);
-                        amountHtml = `<span class="text-sm font-black text-slate-800 font-mono tracking-tight">${formatted}</span>`;
+        const byCompany = laborCheck.contribution_base_by_company || [];
+        if (basesGrid && byCompany.length > 0) {
+            basesGrid.innerHTML = byCompany.map(company => {
+                const months = company.months || [];
+                const monthsHtml = months.map(m => {
+                    const monthLabel = new Date(m.date).toLocaleString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+                    const statusMeta = getContributionMonthMeta(m.status);
+                    let amountHtml;
+                    if (m.status === 'registered' && m.base && m.base.amount != null) {
+                        const formatted = new Intl.NumberFormat('es-ES', { style: 'currency', currency: m.base.currency || 'EUR' }).format(m.base.amount);
+                        amountHtml = `<span class="text-sm font-black text-slate-800 font-mono tracking-tight">${formatted}</span>
+                            ${m.provisional ? '<span class="text-[8px] font-black uppercase tracking-widest text-amber-500 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded" title="Provisional base — may still be regularized by the TGSS">Provisional</span>' : ''}`;
                     } else {
-                        amountHtml = `<span class="text-xs font-bold text-slate-400">--</span>`;
+                        amountHtml = `<span class="text-[10px] font-bold ${statusMeta.textClass} ${statusMeta.bgClass} px-2 py-1 rounded-md border flex items-center gap-1.5"><i class="fa-solid ${statusMeta.icon}"></i> ${statusMeta.label.toUpperCase()}</span>`;
                     }
-                    
                     return `
-                    <div class="flex items-center justify-between p-3 sm:p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-xs shrink-0">
-                                <i class="fa-solid fa-file-invoice-dollar"></i>
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="text-xs sm:text-sm font-bold text-slate-700 truncate max-w-[150px] sm:max-w-xs" title="${baseItem.concept || ''}">${baseItem.concept || 'Unknown Concept'}</span>
-                                <span class="text-[10px] font-semibold text-slate-400">Social Security Contribution</span>
-                            </div>
-                        </div>
-                        <div class="shrink-0 pl-2">
-                            ${amountHtml}
-                        </div>
+                    <div class="flex items-center justify-between px-3 sm:px-4 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
+                        <span class="text-[10px] font-black tracking-widest text-slate-500 uppercase flex items-center gap-2">
+                            <i class="fa-regular fa-calendar text-slate-300"></i> ${monthLabel}
+                        </span>
+                        <div class="shrink-0 pl-2 flex items-center gap-2">${amountHtml}</div>
                     </div>
                     `;
                 }).join('');
 
+                const benefitBadge = company.is_benefit_block
+                    ? '<span class="text-[8px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded" title="This block tracks a benefit, not an employer — its bases are not earned income">Benefit — not earned income</span>'
+                    : '';
+
                 return `
                 <div class="flex flex-col">
-                    <h5 class="text-[10px] font-black tracking-widest text-slate-500 uppercase mb-2 pl-2 border-l-2 border-[var(--primary)]/30">${groupName}</h5>
+                    <div class="flex flex-wrap items-center gap-2 mb-2 pl-2 border-l-2 border-[var(--primary)]/30">
+                        <h5 class="text-[10px] font-black tracking-widest text-slate-600 uppercase">${company.company_name || 'Unknown'}</h5>
+                        ${company.ccc ? `<span class="text-[8px] font-bold uppercase tracking-widest text-slate-400 font-mono" title="Employer contribution account (CCC)">CCC ${company.ccc}</span>` : ''}
+                        ${company.regime ? `<span class="text-[8px] font-bold uppercase tracking-widest text-indigo-500 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">${company.regime}</span>` : ''}
+                        ${benefitBadge}
+                    </div>
                     <div class="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        ${itemsHtml}
+                        ${monthsHtml || '<p class="text-sm text-slate-400 font-medium italic p-4">No monthly data.</p>'}
                     </div>
                 </div>
                 `;
             }).join('');
-
+        } else if (basesGrid && laborCheck.contribution_base_history && laborCheck.contribution_base_history.length > 0) {
+            // Fallback: flat history only (no per-company grouping in the payload)
+            basesGrid.innerHTML = laborCheck.contribution_base_history.map(m => {
+                const monthLabel = new Date(m.date).toLocaleString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+                const statusMeta = getContributionMonthMeta(m.status);
+                const amountHtml = (m.status === 'registered' && m.base && m.base.amount != null)
+                    ? `<span class="text-sm font-black text-slate-800 font-mono tracking-tight">${new Intl.NumberFormat('es-ES', { style: 'currency', currency: m.base.currency || 'EUR' }).format(m.base.amount)}</span>`
+                    : `<span class="text-[10px] font-bold ${statusMeta.textClass} ${statusMeta.bgClass} px-2 py-1 rounded-md border flex items-center gap-1.5"><i class="fa-solid ${statusMeta.icon}"></i> ${statusMeta.label.toUpperCase()}</span>`;
+                return `
+                <div class="flex items-center justify-between px-4 py-2.5 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-[10px] font-black tracking-widest text-slate-500 uppercase">${monthLabel}</span>
+                    <div class="shrink-0 pl-2">${amountHtml}</div>
+                </div>
+                `;
+            }).join('');
         } else if (basesGrid) {
             basesGrid.innerHTML = '<p class="text-sm text-slate-400 font-medium italic">No contribution bases data available.</p>';
         }
+
+        // 3b. Guaranteed Income Floor
+        renderIncomeFloor(laborCheck.income_floor);
 
         // 4. Report Download Button Setup
         const btnWrapper = document.getElementById('btnDownloadWorkLifeWrapper');
@@ -1733,6 +1761,88 @@
                 btnWrapper.classList.add('hidden');
             }
         }
+    }
+
+    function getContributionMonthMeta(status) {
+        const map = {
+            'registered':         { label: 'Registered',        icon: 'fa-circle-check',    textClass: 'text-emerald-600', bgClass: 'bg-emerald-50 border-emerald-100' },
+            'pending_update':     { label: 'Pending update',    icon: 'fa-hourglass-half',  textClass: 'text-amber-500',   bgClass: 'bg-amber-50 border-amber-100' },
+            'not_yet_settled':    { label: 'Not yet settled',   icon: 'fa-clock',           textClass: 'text-sky-500',     bgClass: 'bg-sky-50 border-sky-100' },
+            'not_yet_elapsed':    { label: 'Not yet elapsed',   icon: 'fa-calendar-plus',   textClass: 'text-slate-400',   bgClass: 'bg-slate-50 border-slate-200' },
+            'no_base_registered': { label: 'No base registered',icon: 'fa-circle-minus',    textClass: 'text-slate-400',   bgClass: 'bg-slate-50 border-slate-200' },
+            'no_alta':            { label: 'Not registered',    icon: 'fa-user-slash',      textClass: 'text-slate-400',   bgClass: 'bg-slate-50 border-slate-200' }
+        };
+        return map[status] || { label: status || 'Unknown', icon: 'fa-circle-question', textClass: 'text-slate-400', bgClass: 'bg-slate-50 border-slate-200' };
+    }
+
+    function renderIncomeFloor(floor) {
+        const card = document.getElementById('incomeFloorCard');
+        if (!card) return;
+        if (!floor) { card.classList.add('hidden'); card.innerHTML = ''; return; }
+        card.classList.remove('hidden');
+
+        const fmt = (money) => (money && money.amount != null)
+            ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: money.currency || 'EUR' }).format(money.amount)
+            : '--';
+
+        const statusMap = {
+            'computed':             { label: 'Floor computed',       desc: 'Certified by the contribution bases — real income can only be equal or higher.', icon: 'fa-shield-halved', color: 'emerald' },
+            'not_currently_active': { label: 'No current employment', desc: 'No ongoing employment, so the current guaranteed floor is zero.',               icon: 'fa-pause-circle',  color: 'slate' },
+            'insufficient_data':    { label: 'Insufficient data',     desc: 'The person is active, but there is no certified window to measure a floor from.', icon: 'fa-hourglass-half', color: 'amber' },
+            'activity_unknown':     { label: 'Activity unknown',      desc: 'No employment evidence either way — no floor is claimed.',                       icon: 'fa-circle-question', color: 'amber' }
+        };
+        const meta = statusMap[floor.status] || statusMap['activity_unknown'];
+        const computed = floor.status === 'computed';
+
+        const companiesHtml = (floor.companies || []).map(c => `
+            <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
+                <div class="flex flex-col min-w-0">
+                    <span class="text-xs font-bold text-slate-700 truncate">${c.company_name || 'Unknown'}</span>
+                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">
+                        ${c.ccc ? `CCC ${c.ccc} • ` : ''}${c.observed_months || 0} certified month${c.observed_months === 1 ? '' : 's'}
+                    </span>
+                </div>
+                <div class="flex flex-col items-end shrink-0">
+                    <span class="text-sm font-black text-slate-800 font-mono tracking-tight">${fmt(c.monthly_floor)} <span class="text-[9px] font-bold text-slate-400 uppercase">/ mo</span></span>
+                    <span class="text-[9px] font-semibold text-slate-400 font-mono">${fmt(c.annual_floor)} / yr</span>
+                </div>
+            </div>
+        `).join('');
+
+        card.innerHTML = `
+            <div class="p-6 flex flex-col lg:flex-row gap-6 lg:items-center">
+                <div class="flex items-center gap-4 flex-1 min-w-0">
+                    <div class="w-12 h-12 rounded-2xl bg-${meta.color}-50 text-${meta.color}-500 border border-${meta.color}-100 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid ${meta.icon}"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-black text-slate-800 tracking-tight flex flex-wrap items-center gap-2">
+                            Guaranteed Income Floor
+                            <span class="text-[8px] font-black uppercase tracking-widest text-${meta.color}-600 bg-${meta.color}-50 border border-${meta.color}-200 px-2 py-0.5 rounded">${meta.label}</span>
+                        </h3>
+                        <p class="text-[10px] font-medium text-slate-400 mt-1">${meta.desc} A certified lower bound — never a salary estimate.</p>
+                    </div>
+                </div>
+                ${computed ? `
+                <div class="flex items-center gap-8 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-8">
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Monthly (net)</span>
+                        <span class="text-2xl font-black text-emerald-600 font-mono tracking-tight leading-none">≥ ${fmt(floor.monthly_floor)}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Annual (net)</span>
+                        <span class="text-lg font-black text-slate-700 font-mono tracking-tight leading-none">≥ ${fmt(floor.annual_floor)}</span>
+                    </div>
+                </div>` : ''}
+            </div>
+            ${computed && companiesHtml ? `
+            <div class="border-t border-slate-100">
+                <div class="px-6 pt-3 pb-1">
+                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Contributing employers</span>
+                </div>
+                ${companiesHtml}
+            </div>` : ''}
+        `;
     }
 
     window.switchDriverTab = function(tabId) {
