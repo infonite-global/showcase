@@ -80,13 +80,13 @@
 
     <!-- Tabs Navigation -->
     <div class="flex items-center gap-2 mb-6 p-1.5 bg-slate-100/50 rounded-xl w-fit border border-slate-200/50">
-        <button id="btnTabPoints" onclick="switchDriverTab('points')" class="px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 flex-wrap">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>Point Movements</span>
-        </button>
-        <button id="btnTabVehicles" onclick="switchDriverTab('vehicles')" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2">
+        <button id="btnTabVehicles" onclick="switchDriverTab('vehicles')" class="px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 flex-wrap">
             <i class="fa-solid fa-truck-pickup"></i>
             <span>Vehicles</span>
+        </button>
+        <button id="btnTabPoints" onclick="switchDriverTab('points')" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Point Movements</span>
         </button>
     </div>
 
@@ -96,7 +96,7 @@
         <!-- ======================= -->
         <!-- TAB 1: POINT MOVEMENTS  -->
         <!-- ======================= -->
-        <div id="containerDriverPoints" class="flex flex-col gap-4 pb-8">
+        <div id="containerDriverPoints" class="hidden flex-col gap-4 pb-8">
             <h3 class="text-sm font-bold text-slate-700 tracking-tight mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left text-slate-400"></i> Balance History
             </h3>
@@ -120,7 +120,7 @@
         <!-- ======================= -->
         <!-- TAB 2: VEHICLES         -->
         <!-- ======================= -->
-        <div id="containerDriverVehicles" class="hidden flex-col gap-4 pb-8">
+        <div id="containerDriverVehicles" class="flex flex-col gap-4 pb-8">
             <h3 class="text-sm font-bold text-slate-700 tracking-tight mb-2 flex items-center gap-2">
                 <i class="fa-solid fa-car text-slate-400"></i> Registered Vehicles
             </h3>
