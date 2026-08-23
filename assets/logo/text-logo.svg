@@ -73,10 +73,17 @@
         <filter id="cg-melt" x="-25%" y="-25%" width="150%" height="150%">
             <feGaussianBlur stdDeviation="4"/>
         </filter>
+        <filter id="cg-edge-soft" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="5"/>
+        </filter>
+        <!-- fades the cloud out before it can touch any canvas edge -->
+        <mask id="cg-edge-fade" maskUnits="userSpaceOnUse" x="-100" y="-10" width="300" height="120">
+            <rect x="-80" y="8" width="260" height="78" rx="24" fill="#fff" filter="url(#cg-edge-soft)"/>
+        </mask>
     </defs>
     <!-- mesh-gradient cloud (painted before the mark; white pools last so the
          dots always land on white) -->
-    <g filter="url(#cg-melt)">
+    <g filter="url(#cg-melt)" mask="url(#cg-edge-fade)">
         <ellipse cx="52" cy="46" rx="120" ry="34" fill="url(#cg-b-white)"/>
         <ellipse cx="40" cy="44" rx="80" ry="26" fill="url(#cg-b-mint-light)"/>
         <ellipse cx="-30" cy="62" rx="30" ry="20" fill="url(#cg-b-mint)"/>
