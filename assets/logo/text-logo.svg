@@ -87,7 +87,7 @@
         <ellipse cx="52" cy="46" rx="120" ry="34" fill="url(#cg-b-white)"/>
         <ellipse cx="40" cy="44" rx="80" ry="26" fill="url(#cg-b-mint-light)"/>
         <ellipse cx="-30" cy="62" rx="30" ry="20" fill="url(#cg-b-mint)"/>
-        <circle cx="30" cy="30" r="22" fill="url(#cg-b-emerald)"/>
+        <circle cx="24" cy="27" r="19" fill="url(#cg-b-emerald)" fill-opacity="0.55"/>
         <ellipse cx="161" cy="62" rx="29" ry="20" fill="url(#cg-b-deep)"/>
         <circle cx="90" cy="60" r="24" fill="url(#cg-b-mint-light)"/>
         <circle cx="55" cy="68" r="17" fill="url(#cg-b-gray)"/>
