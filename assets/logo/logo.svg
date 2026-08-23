@@ -9,9 +9,9 @@
 <!--
   - Universal variant: legible on ANY background (light, dark, colored, or
   - scheme-switching surfaces such as email clients with forced dark mode).
-  - Same ink as the light variant plus a solid WHITE BORDER around the whole
-  - mark (a single unified outline, no internal cuts) — the brand designer's
-  - final call for this variant: white border only, nothing else.
+  - Same ink as the light variant plus a solid WHITE BORDER that follows the
+  - official contour exactly: a duplicate of the mark, white-filled and
+  - white-stroked, painted underneath the mark. No filters involved.
   - PARITY RULE: canvas, viewBox and mark geometry are IDENTICAL to the other
   - logo-*.svg variants, so swapping variants never moves or resizes the mark.
   - The border is sized to stay inside the canvas margins.
@@ -37,42 +37,56 @@
         stroke-linejoin: miter;
         stroke-miterlimit: 2;
         }
+        .cg-logo-halo {
+        fill: #FFFFFF;
+        stroke: #FFFFFF;
+        stroke-width: 5;
+        stroke-linejoin: miter;
+        stroke-miterlimit: 2;
+        }
     </style>
-    <defs>
-        <filter id="cg-halo" x="-15%" y="-15%" width="130%" height="130%">
-            <feMorphology in="SourceAlpha" operator="dilate" radius="3.75" result="dilated"/>
-            <feFlood flood-color="#FFFFFF" result="white"/>
-            <feComposite in="white" in2="dilated" operator="in" result="halo"/>
-            <feMerge>
-                <feMergeNode in="halo"/>
-                <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-        </filter>
-    </defs>
-    <g filter="url(#cg-halo)">
-        <g id="logo-group" transform="translate(0 0) scale(1.5)">
-            <g id="pathI1" transform="translate(0 0)">
-                <path
-                        class="cg-logo-color-emphasis"
-                        d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
-                />
-                <path
-                        class="cg-logo-color-base"
-                        d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
-                />
-            </g>
+    <!-- white border layer: the same official geometry, stroked in white and
+         painted entirely underneath the mark -->
+    <g id="halo-group" transform="translate(0 0) scale(1.5)">
+        <g transform="translate(0 0)">
+            <path class="cg-logo-halo"
+                  d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
+            />
+            <path class="cg-logo-halo"
+                  d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
+            />
+        </g>
+        <g transform="translate(25 0)">
+            <path class="cg-logo-halo"
+                  d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
+            />
+            <path class="cg-logo-halo"
+                  d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
+            />
+        </g>
+    </g>
+    <g id="logo-group" transform="translate(0 0) scale(1.5)">
+        <g id="pathI1" transform="translate(0 0)">
+            <path
+                    class="cg-logo-color-emphasis"
+                    d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
+            />
+            <path
+                    class="cg-logo-color-base"
+                    d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
+            />
+        </g>
 
-            <g id="pathT" transform="translate(25 0)">
-                <!--            +25-->
-                <path
-                        class="cg-logo-color-base"
-                        d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
-                />
-                <path
-                        class="cg-logo-color-emphasis"
-                        d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
-                />
-            </g>
+        <g id="pathT" transform="translate(25 0)">
+            <!--            +25-->
+            <path
+                    class="cg-logo-color-base"
+                    d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
+            />
+            <path
+                    class="cg-logo-color-emphasis"
+                    d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
+            />
         </g>
     </g>
 </svg>
