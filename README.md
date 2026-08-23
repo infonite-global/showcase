@@ -61,6 +61,7 @@ The brand represents the limitless potential of data extraction and process auto
 | ---------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Dark (for light backgrounds) | <img src="assets/logo/logo-light.png" height="32">  | [logo-light.png](https://assets.infonite.dev/logo/logo-light.png)   |
 | Light (for dark backgrounds) | <img src="assets/logo/logo-dark.png" height="32"> | [logo-dark.png](https://assets.infonite.dev/logo/logo-dark.png) |
+| Universal (any background) | <img src="assets/logo/logo.png" height="40"> | [logo.png](https://assets.infonite.dev/logo/logo.png) |
 
 ### Wordmark (for headers, documents)
 
@@ -68,6 +69,9 @@ The brand represents the limitless potential of data extraction and process auto
 | ---------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | Dark (for light backgrounds) | <img src="assets/logo/text-logo-light.png" height="24">  | [text-logo-light.png](https://assets.infonite.dev/logo/text-logo-light.png)   |
 | Light (for dark backgrounds) | <img src="assets/logo/text-logo-dark.png" height="24"> | [text-logo-dark.png](https://assets.infonite.dev/logo/text-logo-dark.png) |
+| Universal (any background) | <img src="assets/logo/text-logo.png" height="26"> | [text-logo.png](https://assets.infonite.dev/logo/text-logo.png) |
+
+> The **universal** variants carry a soft light-and-green aura so they stay legible on any background. Use them on surfaces you don't control (email clients with forced dark mode, theme-switching sites); email signatures use the universal wordmark.
 
 > 💡 **The Icon**: Simplified from the wordmark's **"it"** — two connected data points symbolizing infinite information flow.
 
