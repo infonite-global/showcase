@@ -1,0 +1,95 @@
+<!--
+  - Copyright (c) 2025. Adler Marmol & Camila Molina.
+  - Unauthorized copying or redistribution of this file in source and binary forms via any medium is strictly prohibited.
+  - Contact:
+  -  adler.marmol@gmail.com
+  -  mariacmolinav@gmail.com
+  -->
+
+<!--
+  - Universal variant: legible on ANY background (light, dark, colored, or
+  - scheme-switching surfaces such as email clients with forced dark mode).
+  - Same ink as the light variant, wrapped in a soft two-layer glow: a white
+  - halo that fades into a wider brand-green aura. On white the white layer
+  - disappears and only a faint green haze remains; on dark it lights the
+  - mark up. The viewBox carries extra padding so the glow never clips.
+  -->
+
+<svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="110.6 78.7 130 130"
+        height="100" width="100" version="1.1"
+>
+    <style>
+        .cg-logo-color-base {
+        fill: #1C252E;
+        stroke: #1C252E;
+        stroke-width: 0;
+        stroke-linejoin: miter;
+        stroke-miterlimit: 2;
+        }
+        .cg-logo-color-emphasis {
+        fill: #00a76f;
+        stroke: #00a76f;
+        stroke-width: 0;
+        stroke-linejoin: miter;
+        stroke-miterlimit: 2;
+        }
+    </style>
+    <defs>
+        <filter id="cg-glow" x="-40%" y="-40%" width="180%" height="180%">
+            <!-- background light: soft mint-white veil -->
+            <feMorphology in="SourceAlpha" operator="dilate" radius="1.8" result="white-spread"/>
+            <feGaussianBlur in="white-spread" stdDeviation="4.5" result="white-blur"/>
+            <feComponentTransfer in="white-blur" result="white-shaped">
+                <feFuncA type="gamma" amplitude="1" exponent="0.8" offset="0"/>
+            </feComponentTransfer>
+            <feFlood flood-color="#F2FFF9" flood-opacity="0.65" result="white-fill"/>
+            <feComposite in="white-fill" in2="white-shaped" operator="in" result="white-glow"/>
+            <!-- green beams: a broad aura gated by organic fractal noise, so the
+                 green shows up as irregular streaks inside the light instead of
+                 a concentric ring -->
+            <feMorphology in="SourceAlpha" operator="dilate" radius="4.5" result="green-spread"/>
+            <feGaussianBlur in="green-spread" stdDeviation="9" result="green-blur"/>
+            <feFlood flood-color="#00a76f" flood-opacity="0.7" result="green-fill"/>
+            <feComposite in="green-fill" in2="green-blur" operator="in" result="green-glow"/>
+            <feTurbulence type="fractalNoise" baseFrequency="0.013 0.019" numOctaves="2" seed="7" result="noise"/>
+            <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.34 0.34 0.34 0 0" result="noise-alpha"/>
+            <feComponentTransfer in="noise-alpha" result="noise-gate">
+                <feFuncA type="linear" slope="1.9" intercept="-0.5"/>
+            </feComponentTransfer>
+            <feComposite in="green-glow" in2="noise-gate" operator="in" result="green-beams"/>
+            <feMerge>
+                <feMergeNode in="white-glow"/>
+                <feMergeNode in="green-beams"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+    <g filter="url(#cg-glow)">
+        <g id="logo-group" transform="translate(0 0) scale(1.5)">
+            <g id="pathI1" transform="translate(0 0)">
+                <path
+                        class="cg-logo-color-emphasis"
+                        d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
+                />
+                <path
+                        class="cg-logo-color-base"
+                        d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
+                />
+            </g>
+
+            <g id="pathT" transform="translate(25 0)">
+                <!--            +25-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
+                />
+                <path
+                        class="cg-logo-color-emphasis"
+                        d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
+                />
+            </g>
+        </g>
+    </g>
+</svg>
