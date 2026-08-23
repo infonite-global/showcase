@@ -9,13 +9,12 @@
 <!--
   - Universal variant: legible on ANY background (light, dark, colored, or
   - scheme-switching surfaces such as email clients with forced dark mode).
-  - The mark sits on a hand-placed mesh-gradient cloud: soft radial blobs of
-  - white, INFONITE green derivatives and a light slate gray, melted together
-  - by a blur. The white pools are placed under the green dots on purpose so
-  - the identity green always reads against white light.
+  - Same ink as the light variant plus a solid WHITE BORDER around the whole
+  - mark (a single unified outline, no internal cuts) — the brand designer's
+  - final call for this variant: white border only, nothing else.
   - PARITY RULE: canvas, viewBox and mark geometry are IDENTICAL to the other
   - text-logo-*.svg variants, so swapping variants never moves or resizes the
-  - mark. The cloud is irregular and never reaches the canvas corners.
+  - mark. The border is sized to stay inside the canvas margins.
   -->
 
 <svg
@@ -40,129 +39,86 @@
         }
     </style>
     <defs>
-        <radialGradient id="cg-b-white">
-            <stop offset="0%" stop-color="#FCFCFC" stop-opacity="0.95"/>
-            <stop offset="55%" stop-color="#FCFCFC" stop-opacity="0.6"/>
-            <stop offset="100%" stop-color="#FCFCFC" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-mint">
-            <stop offset="0%" stop-color="#A9EAD2" stop-opacity="0.85"/>
-            <stop offset="60%" stop-color="#A9EAD2" stop-opacity="0.45"/>
-            <stop offset="100%" stop-color="#A9EAD2" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-mint-light">
-            <stop offset="0%" stop-color="#DFF7EE" stop-opacity="0.9"/>
-            <stop offset="60%" stop-color="#DFF7EE" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#DFF7EE" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-emerald">
-            <stop offset="0%" stop-color="#2FBE8F" stop-opacity="0.8"/>
-            <stop offset="60%" stop-color="#2FBE8F" stop-opacity="0.4"/>
-            <stop offset="100%" stop-color="#2FBE8F" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-deep">
-            <stop offset="0%" stop-color="#0A8A61" stop-opacity="0.75"/>
-            <stop offset="60%" stop-color="#0A8A61" stop-opacity="0.35"/>
-            <stop offset="100%" stop-color="#0A8A61" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-gray">
-            <stop offset="0%" stop-color="#C3CDD5" stop-opacity="0.7"/>
-            <stop offset="60%" stop-color="#C3CDD5" stop-opacity="0.35"/>
-            <stop offset="100%" stop-color="#C3CDD5" stop-opacity="0"/>
-        </radialGradient>
-        <filter id="cg-melt" x="-25%" y="-25%" width="150%" height="150%">
-            <feGaussianBlur stdDeviation="4"/>
+        <filter id="cg-halo" x="-15%" y="-15%" width="130%" height="130%">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="2.5" result="dilated"/>
+            <feFlood flood-color="#FFFFFF" result="white"/>
+            <feComposite in="white" in2="dilated" operator="in" result="halo"/>
+            <feMerge>
+                <feMergeNode in="halo"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
         </filter>
-        <filter id="cg-edge-soft" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="5"/>
-        </filter>
-        <!-- fades the cloud out before it can touch any canvas edge -->
-        <mask id="cg-edge-fade" maskUnits="userSpaceOnUse" x="-100" y="-10" width="300" height="120">
-            <rect x="-80" y="8" width="260" height="78" rx="24" fill="#fff" filter="url(#cg-edge-soft)"/>
-        </mask>
     </defs>
-    <!-- mesh-gradient cloud (painted before the mark; white pools last so the
-         dots always land on white) -->
-    <g filter="url(#cg-melt)" mask="url(#cg-edge-fade)">
-        <ellipse cx="52" cy="46" rx="120" ry="34" fill="url(#cg-b-white)"/>
-        <ellipse cx="40" cy="44" rx="80" ry="26" fill="url(#cg-b-mint-light)"/>
-        <ellipse cx="-30" cy="62" rx="30" ry="20" fill="url(#cg-b-mint)"/>
-        <circle cx="24" cy="27" r="19" fill="url(#cg-b-emerald)" fill-opacity="0.55"/>
-        <ellipse cx="161" cy="62" rx="29" ry="20" fill="url(#cg-b-deep)"/>
-        <circle cx="90" cy="60" r="24" fill="url(#cg-b-mint-light)"/>
-        <circle cx="55" cy="68" r="17" fill="url(#cg-b-gray)"/>
-        <circle cx="-68" cy="26" r="24" fill="url(#cg-b-white)"/>
-        <circle cx="97" cy="26" r="22" fill="url(#cg-b-white)"/>
-        <circle cx="131" cy="46" r="19" fill="url(#cg-b-white)"/>
-    </g>
-    <g id="logo-group" transform="translate(-168 -50)">
-        <g id="pathI1" transform="translate(0 0)">
-            <path
-                    class="cg-logo-color-emphasis"
-                    d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
-            />
-            <path
-                    class="cg-logo-color-base"
-                    d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
-            />
-        </g>
-        <g id="pathN1" transform="translate(30 0)">
-            <!--            +30-->
-            <path
-                    class="cg-logo-color-base"
-                    d="M117.58809,99.88029v22.11597H105.8044v-17.6991c0-5.45886-1.8916-7.40662-5.27734-7.40662 c-4.90234,0-5.98633,3.88037-5.98633,6.66992v18.43506H82.75655V88.10294h11.78418v4.13318c0,0,2.87305-4.85901,10.42871-4.85901 C111.696,87.37711,117.58809,91.21281,117.58809,99.88029z"
-            />
-        </g>
-        <g id="pathF" transform="translate(60 0)">
-            <!--            +30-->
-            <path
-                    class="cg-logo-color-base"
-                    d="M104.29756,84.37223v3.73145h7.75146v9.70422h-7.75146v24.18835H92.51363V97.8079h-4.03296v-9.70422 h4.03296v-4.33044c0-8.84167,5.8916-15.95374,14.70288-15.95374c2.97461,0,5.27954,1.25513,5.27954,1.25513v10.43872 C108.48897,77.63615,104.29756,77.11832,104.29756,84.37223z"
-            />
-        </g>
-        <g id="pathO" transform="translate(95 0)">
-            <!--            +35-->
-            <path
-                    class="cg-logo-color-base"
-                    d="M119.82588,105.0496c0,10.05273-7.83447,18.29321-19.83105,18.29321 c-11.99609,0-19.83008-8.24048-19.83008-18.29321c0-10.05286,7.83398-18.20178,19.83008-18.20178 C111.99141,86.84782,119.82588,94.99674,119.82588,105.0496z M107.52559,105.09489c0-4.34839-3.37158-7.87378-7.53076-7.87378 c-4.15869,0-7.53027,3.52539-7.53027,7.87378c0,4.34924,3.37158,7.87463,7.53027,7.87463 C104.15401,112.96952,107.52559,109.44413,107.52559,105.09489z"
-            />
-        </g>
-        <g id="pathN2" transform="translate(135 0)">
-            <!--            +40-->
-            <path
-                    class="cg-logo-color-base"
-                    d="M117.58809,99.88029v22.11597H105.8044v-17.6991c0-5.45886-1.8916-7.40662-5.27734-7.40662 c-4.90234,0-5.98633,3.88037-5.98633,6.66992v18.43506H82.75655V88.10294h11.78418v4.13318c0,0,2.87305-4.85901,10.42871-4.85901 C111.696,87.37711,117.58809,91.21281,117.58809,99.88029z"
-            />
-        </g>
-        <g id="pathI2" transform="translate(165 0)">
-            <!--            +30-->
-            <path
-                    class="cg-logo-color-emphasis"
-                    d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
+    <g filter="url(#cg-halo)">
+        <g id="logo-group" transform="translate(-168 -50)">
+            <g id="pathI1" transform="translate(0 0)">
+                <path
+                        class="cg-logo-color-emphasis"
+                        d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
+                />
+                <path
+                        class="cg-logo-color-base"
+                        d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
+                />
+            </g>
+            <g id="pathN1" transform="translate(30 0)">
+                <!--            +30-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M117.58809,99.88029v22.11597H105.8044v-17.6991c0-5.45886-1.8916-7.40662-5.27734-7.40662 c-4.90234,0-5.98633,3.88037-5.98633,6.66992v18.43506H82.75655V88.10294h11.78418v4.13318c0,0,2.87305-4.85901,10.42871-4.85901 C111.696,87.37711,117.58809,91.21281,117.58809,99.88029z"
+                />
+            </g>
+            <g id="pathF" transform="translate(60 0)">
+                <!--            +30-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M104.29756,84.37223v3.73145h7.75146v9.70422h-7.75146v24.18835H92.51363V97.8079h-4.03296v-9.70422 h4.03296v-4.33044c0-8.84167,5.8916-15.95374,14.70288-15.95374c2.97461,0,5.27954,1.25513,5.27954,1.25513v10.43872 C108.48897,77.63615,104.29756,77.11832,104.29756,84.37223z"
+                />
+            </g>
+            <g id="pathO" transform="translate(95 0)">
+                <!--            +35-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M119.82588,105.0496c0,10.05273-7.83447,18.29321-19.83105,18.29321 c-11.99609,0-19.83008-8.24048-19.83008-18.29321c0-10.05286,7.83398-18.20178,19.83008-18.20178 C111.99141,86.84782,119.82588,94.99674,119.82588,105.0496z M107.52559,105.09489c0-4.34839-3.37158-7.87378-7.53076-7.87378 c-4.15869,0-7.53027,3.52539-7.53027,7.87378c0,4.34924,3.37158,7.87463,7.53027,7.87463 C104.15401,112.96952,107.52559,109.44413,107.52559,105.09489z"
+                />
+            </g>
+            <g id="pathN2" transform="translate(135 0)">
+                <!--            +40-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M117.58809,99.88029v22.11597H105.8044v-17.6991c0-5.45886-1.8916-7.40662-5.27734-7.40662 c-4.90234,0-5.98633,3.88037-5.98633,6.66992v18.43506H82.75655V88.10294h11.78418v4.13318c0,0,2.87305-4.85901,10.42871-4.85901 C111.696,87.37711,117.58809,91.21281,117.58809,99.88029z"
+                />
+            </g>
+            <g id="pathI2" transform="translate(165 0)">
+                <!--            +30-->
+                <path
+                        class="cg-logo-color-emphasis"
+                        d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
 
-            />
-            <path
-                    class="cg-logo-color-base"
-                    d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
-            />
-        </g>
-        <g id="pathT" transform="translate(190 0)">
-            <!--            +25-->
-            <path
-                    class="cg-logo-color-base"
-                    d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
-            />
-            <path
-                    class="cg-logo-color-emphasis"
-                    d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
-            />
-        </g>
-        <g id="path9385" transform="translate(225 0)">
-            <!--            +35-->
-            <path
-                    class="cg-logo-color-base"
-                    d="M106.71529,109.6724h11.26465c0,11.86011-12.58813,13.56531-17.79419,13.56531 s-18.47314-3.2511-18.47314-18.02246s11.45825-18.36951,18.34863-18.36951c10.64673,0,15.6311,5.49048,17.28784,13.28149 c0.4646,2.16309,0.67261,4.4989,0.67261,6.93848H93.48994c0,5.55249,2.90405,7.72925,7.08398,7.72925 C104.75313,114.79496,106.71529,112.44535,106.71529,109.6724z M93.7729,100.12724h13.20532l-0.07642-0.04822 c0-2.49573-1.88501-5.50415-6.52222-5.50415C95.74947,94.57487,93.77364,97.88859,93.7729,100.12724z"
-            />
+                />
+                <path
+                        class="cg-logo-color-base"
+                        d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
+                />
+            </g>
+            <g id="pathT" transform="translate(190 0)">
+                <!--            +25-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
+                />
+                <path
+                        class="cg-logo-color-emphasis"
+                        d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
+                />
+            </g>
+            <g id="path9385" transform="translate(225 0)">
+                <!--            +35-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M106.71529,109.6724h11.26465c0,11.86011-12.58813,13.56531-17.79419,13.56531 s-18.47314-3.2511-18.47314-18.02246s11.45825-18.36951,18.34863-18.36951c10.64673,0,15.6311,5.49048,17.28784,13.28149 c0.4646,2.16309,0.67261,4.4989,0.67261,6.93848H93.48994c0,5.55249,2.90405,7.72925,7.08398,7.72925 C104.75313,114.79496,106.71529,112.44535,106.71529,109.6724z M93.7729,100.12724h13.20532l-0.07642-0.04822 c0-2.49573-1.88501-5.50415-6.52222-5.50415C95.74947,94.57487,93.77364,97.88859,93.7729,100.12724z"
+                />
+            </g>
         </g>
     </g>
 </svg>

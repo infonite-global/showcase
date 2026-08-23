@@ -9,13 +9,12 @@
 <!--
   - Universal variant: legible on ANY background (light, dark, colored, or
   - scheme-switching surfaces such as email clients with forced dark mode).
-  - The mark sits on a hand-placed mesh-gradient cloud: soft radial blobs of
-  - white, INFONITE green derivatives and a light slate gray, melted together
-  - by a blur. The white pools are placed under the green dots on purpose so
-  - the identity green always reads against white light.
+  - Same ink as the light variant plus a solid WHITE BORDER around the whole
+  - mark (a single unified outline, no internal cuts) — the brand designer's
+  - final call for this variant: white border only, nothing else.
   - PARITY RULE: canvas, viewBox and mark geometry are IDENTICAL to the other
   - logo-*.svg variants, so swapping variants never moves or resizes the mark.
-  - The cloud is irregular and never reaches the canvas corners.
+  - The border is sized to stay inside the canvas margins.
   -->
 
 <svg
@@ -40,81 +39,40 @@
         }
     </style>
     <defs>
-        <radialGradient id="cg-b-white">
-            <stop offset="0%" stop-color="#FCFCFC" stop-opacity="0.95"/>
-            <stop offset="55%" stop-color="#FCFCFC" stop-opacity="0.6"/>
-            <stop offset="100%" stop-color="#FCFCFC" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-mint">
-            <stop offset="0%" stop-color="#A9EAD2" stop-opacity="0.85"/>
-            <stop offset="60%" stop-color="#A9EAD2" stop-opacity="0.45"/>
-            <stop offset="100%" stop-color="#A9EAD2" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-mint-light">
-            <stop offset="0%" stop-color="#DFF7EE" stop-opacity="0.9"/>
-            <stop offset="60%" stop-color="#DFF7EE" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#DFF7EE" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-emerald">
-            <stop offset="0%" stop-color="#2FBE8F" stop-opacity="0.8"/>
-            <stop offset="60%" stop-color="#2FBE8F" stop-opacity="0.4"/>
-            <stop offset="100%" stop-color="#2FBE8F" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-deep">
-            <stop offset="0%" stop-color="#0A8A61" stop-opacity="0.75"/>
-            <stop offset="60%" stop-color="#0A8A61" stop-opacity="0.35"/>
-            <stop offset="100%" stop-color="#0A8A61" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="cg-b-gray">
-            <stop offset="0%" stop-color="#C3CDD5" stop-opacity="0.7"/>
-            <stop offset="60%" stop-color="#C3CDD5" stop-opacity="0.35"/>
-            <stop offset="100%" stop-color="#C3CDD5" stop-opacity="0"/>
-        </radialGradient>
-        <filter id="cg-melt" x="-25%" y="-25%" width="150%" height="150%">
-            <feGaussianBlur stdDeviation="4"/>
+        <filter id="cg-halo" x="-15%" y="-15%" width="130%" height="130%">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="3.75" result="dilated"/>
+            <feFlood flood-color="#FFFFFF" result="white"/>
+            <feComposite in="white" in2="dilated" operator="in" result="halo"/>
+            <feMerge>
+                <feMergeNode in="halo"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
         </filter>
-        <filter id="cg-edge-soft" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="5"/>
-        </filter>
-        <!-- fades the cloud out before it can touch any canvas edge -->
-        <mask id="cg-edge-fade" maskUnits="userSpaceOnUse" x="110" y="85" width="120" height="120">
-            <rect x="129" y="104" width="82" height="82" rx="26" fill="#fff" filter="url(#cg-edge-soft)"/>
-        </mask>
     </defs>
-    <!-- mesh-gradient cloud (painted before the mark; white pools last so the
-         dots always land on white) -->
-    <g filter="url(#cg-melt)" mask="url(#cg-edge-fade)">
-        <ellipse cx="172" cy="146" rx="50" ry="46" fill="url(#cg-b-white)"/>
-        <circle cx="147" cy="167" r="26" fill="url(#cg-b-mint)"/>
-        <circle cx="178" cy="176" r="21" fill="url(#cg-b-emerald)"/>
-        <circle cx="205" cy="167" r="18" fill="url(#cg-b-deep)"/>
-        <circle cx="133" cy="136" r="17" fill="url(#cg-b-gray)"/>
-        <circle cx="190" cy="114" r="21" fill="url(#cg-b-mint-light)"/>
-        <circle cx="150" cy="113" r="26" fill="url(#cg-b-white)"/>
-        <circle cx="201" cy="142" r="23" fill="url(#cg-b-white)"/>
-    </g>
-    <g id="logo-group" transform="translate(0 0) scale(1.5)">
-        <g id="pathI1" transform="translate(0 0)">
-            <path
-                    class="cg-logo-color-emphasis"
-                    d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
-            />
-            <path
-                    class="cg-logo-color-base"
-                    d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
-            />
-        </g>
+    <g filter="url(#cg-halo)">
+        <g id="logo-group" transform="translate(0 0) scale(1.5)">
+            <g id="pathI1" transform="translate(0 0)">
+                <path
+                        class="cg-logo-color-emphasis"
+                        d="M93.48506,75.08781c0-3.72131,2.92334-6.73901,6.5293-6.73901c3.60693,0,6.53027,3.0177,6.53027,6.73901 c0,3.72205-2.92334,6.73975-6.53027,6.73975C96.4084,81.82755,93.48506,78.80985,93.48506,75.08781z"
+                />
+                <path
+                        class="cg-logo-color-base"
+                        d="M94.0898,121.99552V88.10294h11.78442v33.89258H94.0898z"
+                />
+            </g>
 
-        <g id="pathT" transform="translate(25 0)">
-            <!--            +25-->
-            <path
-                    class="cg-logo-color-base"
-                    d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
-            />
-            <path
-                    class="cg-logo-color-emphasis"
-                    d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
-            />
+            <g id="pathT" transform="translate(25 0)">
+                <!--            +25-->
+                <path
+                        class="cg-logo-color-base"
+                        d="M106.36348,113.47355v9.77844c-6.89941,0-17.72852-1.4552-17.72852-13.25342V98.49418H84.9167V88.10294 h3.71826V77.92912h11.78369v30.0022C100.41866,109.95036,101.51387,113.47355,106.36348,113.47355z"
+                />
+                <path
+                        class="cg-logo-color-emphasis"
+                        d="M102.66182,94.82755c0-3.72119,2.92334-6.73901,6.53027-6.73901c3.60596,0,6.5293,3.01782,6.5293,6.73901 c0,3.72205-2.92334,6.73914-6.5293,6.73914C105.58516,101.56669,102.66182,98.5496,102.66182,94.82755z"
+                />
+            </g>
         </g>
     </g>
 </svg>
