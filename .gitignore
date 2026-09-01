@@ -26,3 +26,19 @@ npm-debug.log*
 # Build outputs
 dist/
 build/
+
+# Secrets, keys and env files.
+# This repo publishes to GitHub Pages, so its tracked files are world-readable
+# the moment they are pushed — there is no private staging step to catch a
+# mistake in.
+.env*
+!.env.example
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Platform artefacts
+.vercel
