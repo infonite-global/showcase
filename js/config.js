@@ -1003,39 +1003,45 @@ function deleteConfig(id) {
 }
 
 function showConfirmModal(title, message, confirmText, onConfirm, cancelText = "Cancel") {
+    // A decision of no return floats mid-screen on the glass: the title and its X, one card with
+    // the consequence, and the pills — the way out dark, the irreversible act in red.
     const modalId = 'infonite-confirm-modal';
     let modal = document.getElementById(modalId);
     if (!modal) {
         modal = document.createElement('div');
         modal.id = modalId;
-        modal.className = `fixed inset-0 bg-black/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-4 fade-in`;
+        modal.className = `fixed inset-0 glass-layout z-[2000] flex flex-col overflow-y-auto custom-scrollbar`;
         document.body.appendChild(modal);
     }
-    
+
     modal.innerHTML = `
-        <div class="bg-white w-full max-w-sm rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 flex flex-col scale-in">
-            <div class="p-6 md:p-8 flex flex-col items-center text-center">
-                <div class="w-16 h-16 rounded-full bg-red-50 border border-red-100 text-red-500 flex items-center justify-center mb-6">
-                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+        <div class="glass-column w-full max-w-2xl mx-auto my-auto px-4 sm:px-6 md:px-8 py-10 flex flex-col gap-5">
+            <div class="flex items-start justify-between gap-6">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-11 h-11 rounded-full bg-red-50 border border-red-100 text-red-500 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h3 class="glass-title">${title}</h3>
                 </div>
-                <h3 class="font-black text-lg text-slate-900 mb-2">${title}</h3>
-                <p class="text-sm text-slate-500 mb-8 px-2">${message}</p>
-                
-                <div class="flex gap-3 w-full">
-                    <button class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-xl text-[10px] uppercase tracking-widest transition-colors" id="${modalId}-cancel">
-                        ${cancelText}
-                    </button>
-                    <button class="flex-1 bg-red-500 hover:bg-red-600 text-white font-black py-3.5 rounded-xl shadow-lg shadow-red-500/30 text-[10px] uppercase tracking-widest transition-colors" id="${modalId}-confirm">
-                        ${confirmText}
-                    </button>
-                </div>
+                <button class="glass-close" id="${modalId}-close" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="bg-white border border-black/5 rounded-3xl p-6 shadow-sm">
+                <p class="text-sm text-slate-600 leading-relaxed">${message}</p>
+            </div>
+            <div class="flex items-center justify-end gap-3">
+                <button class="glass-pill" id="${modalId}-cancel">${cancelText}</button>
+                <button class="glass-pill glass-pill-danger" id="${modalId}-confirm">${confirmText}</button>
             </div>
         </div>
     `;
-    
-    document.getElementById(`${modalId}-cancel`).onclick = () => modal.remove();
+
+    const dismiss = () => { modal.remove(); document.removeEventListener('keydown', onKey); };
+    const onKey = (event) => { if (event.key === 'Escape') dismiss(); };
+    document.addEventListener('keydown', onKey);
+    document.getElementById(`${modalId}-close`).onclick = dismiss;
+    document.getElementById(`${modalId}-cancel`).onclick = dismiss;
     document.getElementById(`${modalId}-confirm`).onclick = () => {
-        modal.remove();
+        dismiss();
         if (typeof onConfirm === 'function') onConfirm();
     };
 }

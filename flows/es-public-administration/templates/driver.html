@@ -84,7 +84,8 @@
             <i class="fa-solid fa-truck-pickup"></i>
             <span>Vehicles</span>
         </button>
-        <button id="btnTabPoints" onclick="switchDriverTab('points')" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2">
+        <!-- Point Movements is temporarily disabled: see DRIVER_POINTS_TAB_DISABLED in the results page -->
+        <button id="btnTabPoints" onclick="switchDriverTab('points')" disabled aria-disabled="true" title="Temporarily unavailable" class="px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-300 cursor-not-allowed flex items-center gap-2">
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span>Point Movements</span>
         </button>

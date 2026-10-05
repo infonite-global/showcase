@@ -13,6 +13,7 @@
 <link href="../../assets/favicon/site.webmanifest" rel="manifest"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="../../css/glass.css" rel="stylesheet">
 <style>
       /* JSON Syntax Highlighting */
       .json-key { color: #9cdcfe; }
@@ -316,35 +317,24 @@
   </div>
 </div>
 
-<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4" id="settingsModal">
-<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 fade-in flex flex-col max-h-[90vh]">
-<div class="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-white min-h-[85px]">
-<h3 class="font-black text-sm uppercase tracking-[0.2em] text-slate-900">
-            System Configuration
-          </h3>
-          
-          <!-- LIST ACTIONS -->
-          <div id="modal-header-actions-list" class="flex">
-            <button class="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 hover:bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center" onclick="closeSettings()">
-            <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-          
-          <!-- EDIT ACTIONS -->
-          <div id="modal-header-actions-edit" class="hidden flex items-center gap-2">
-            <button id="exportConfigBtn" class="hidden bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 font-bold px-4 py-2 rounded-lg text-[9px] uppercase tracking-widest hover:bg-[var(--primary)]/20 transition-all items-center gap-1" onclick="exportActiveConfigUrl()">
-              <i class="fa-solid fa-link"></i> Export URL
-            </button>
-            <button class="bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-lg text-[9px] uppercase tracking-widest hover:bg-slate-300 transition-colors" onclick="showListView()">
-              Cancel
-            </button>
-            <button id="saveConfigBtn" class="btn-brand font-black px-5 py-2 rounded-lg shadow-lg text-[9px] uppercase tracking-widest transition-opacity" onclick="saveCurrentConfig()">
-              Save
-            </button>
-          </div>
-</div>
+<div class="fixed inset-0 glass-layout z-[999] hidden overflow-y-auto custom-scrollbar" id="settingsModal">
+<div class="glass-column w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 flex flex-col gap-6">
+    <!-- Header, on the glass -->
+    <div id="settings-header" class="flex items-start justify-between gap-6">
+      <div class="flex items-center gap-4 text-left min-w-0">
+        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
+          <i class="fa-solid fa-sliders text-[var(--primary)] text-lg"></i>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <h3 class="glass-title">System Configuration</h3>
+          <p class="glass-subtitle">The environments, credentials and look of this demo. Stored in this browser only.</p>
+        </div>
+      </div>
+      <button class="glass-close" onclick="closeSettings()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
 <!-- VIEW: LIST -->
-<div class="p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-list-view">
+<div class="space-y-5 fade-in" id="settings-list-view">
 <div class="space-y-3" id="configListContainer">
 <!-- Populated by JS -->
 </div>
@@ -353,7 +343,7 @@
           </button>
 </div>
 <!-- VIEW: EDITOR -->
-<div class="hidden p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-editor-view">
+<div class="hidden bg-white border border-black/5 rounded-3xl p-6 md:p-8 shadow-sm space-y-5 fade-in" id="settings-editor-view">
 <div class="flex items-center gap-2 mb-2">
 <button class="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 text-slate-500 transition-colors" onclick="showListView()">
 <i class="fa-solid fa-arrow-left text-[10px]"></i>
@@ -514,6 +504,14 @@
 </div>
 </div>
 </div>
+</div>
+<!-- EDIT ACTIONS, on the glass -->
+<div id="modal-header-actions-edit" class="hidden flex items-center justify-end gap-3">
+  <button id="exportConfigBtn" class="hidden glass-pill glass-pill-quiet items-center" onclick="exportActiveConfigUrl()">
+    <i class="fa-solid fa-link"></i> Export URL
+  </button>
+  <button class="glass-pill" onclick="showListView()">Cancel</button>
+  <button id="saveConfigBtn" class="glass-pill glass-pill-brand" onclick="saveCurrentConfig()">Save</button>
 </div>
 </div>
 </div>
@@ -2607,15 +2605,15 @@
 </script>
 
 <!-- Iframe LAUNCH Modal -->
-<div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeWidget()">
-    <div class="relative w-full md:max-w-[480px] h-full md:h-[750px] max-h-full md:max-h-[90vh] bg-white rounded-none md:rounded-3xl shadow-2xl mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
+<div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center glass-layout transition-opacity" onclick="closeWidget()">
+    <div class="relative w-full md:max-w-[480px] h-full md:h-[750px] max-h-full md:max-h-[90vh] rounded-none md:rounded-3xl glass-halo mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <!-- Optional skeleton loading could go here, but an empty white screen is fine -->
-        <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 bg-white" src="about:blank"></iframe>
+        <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 glass-frame-scaled" src="about:blank"></iframe>
     </div>
 </div>
 
 <!-- JSON Data Viewer Modal -->
-<div id="jsonModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-0 pt-6 md:p-4" onclick="closeJsonModal()">
+<div id="jsonModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center glass-layout transition-opacity p-0 pt-6 md:p-4" onclick="closeJsonModal()">
     <div class="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] md:h-[80vh] flex flex-col bg-[#1e1e1e] rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden border border-slate-700/50 border-b-0 md:border-b" onclick="event.stopPropagation()">
         
         <!-- Header -->

@@ -13,6 +13,7 @@
 <link href="../../assets/favicon/site.webmanifest" rel="manifest"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="../../css/glass.css" rel="stylesheet">
 <style>
       /* JSON Syntax Highlighting */
       .json-key { color: #9cdcfe; }
@@ -316,35 +317,24 @@
   </div>
 </div>
 
-<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4" id="settingsModal">
-<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 fade-in flex flex-col max-h-[90vh]">
-<div class="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-white min-h-[85px]">
-<h3 class="font-black text-sm uppercase tracking-[0.2em] text-slate-900">
-            System Configuration
-          </h3>
-          
-          <!-- LIST ACTIONS -->
-          <div id="modal-header-actions-list" class="flex">
-            <button class="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 hover:bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center" onclick="closeSettings()">
-            <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-          
-          <!-- EDIT ACTIONS -->
-          <div id="modal-header-actions-edit" class="hidden flex items-center gap-2">
-            <button id="exportConfigBtn" class="hidden bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 font-bold px-4 py-2 rounded-lg text-[9px] uppercase tracking-widest hover:bg-[var(--primary)]/20 transition-all items-center gap-1" onclick="exportActiveConfigUrl()">
-              <i class="fa-solid fa-link"></i> Export URL
-            </button>
-            <button class="bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-lg text-[9px] uppercase tracking-widest hover:bg-slate-300 transition-colors" onclick="showListView()">
-              Cancel
-            </button>
-            <button id="saveConfigBtn" class="btn-brand font-black px-5 py-2 rounded-lg shadow-lg text-[9px] uppercase tracking-widest transition-opacity" onclick="saveCurrentConfig()">
-              Save
-            </button>
-          </div>
-</div>
+<div class="fixed inset-0 glass-layout z-[999] hidden overflow-y-auto custom-scrollbar" id="settingsModal">
+<div class="glass-column w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 flex flex-col gap-6">
+    <!-- Header, on the glass -->
+    <div id="settings-header" class="flex items-start justify-between gap-6">
+      <div class="flex items-center gap-4 text-left min-w-0">
+        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
+          <i class="fa-solid fa-sliders text-[var(--primary)] text-lg"></i>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <h3 class="glass-title">System Configuration</h3>
+          <p class="glass-subtitle">The environments, credentials and look of this demo. Stored in this browser only.</p>
+        </div>
+      </div>
+      <button class="glass-close" onclick="closeSettings()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
 <!-- VIEW: LIST -->
-<div class="p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-list-view">
+<div class="space-y-5 fade-in" id="settings-list-view">
 <div class="space-y-3" id="configListContainer">
 <!-- Populated by JS -->
 </div>
@@ -353,7 +343,7 @@
           </button>
 </div>
 <!-- VIEW: EDITOR -->
-<div class="hidden p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-editor-view">
+<div class="hidden bg-white border border-black/5 rounded-3xl p-6 md:p-8 shadow-sm space-y-5 fade-in" id="settings-editor-view">
 <div class="flex items-center gap-2 mb-2">
 <button class="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 text-slate-500 transition-colors" onclick="showListView()">
 <i class="fa-solid fa-arrow-left text-[10px]"></i>
@@ -514,6 +504,14 @@
 </div>
 </div>
 </div>
+</div>
+<!-- EDIT ACTIONS, on the glass -->
+<div id="modal-header-actions-edit" class="hidden flex items-center justify-end gap-3">
+  <button id="exportConfigBtn" class="hidden glass-pill glass-pill-quiet items-center" onclick="exportActiveConfigUrl()">
+    <i class="fa-solid fa-link"></i> Export URL
+  </button>
+  <button class="glass-pill" onclick="showListView()">Cancel</button>
+  <button id="saveConfigBtn" class="glass-pill glass-pill-brand" onclick="saveCurrentConfig()">Save</button>
 </div>
 </div>
 </div>
@@ -1845,7 +1843,11 @@
         `;
     }
 
+    // Point Movements is temporarily disabled: its tab stays grey and does not open
+    const DRIVER_POINTS_TAB_DISABLED = true;
+
     window.switchDriverTab = function(tabId) {
+        if (tabId === 'points' && DRIVER_POINTS_TAB_DISABLED) return;
         const btnPoints = document.getElementById('btnTabPoints');
         const btnVehicles = document.getElementById('btnTabVehicles');
         const contPoints = document.getElementById('containerDriverPoints');
@@ -1861,7 +1863,7 @@
             if (contVehicles) { contVehicles.classList.add('hidden'); contVehicles.classList.remove('flex'); }
         } else {
             if (btnVehicles) btnVehicles.className = activeClass;
-            if (btnPoints) btnPoints.className = inactiveClass;
+            if (btnPoints && !DRIVER_POINTS_TAB_DISABLED) btnPoints.className = inactiveClass;
             if (contVehicles) { contVehicles.classList.remove('hidden'); contVehicles.classList.add('flex'); }
             if (contPoints) { contPoints.classList.add('hidden'); contPoints.classList.remove('flex'); }
         }
@@ -2549,6 +2551,97 @@
         }).join('');
     };
 
+    // CIRBE vocabularies, as the core publishes them (infonite.enums.engines.products._credit_registry)
+    const CIRBE_PRODUCT_LABELS = {
+        securities_lending: 'Securities lending',
+        trade_credit_with_recourse: 'Trade credit with recourse',
+        trade_credit_without_recourse: 'Trade credit without recourse',
+        trade_receivables: 'Trade receivables',
+        financial_credit: 'Financial credit',
+        financial_lease: 'Financial lease',
+        reverse_repurchase_agreement: 'Reverse repurchase agreement',
+        debt_securities: 'Debt securities',
+        financial_guarantee: 'Financial guarantee',
+        forward_deposit: 'Forward deposit',
+        non_financial_guarantee: 'Non-financial guarantee',
+        irrevocable_documentary_credit: 'Irrevocable documentary credit',
+        available_in_other_commitments: 'Other commitments',
+        overdraft: 'Overdraft',
+        credit_card_debt: 'Credit card debt',
+        deposit: 'Deposit',
+        revolving_credit: 'Revolving credit',
+        credit_line: 'Credit line',
+        other_loans: 'Other loans'
+    };
+    const CIRBE_NATURE_LABELS = {
+        direct_holder: { label: 'Direct holder', icon: 'fa-user' },
+        guarantor: { label: 'Guarantor', icon: 'fa-user-shield' },
+        bill_signatory: { label: 'Bill signatory', icon: 'fa-file-signature' }
+    };
+    const CIRBE_MATURITY_LABELS = {
+        up_to_three_months: 'Up to 3 months',
+        three_months_to_one_year: '3 months to 1 year',
+        one_to_five_years: '1 to 5 years',
+        over_five_years: 'Over 5 years',
+        indeterminate: 'Indeterminate'
+    };
+    const CIRBE_JOINT_LIABILITY_LABELS = {
+        joint_and_several: 'Joint and several',
+        collective: 'Collective',
+        not_joint_and_several: 'Not joint and several'
+    };
+    const CIRBE_REAL_GUARANTEE_LABELS = {
+        financial_assets_pledge: 'Pledge of financial assets',
+        real_estate_mortgage: 'Real estate mortgage',
+        other_real_guarantee: 'Other real guarantee',
+        life_insurance_pledge: 'Pledge of life insurance',
+        other_physical_collateral: 'Other physical collateral',
+        credit_derivatives: 'Credit derivatives',
+        financial_guarantee_other_than_credit_derivatives: 'Financial guarantee',
+        other_protection: 'Other protection',
+        residential_real_estate: 'Residential property',
+        offices_and_commercial_premises: 'Offices and commercial premises',
+        commercial_real_estate: 'Commercial property',
+        debt_securities: 'Debt securities',
+        gold: 'Gold',
+        cash_and_deposits: 'Cash and deposits',
+        loans: 'Loans',
+        trade_receivables: 'Trade receivables',
+        equity_and_investment_fund_shares: 'Shares and fund units'
+    };
+    const CIRBE_PERSONAL_GUARANTEE_LABELS = {
+        public_administration: 'Public administration',
+        other_personal_guarantee: 'Other personal guarantee',
+        reporting_entity: 'Reporting entity',
+        public_credit_insurer: 'Public credit insurer',
+        unspecified: 'Unspecified'
+    };
+    const CIRBE_COVERAGE_LABELS = { total: 'total coverage', partial: 'partial coverage' };
+
+    // A value the vocabulary does not know yet still shows: its label, else its raw code
+    function cirbeLabel(map, value, code) {
+        if (!value) return code || null;
+        const entry = map[value];
+        if (entry) return typeof entry === 'string' ? entry : entry.label;
+        return value.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+    }
+
+    // An amount the report did not give (absent, or NaN) is unknown: '--'. Zero is a figure: 0,00 €
+    function cirbeAmount(money) {
+        if (!money || money.amount == null) return NaN;
+        return parseFloat(money.amount);
+    }
+
+    function cirbeChip(icon, text, tone = 'slate') {
+        const tones = {
+            slate: 'bg-slate-50 text-slate-600 border-slate-200/70',
+            indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+            emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+            amber: 'bg-amber-50 text-amber-700 border-amber-100'
+        };
+        return `<span class="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-md border ${tones[tone] || tones.slate}"><i class="fa-solid ${icon} opacity-60 text-[9px]"></i>${text}</span>`;
+    }
+
     window.renderCreditRegistryData = function(payload) {
         const totalDrawnEl = document.getElementById('cirbeTotalDrawn');
         const totalOverdueEl = document.getElementById('cirbeTotalOverdue');
@@ -2602,13 +2695,13 @@
             holderIdentifierEl.textContent = creditData.identifier?.value || '--';
         }
 
-        if (totalDrawnEl) totalDrawnEl.textContent = formatCurrency(parseFloat(creditData.total_drawn?.amount || 0));
-        if (totalOverdueEl) totalOverdueEl.textContent = formatCurrency(parseFloat(creditData.total_overdue?.amount || 0));
-        if (totalArrearsEl) totalArrearsEl.textContent = formatCurrency(parseFloat(creditData.total_arrears?.amount || 0));
-        if (totalAvailableEl) totalAvailableEl.textContent = formatCurrency(parseFloat(creditData.total_risk_available?.amount || 0));
+        if (totalDrawnEl) totalDrawnEl.textContent = formatCurrency(cirbeAmount(creditData.total_drawn));
+        if (totalOverdueEl) totalOverdueEl.textContent = formatCurrency(cirbeAmount(creditData.total_overdue));
+        if (totalArrearsEl) totalArrearsEl.textContent = formatCurrency(cirbeAmount(creditData.total_arrears));
+        if (totalAvailableEl) totalAvailableEl.textContent = formatCurrency(cirbeAmount(creditData.total_risk_available));
 
-        const overdueVal = parseFloat(creditData.total_overdue?.amount || 0);
-        const arrearsVal = parseFloat(creditData.total_arrears?.amount || 0);
+        const overdueVal = cirbeAmount(creditData.total_overdue);
+        const arrearsVal = cirbeAmount(creditData.total_arrears);
         
         const overdueCard = document.getElementById('cirbeOverdueCard');
         const arrearsCard = document.getElementById('cirbeArrearsCard');
@@ -2667,68 +2760,70 @@
 
         if (operationsTable) {
             const ops = creditData.operations || [];
+            const isAggregated = creditData.sub_family === 'credit_registry_data:es_cirbe_aggregated';
+            const entityHeader = document.getElementById('cirbeEntityHeader');
+            if (entityHeader) entityHeader.style.display = isAggregated ? 'none' : '';
+            const columns = isAggregated ? 5 : 6;
+
             if (ops.length === 0) {
-                operationsTable.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs italic">No active operations reported in the registry.</td></tr>`;
+                operationsTable.innerHTML = `<tr><td colspan="${columns}" class="p-8 text-center text-slate-400 text-xs italic">No active operations reported in the registry.</td></tr>`;
             } else {
-                const isAggregated = creditData.sub_family === 'credit_registry_data:es_cirbe_aggregated';
-                
-                const entityHeader = document.getElementById('cirbeEntityHeader');
-                const opCodeHeader = document.getElementById('cirbeOpCodeHeader');
-                if (entityHeader) entityHeader.style.display = isAggregated ? 'none' : '';
-                if (opCodeHeader) opCodeHeader.style.display = isAggregated ? 'none' : '';
+                // A figure that is not zero is shown in its tone; zero is shown plain, unknown as '--'
+                const figure = (money, tone) => {
+                    const value = cirbeAmount(money);
+                    const text = formatCurrency(value);
+                    if (isNaN(value)) return `<span class="text-slate-300">${text}</span>`;
+                    if (value > 0 && tone) return `<span class="${tone}">${text}</span>`;
+                    return value === 0 ? `<span class="text-slate-400">${text}</span>` : text;
+                };
 
                 operationsTable.innerHTML = ops.map(op => {
-                    const totalDrawnStr = formatCurrency(parseFloat(op.total_drawn?.amount || 0));
-                    const overdueVal = parseFloat(op.overdue?.amount || 0);
-                    const overdueStr = overdueVal > 0 ? `<span class="text-red-600 font-bold">${formatCurrency(overdueVal)}</span>` : '--';
-                    const arrearsVal = parseFloat(op.arrears?.amount || 0);
-                    const arrearsStr = arrearsVal > 0 ? `<span class="text-red-500 font-medium">${formatCurrency(arrearsVal)}</span>` : '--';
-                    const riskAvailableVal = parseFloat(op.risk_available?.amount || 0);
-                    const riskAvailableStr = riskAvailableVal > 0 ? formatCurrency(riskAvailableVal) : '--';
-                    
-                    const pNum = op.participants_number ? `<span class="text-[9px] bg-slate-100 text-slate-500 border border-slate-200/60 px-1.5 py-0.5 rounded font-medium mt-1">Partícipes: ${op.participants_number}</span>` : '';
-                    const colStatus = op.collective_status ? `<span class="text-[9px] bg-indigo-50 text-indigo-600 border border-indigo-100 px-1.5 py-0.5 rounded font-bold uppercase mt-1">${op.collective_status}</span>` : '';
-                    const maturity = op.maturity_type ? `<span class="text-[10px] text-slate-500 border border-slate-200 bg-slate-50 px-2 py-0.5 rounded-md font-mono">${op.maturity_type}</span>` : '--';
-                    
-                    let guaranteeHtml = '--';
-                    if (op.real_guarantee_type || op.personal_guarantee_type) {
-                        let parts = [];
-                        if (op.real_guarantee_type) {
-                            parts.push(`Real: ${op.real_guarantee_type}`);
-                        }
-                        if (op.personal_guarantee_type) {
-                            parts.push(`Pers: ${op.personal_guarantee_type}`);
-                        }
-                        guaranteeHtml = `<div class="flex flex-col gap-1 font-mono text-[9px] text-slate-500">${parts.join('<br/>')}</div>`;
+                    const product = cirbeLabel(CIRBE_PRODUCT_LABELS, op.product_type, op.product_type_code) || 'Unknown product';
+
+                    // Second line: the terms of the operation
+                    const terms = [];
+                    if (op.intervention_nature || op.intervention_nature_code) {
+                        const nature = CIRBE_NATURE_LABELS[op.intervention_nature];
+                        terms.push(cirbeChip(nature?.icon || 'fa-user', cirbeLabel(CIRBE_NATURE_LABELS, op.intervention_nature, op.intervention_nature_code), op.intervention_nature === 'guarantor' ? 'amber' : 'indigo'));
+                    }
+                    if (op.maturity_type || op.maturity_type_code) {
+                        terms.push(cirbeChip('fa-hourglass-half', `Maturity: ${cirbeLabel(CIRBE_MATURITY_LABELS, op.maturity_type, op.maturity_type_code)}`));
+                    }
+                    if ((op.real_guarantee_type && op.real_guarantee_type !== 'none') || (!op.real_guarantee_type && op.real_guarantee_type_code)) {
+                        const coverage = op.real_guarantee_coverage ? ` · ${CIRBE_COVERAGE_LABELS[op.real_guarantee_coverage] || op.real_guarantee_coverage}` : '';
+                        terms.push(cirbeChip('fa-house-lock', `${cirbeLabel(CIRBE_REAL_GUARANTEE_LABELS, op.real_guarantee_type, op.real_guarantee_type_code)}${coverage}`, 'emerald'));
+                    }
+                    if ((op.personal_guarantee_type && op.personal_guarantee_type !== 'none') || (!op.personal_guarantee_type && op.personal_guarantee_type_code)) {
+                        const coverage = op.personal_guarantee_coverage ? ` · ${CIRBE_COVERAGE_LABELS[op.personal_guarantee_coverage] || op.personal_guarantee_coverage}` : '';
+                        terms.push(cirbeChip('fa-handshake', `Personal: ${cirbeLabel(CIRBE_PERSONAL_GUARANTEE_LABELS, op.personal_guarantee_type, op.personal_guarantee_type_code)}${coverage}`, 'emerald'));
+                    }
+                    if (op.collective_status || op.collective_status_code) {
+                        terms.push(cirbeChip('fa-link', cirbeLabel(CIRBE_JOINT_LIABILITY_LABELS, op.collective_status, op.collective_status_code)));
+                    }
+                    if (op.participants_number) {
+                        terms.push(cirbeChip('fa-users', `${op.participants_number} participant${op.participants_number === 1 ? '' : 's'}`));
                     }
 
                     return `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                    <tr class="group">
                         ${!isAggregated ? `
-                            <td class="p-4 pl-6 align-middle">
+                            <td class="px-4 pl-6 pt-4 pb-1.5 align-top">
                                 <div class="flex flex-col">
-                                    <span class="text-xs font-bold text-slate-800">${op.entity_name || 'Declaring Entity'}</span>
-                                    <span class="text-[9px] font-mono text-slate-400 mt-0.5">${op.entity_code || 'Code: --'}</span>
+                                    <span class="text-xs font-bold text-slate-800">${op.entity_name || 'Declaring entity'}</span>
+                                    ${op.entity_code ? `<span class="text-[9px] font-mono text-slate-400 mt-0.5">${op.entity_code}</span>` : ''}
                                 </div>
                             </td>
-                            <td class="p-4 align-middle font-mono text-xs text-slate-600">${op.operation_code || '--'}</td>
                         ` : ''}
-                        <td class="p-4 align-middle">
-                            <div class="flex flex-col items-start gap-1">
-                                <span class="text-xs font-bold text-slate-700">${op.product_type || '--'}</span>
-                                <span class="text-[9px] text-slate-400 font-mono">Nat: ${op.intervention_nature || '--'}</span>
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    ${pNum}
-                                    ${colStatus}
-                                </div>
-                            </div>
+                        <td class="px-4 ${isAggregated ? 'pl-6' : ''} pt-4 pb-1.5 align-top text-xs font-bold text-slate-700">${product}</td>
+                        <td class="px-4 pt-4 pb-1.5 align-top font-mono text-xs text-right font-bold text-slate-800">${figure(op.total_drawn)}</td>
+                        <td class="px-4 pt-4 pb-1.5 align-top font-mono text-xs text-right">${figure(op.overdue, 'text-red-600 font-bold')}</td>
+                        <td class="px-4 pt-4 pb-1.5 align-top font-mono text-xs text-right">${figure(op.arrears, 'text-red-500 font-medium')}</td>
+                        <td class="px-4 pr-6 pt-4 pb-1.5 align-top font-mono text-xs text-right text-slate-500">${figure(op.risk_available)}</td>
+                    </tr>
+                    <tr class="border-b border-slate-100">
+                        <td colspan="${columns}" class="px-6 pb-4 pt-0.5">
+                            <div class="flex items-center gap-1.5 flex-wrap">${terms.join('') || '<span class="text-[10px] text-slate-300 italic">No terms reported</span>'}</div>
                         </td>
-                        <td class="p-4 align-middle">${maturity}</td>
-                        <td class="p-4 align-middle">${guaranteeHtml}</td>
-                        <td class="p-4 align-middle font-mono text-xs text-right font-bold text-slate-800">${totalDrawnStr}</td>
-                        <td class="p-4 align-middle font-mono text-xs text-right">${overdueStr}</td>
-                        <td class="p-4 align-middle font-mono text-xs text-right">${arrearsStr}</td>
-                        <td class="p-4 pr-6 align-middle font-mono text-xs text-right text-slate-500">${riskAvailableStr}</td>
                     </tr>`;
                 }).join('');
             }
@@ -2754,7 +2849,7 @@
                         </div>
                         <div class="flex flex-col text-right">
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Accumulation Limit</span>
-                            <span class="text-xs font-black text-slate-800 font-mono mt-0.5">${formatCurrency(parseFloat(r.limit_amount?.amount || 0))}</span>
+                            <span class="text-xs font-black text-slate-800 font-mono mt-0.5">${formatCurrency(cirbeAmount(r.limit_amount))}</span>
                         </div>
                     </div>`).join('');
                 }
@@ -3623,15 +3718,15 @@
 </script>
 
 <!-- Iframe LAUNCH Modal -->
-<div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeWidget()">
-    <div class="relative w-full md:max-w-[480px] h-full md:h-[750px] max-h-full md:max-h-[90vh] bg-white rounded-none md:rounded-3xl shadow-2xl mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
+<div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center glass-layout transition-opacity" onclick="closeWidget()">
+    <div class="relative w-full md:max-w-[480px] h-full md:h-[750px] max-h-full md:max-h-[90vh] rounded-none md:rounded-3xl glass-halo mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <!-- Optional skeleton loading could go here, but an empty white screen is fine -->
-        <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 bg-white" src="about:blank"></iframe>
+        <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 glass-frame-scaled" src="about:blank"></iframe>
     </div>
 </div>
 
 <!-- JSON Data Viewer Modal -->
-<div id="jsonModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-0 pt-6 md:p-4" onclick="closeJsonModal()">
+<div id="jsonModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center glass-layout transition-opacity p-0 pt-6 md:p-4" onclick="closeJsonModal()">
     <div class="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] md:h-[80vh] flex flex-col bg-[#1e1e1e] rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden border border-slate-700/50 border-b-0 md:border-b" onclick="event.stopPropagation()">
         
         <!-- Header -->
@@ -3659,7 +3754,7 @@
 </div>
 
 <!-- PDF Viewer Modal -->
-<div id="pdfModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center bg-slate-900/80 backdrop-blur-sm transition-opacity p-0 pt-6 md:p-4" onclick="closePdfModal()">
+<div id="pdfModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center glass-layout transition-opacity p-0 pt-6 md:p-4" onclick="closePdfModal()">
     <div class="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] md:h-[85vh] flex flex-col bg-[#1e1e1e] rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden border border-slate-700/50 border-b-0 md:border-b" onclick="event.stopPropagation()">
         
         <!-- Header -->

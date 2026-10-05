@@ -117,20 +117,18 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             <th id="cirbeEntityHeader" class="p-4 pl-6">Entity</th>
-                            <th id="cirbeOpCodeHeader" class="p-4">Op. Code</th>
-                            <th class="p-4">Product / Nature</th>
-                            <th class="p-4">Maturity</th>
-                            <th class="p-4">Guarantees</th>
+                            <th class="p-4">Product</th>
                             <th class="p-4 text-right">Drawn</th>
                             <th class="p-4 text-right">Overdue</th>
                             <th class="p-4 text-right">Arrears</th>
                             <th class="p-4 pr-6 text-right">Available</th>
                         </tr>
                     </thead>
-                    <tbody id="cirbeOperationsTable" class="divide-y divide-slate-100">
+                    <!-- Two rows per operation: the figures, then the terms (nature, maturity, guarantees) -->
+                    <tbody id="cirbeOperationsTable">
                         <!-- JS Injection -->
                         <tr>
-                            <td colspan="9" class="p-8 text-center text-slate-400 text-xs italic">Loading active operations...</td>
+                            <td colspan="6" class="p-8 text-center text-slate-400 text-xs italic">Loading active operations...</td>
                         </tr>
                     </tbody>
                 </table>

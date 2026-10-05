@@ -44,6 +44,8 @@ function renderModulesGrid() {
     }
 
     let htmlContent = '';
+    // Modules this demo does not enable are drawn apart, grouped in one labelled box
+    let notEnabledContent = '';
 
     ALLOWED_MODULES.forEach(moduleCode => {
         const featureDef = window.INFONITE_FEATURES[moduleCode];
@@ -56,7 +58,7 @@ function renderModulesGrid() {
         const opc = isChecked ? 'opacity-100' : 'opacity-0';
         const bgc = isChecked ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white text-slate-300 border-black/10';
  
-        htmlContent += `
+        const cardHtml = `
         <label class="${labelClass} block relative group h-full">
             <input class="feature-checkbox sr-only" type="checkbox" value="${featureDef.code}" ${isChecked} ${isDisabled} onchange="toggleFeatureVisual(this)"/>
             <div class="feature-card border border-black/10 rounded-2xl p-4 flex flex-col items-center text-center transition-all hover:bg-slate-50 hover:border-black/20 group-hover:shadow-md h-full gap-3 bg-white relative">
@@ -70,9 +72,7 @@ function renderModulesGrid() {
                     <p class="text-[9px] text-slate-500 font-medium leading-tight">${featureDef.workMessage.replace('Consulting your', '').replace('Retrieving your', '').trim()}</p>
                 </div>
                 <div class="absolute top-3 right-3 transition-opacity">
-                     ${isSoon ? `
-                        <span class="bg-amber-100 text-amber-800 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border border-amber-200 shadow-sm shrink-0">Soon</span>
-                     ` : `
+                     ${isSoon ? '' : `
                         <div class="indicator w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${bgc}">
                            <i class="fa-solid fa-check text-[10px] ${opc} transition-opacity check-icon"></i>
                         </div>
@@ -81,12 +81,58 @@ function renderModulesGrid() {
             </div>
         </label>
         `;
+        if (isSoon) notEnabledContent += cardHtml;
+        else htmlContent += cardHtml;
     });
 
+    if (notEnabledContent) {
+        htmlContent += `
+        <div class="col-span-full relative mt-3 border border-dashed border-slate-300 rounded-3xl p-3 pt-5 bg-slate-50/40">
+            <span class="absolute -top-2.5 left-5 px-2.5 py-0.5 bg-white border border-slate-200 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-lock text-[8px]"></i> Not enabled for this demo
+            </span>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">${notEnabledContent}</div>
+        </div>`;
+    }
+
     gridContainer.innerHTML = htmlContent;
+    syncEmailRequirement();
+}
+
+// Modules whose request needs the customer's email (the CIRBE request to the Bank of Spain carries it)
+const EMAIL_REQUIRED_BY = ['credit_registry_data'];
+
+function isEmailRequired() {
+    return EMAIL_REQUIRED_BY.some(code =>
+        document.querySelector(`#modulesGrid input.feature-checkbox[value="${code}"]`)?.checked);
+}
+
+/**
+ * While a selected module requires the email: Fixed Parameters stays open, the email field glows
+ * until it is filled, and its hint says why it is required.
+ */
+function syncEmailRequirement() {
+    const required = isEmailRequired();
+    const content = document.getElementById('acc-fixed-parameters');
+    const icon = document.getElementById('acc-fixed-parameters-icon');
+    const input = document.getElementById('generate-fixed-user-email');
+    const optionalHint = document.getElementById('generate-fixed-user-email-optional');
+    const requiredHint = document.getElementById('generate-fixed-user-email-required');
+    if (!content || !input) return;
+
+    if (required) {
+        content.classList.remove('hidden');
+        if (icon) icon.classList.add('rotate-180');
+    }
+    input.required = required;
+    input.classList.toggle('email-required-glow', required && !input.value.trim());
+    if (optionalHint) optionalHint.classList.toggle('hidden', required);
+    document.getElementById('generate-fixed-user-email-optional-note')?.classList.toggle('hidden', required);
+    if (requiredHint) requiredHint.classList.toggle('hidden', !required);
 }
 
 function toggleFeatureVisual(input) {
+    syncEmailRequirement();
     const card = input.closest('label').querySelector('.indicator');
     const icon = card.querySelector('.check-icon');
     if (input.checked) {
@@ -581,6 +627,8 @@ window.closeNewLeadModal = function() {
 
 // Setup simple accordion toggling for Advanced Configuration
 window.toggleAccordion = function(id) {
+    // Fixed Parameters cannot be folded while the email it holds is required
+    if (id === 'acc-fixed-parameters' && isEmailRequired()) return;
     const content = document.getElementById(id);
     const icon = document.getElementById(id + '-icon');
     if (content && icon) {
@@ -656,6 +704,12 @@ window.generateLeadSession = async function() {
 
         if (selectedFeatures.length === 0) {
             throw new Error("You must select at least one module module to generate a session.");
+        }
+
+        if (isEmailRequired() && userEmail === "") {
+            syncEmailRequirement();
+            userEmailInput?.focus();
+            throw new Error("Credit Registry (CIRBE) requires the customer's email: fill in User Email under Fixed Parameters.");
         }
 
         // 3. Assemble Strict Payload

@@ -14,6 +14,7 @@
 <link href="assets/favicon/site.webmanifest" rel="manifest"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="css/glass.css" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
       :root {
@@ -138,6 +139,98 @@
         backdrop-filter: blur(8px);
         border: 1px solid var(--outline-variant);
         box-shadow: var(--elevation-1);
+      }
+
+      /* Financial Rider card: the word that rides (see the card's own note) */
+      .rider-card { border-style: dashed; }
+      .rider-card h3 { align-items: baseline; }
+      .rider-word { display: inline-flex; align-items: baseline; position: relative; z-index: 1; }
+      /* Both glyphs share one grid cell: the slot keeps the word's baseline and clips the one
+         that is sliding out */
+      .rider-slot {
+        display: inline-grid;
+        justify-items: start;
+        vertical-align: baseline;
+        overflow: hidden;
+        transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .rider-glyph {
+        grid-area: 1 / 1;
+        white-space: nowrap;
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      }
+      .rider-glyph-reader { color: var(--primary); transform: translateY(110%); opacity: 0; }
+      .is-reader .rider-glyph-rider { transform: translateY(-110%); opacity: 0; }
+      .is-reader .rider-glyph-reader { transform: translateY(0); opacity: 1; }
+
+      /* The jockey: lives right after the last "r", and everything it does starts BEHIND it —
+         the wrapper clips its left edge, so it rides out from behind the word and retreats
+         back behind it. At rest it keeps a gallop going. */
+      .rider-horse {
+        display: inline-block;
+        position: relative;
+        width: 2em;
+        height: 1.6em;
+        margin-left: -0.5rem;  /* cancels the heading's gap: the clip edge IS the last "r" */
+        overflow: hidden;
+        transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1), margin 0.45s ease;
+      }
+      .rider-rig {
+        position: absolute;
+        left: 0.15em;
+        bottom: -0.12em;
+        width: 1.7em;
+        height: 1.7em;
+        animation: rider-emerge 0.75s cubic-bezier(0.16, 1, 0.3, 1) both, rider-gallop 0.6s ease-in-out 0.75s infinite;
+      }
+      /* The drawing faces left; flipped, the rider runs AWAY from the "r" */
+      .rider-rig img { display: block; width: 100%; height: 100%; transform: scaleX(-1); }
+      .is-reader .rider-horse { width: 0; margin-left: 0; }
+      .is-reader .rider-rig { animation: rider-retreat 0.4s ease-in both; }
+      /* The dust the hooves raise, only while riding out */
+      .rider-horse::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0.08em;
+        width: 1.4em;
+        height: 0.5em;
+        pointer-events: none;
+        opacity: 0;
+        background:
+          radial-gradient(circle at 15% 60%, rgba(148, 163, 184, 0.55) 0 18%, transparent 20%),
+          radial-gradient(circle at 45% 30%, rgba(148, 163, 184, 0.45) 0 14%, transparent 16%),
+          radial-gradient(circle at 70% 70%, rgba(148, 163, 184, 0.5) 0 12%, transparent 14%);
+      }
+      .is-riding .rider-horse::after { animation: rider-dust 0.9s ease-out 0.1s both; }
+      .is-riding .rider-word { animation: rider-flash 1.1s ease-out both; }
+      @keyframes rider-emerge {
+        0% { transform: translateX(-130%) scaleX(0.9); opacity: 0.4; }
+        55% { transform: translateX(14%) translateY(-0.12em); opacity: 1; }
+        75% { transform: translateX(-4%) translateY(0); }
+        100% { transform: translateX(0) translateY(0); opacity: 1; }
+      }
+      @keyframes rider-retreat {
+        0% { transform: translateX(0); opacity: 1; }
+        100% { transform: translateX(-130%); opacity: 0; }
+      }
+      @keyframes rider-gallop {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        30% { transform: translateY(-0.1em) rotate(-5deg); }
+        60% { transform: translateY(0.02em) rotate(3deg); }
+      }
+      @keyframes rider-dust {
+        0% { opacity: 0; transform: translateX(-0.6em) scale(0.6); }
+        30% { opacity: 1; }
+        100% { opacity: 0; transform: translateX(-1.4em) translateY(-0.2em) scale(1.5); }
+      }
+      @keyframes rider-flash {
+        0% { color: inherit; text-shadow: none; }
+        35% { color: var(--primary); text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.45); }
+        100% { color: inherit; text-shadow: none; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .rider-rig, .rider-horse::after, .rider-word { animation: none !important; }
       }
 
       .pulse-ring {
@@ -441,16 +534,58 @@
                     Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
 </div>
 </a>
-<a class="glass-panel p-8 rounded-3xl hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md block" href="flows/bank-reader/bank-reader.html">
+<!-- Financial Rider: not open yet. The horse is on purpose — the name is Rider, not Reader,
+     and the title says so: it reads "Reader" for a beat on arrival, then rides into "Rider";
+     hovering shows the word it is NOT, and leaving brings the rider back. -->
+<div class="glass-panel p-8 rounded-3xl block relative cursor-default select-none rider-card" id="financialRiderCard" aria-disabled="true">
+<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 border border-slate-200/70 px-2 py-1 rounded-md">Soon</span>
 <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
 <i class="fa-solid fa-building-columns text-2xl text-[var(--primary)]"></i>
 </div>
-<h3 class="text-lg font-bold text-slate-900 mb-2">Bank Reader</h3>
-<p class="text-sm text-slate-500 mb-6">Openbanking aggregation and identity verification module.</p>
-<div class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2">
-                    Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+<h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2 flex-wrap">
+  <span>Financial</span>
+  <span class="sr-only">Rider</span>
+  <span class="rider-word" aria-hidden="true">R<span class="rider-slot"><span class="rider-glyph rider-glyph-rider">i</span><span class="rider-glyph rider-glyph-reader">ea</span></span>der</span>
+  <span class="rider-horse" aria-hidden="true"><span class="rider-rig"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c7.svg" alt="" draggable="false"></span></span>
+</h3>
+<p class="text-sm text-slate-500 mb-6">Open Banking in a widget we host: your customer connects their banks and you read one financial position.</p>
+<div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fa-regular fa-clock"></i> The demo will soon be available here
 </div>
-</a>
+</div>
+<script>
+  (function () {
+    const card = document.getElementById('financialRiderCard');
+    const slot = card.querySelector('.rider-slot');
+    const glyphs = {
+      rider: card.querySelector('.rider-glyph-rider'),
+      reader: card.querySelector('.rider-glyph-reader'),
+    };
+    // The slot is the one letter that differs: "i" against "ea". Its width is measured once so
+    // the word can slide between the two instead of jumping.
+    const fit = (which) => { slot.style.width = glyphs[which].getBoundingClientRect().width + 'px'; };
+    const show = (which) => { card.classList.toggle('is-reader', which === 'reader'); fit(which); };
+
+    // Riding out: the jockey comes from behind the "r", raising dust, and the word flashes
+    let riding = null;
+    const ride = () => {
+      card.classList.remove('is-riding');
+      void card.offsetWidth;  // restart the animations
+      card.classList.add('is-riding');
+      show('rider');
+      clearTimeout(riding);
+      riding = setTimeout(() => card.classList.remove('is-riding'), 1300);
+    };
+
+    // Arrival: it reads "Reader" for a beat, then rides into "Rider"
+    show('reader');
+    setTimeout(ride, 1100);
+
+    card.addEventListener('mouseenter', () => { clearTimeout(riding); card.classList.remove('is-riding'); show('reader'); });
+    card.addEventListener('mouseleave', ride);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fit(card.classList.contains('is-reader') ? 'reader' : 'rider'));
+  })();
+</script>
 </div>
 </div>
 </div></div>
@@ -502,35 +637,24 @@
 
 
 <!-- Settings Modal -->
-<div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] hidden flex items-center justify-center p-4" id="settingsModal">
-<div class="bg-white w-full max-w-lg md:max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl border border-slate-100 fade-in flex flex-col max-h-[90vh]">
-<div class="p-6 md:p-8 border-b border-slate-100 flex justify-between items-center bg-white min-h-[85px]">
-<h3 class="font-black text-sm uppercase tracking-[0.2em] text-slate-900">
-            System Configuration
-          </h3>
-          
-          <!-- LIST ACTIONS -->
-          <div id="modal-header-actions-list" class="flex">
-            <button class="text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 hover:bg-slate-100 w-8 h-8 rounded-full flex items-center justify-center" onclick="closeSettings()">
-            <i class="fa-solid fa-xmark"></i>
-            </button>
-          </div>
-          
-          <!-- EDIT ACTIONS -->
-          <div id="modal-header-actions-edit" class="hidden flex items-center gap-2">
-            <button id="exportConfigBtn" class="hidden bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 font-bold px-4 py-2 rounded-lg text-[9px] uppercase tracking-widest hover:bg-[var(--primary)]/20 transition-all items-center gap-1" onclick="exportActiveConfigUrl()">
-              <i class="fa-solid fa-link"></i> Export URL
-            </button>
-            <button class="bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-lg text-[9px] uppercase tracking-widest hover:bg-slate-300 transition-colors" onclick="showListView()">
-              Cancel
-            </button>
-            <button id="saveConfigBtn" class="btn-brand font-black px-5 py-2 rounded-lg shadow-lg text-[9px] uppercase tracking-widest transition-opacity" onclick="saveCurrentConfig()">
-              Save
-            </button>
-          </div>
-</div>
+<div class="fixed inset-0 glass-layout z-[999] hidden overflow-y-auto custom-scrollbar" id="settingsModal">
+<div class="glass-column w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 flex flex-col gap-6">
+    <!-- Header, on the glass -->
+    <div id="settings-header" class="flex items-start justify-between gap-6">
+      <div class="flex items-center gap-4 text-left min-w-0">
+        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
+          <i class="fa-solid fa-sliders text-[var(--primary)] text-lg"></i>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <h3 class="glass-title">System Configuration</h3>
+          <p class="glass-subtitle">The environments, credentials and look of this demo. Stored in this browser only.</p>
+        </div>
+      </div>
+      <button class="glass-close" onclick="closeSettings()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
 <!-- VIEW: LIST -->
-<div class="p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-list-view">
+<div class="space-y-5 fade-in" id="settings-list-view">
 <div class="space-y-3" id="configListContainer">
 <!-- Populated by JS -->
 </div>
@@ -539,7 +663,7 @@
           </button>
 </div>
 <!-- VIEW: EDITOR -->
-<div class="hidden p-6 space-y-5 fade-in overflow-y-auto flex-1" id="settings-editor-view">
+<div class="hidden bg-white border border-black/5 rounded-3xl p-6 md:p-8 shadow-sm space-y-5 fade-in" id="settings-editor-view">
 <div class="flex items-center gap-2 mb-2">
 <button class="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 hover:bg-black/10 text-slate-500 transition-colors" onclick="showListView()">
 <i class="fa-solid fa-arrow-left text-[10px]"></i>
@@ -700,6 +824,14 @@
 </div>
 </div>
 </div>
+</div>
+<!-- EDIT ACTIONS, on the glass -->
+<div id="modal-header-actions-edit" class="hidden flex items-center justify-end gap-3">
+  <button id="exportConfigBtn" class="hidden glass-pill glass-pill-quiet items-center" onclick="exportActiveConfigUrl()">
+    <i class="fa-solid fa-link"></i> Export URL
+  </button>
+  <button class="glass-pill" onclick="showListView()">Cancel</button>
+  <button id="saveConfigBtn" class="glass-pill glass-pill-brand" onclick="saveCurrentConfig()">Save</button>
 </div>
 </div>
 </div>
