@@ -2571,8 +2571,25 @@
             if (wrapper) {
                 wrapper.innerHTML = `<div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl min-h-[300px]">
                     <i class="fa-solid fa-money-check-dollar text-4xl text-slate-300 mb-3"></i>
-                    <h4 class="text-sm font-bold text-slate-600">No CIRBE Data Found</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-sm">No Central Credit Registry records were found in this session's payload.</p>
+                    <h4 class="text-sm font-bold text-slate-600">CIRBE Report Not Available</h4>
+                    <p class="text-xs text-slate-500 mt-1 max-w-md">The Bank of Spain's Central Credit Registry (CIRBE) report could not be retrieved in this session. This does not mean the person has no debts: the report was simply not obtained.</p>
+                    <div class="mt-5 w-full max-w-md text-left bg-white border border-slate-200 rounded-xl p-4">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Most common reasons</span>
+                        <ul class="mt-3 space-y-3 text-xs text-slate-600">
+                            <li class="flex gap-3">
+                                <i class="fa-solid fa-id-card text-slate-400 mt-0.5 w-4 text-center"></i>
+                                <span><strong class="text-slate-700">Insufficient Cl@ve level.</strong> The Bank of Spain only issues the report to people identified with an electronic certificate, DNIe or Cl@ve registered at the advanced level (in-person registration). A Cl@ve registered only at the basic level is not enough.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <i class="fa-solid fa-user-lock text-slate-400 mt-0.5 w-4 text-center"></i>
+                                <span><strong class="text-slate-700">No Cl@ve or certificate.</strong> The person does not hold any of the credentials above, so the request to the Bank of Spain could not be made.</span>
+                            </li>
+                            <li class="flex gap-3">
+                                <i class="fa-solid fa-plug-circle-xmark text-slate-400 mt-0.5 w-4 text-center"></i>
+                                <span><strong class="text-slate-700">Source unavailable.</strong> The Bank of Spain's service did not respond, or the consultation did not finish during the session.</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>`;
             }
             return;
