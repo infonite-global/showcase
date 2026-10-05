@@ -172,12 +172,12 @@
 .glass-halo iframe { background: rgb(var(--halo-ink)); }
 
 
-/* The widget renders at 80%: drawn a quarter larger and scaled down, so it shows more of itself
+/* The widget renders at 90%: drawn a ninth larger and scaled down, so it shows more of itself
    at the same size, sharper, instead of the phone-sized layout stretched to a desktop frame */
 .glass-frame-scaled {
-  width: 125% !important;
-  height: 125% !important;
-  transform: scale(0.8);
+  width: 111.1112% !important;
+  height: 111.1112% !important;
+  transform: scale(0.9);
   transform-origin: 0 0;
 }
 
