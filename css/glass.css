@@ -1,0 +1,189 @@
+/*
+ * The FLOATING TRANSLUCENT LAYOUT — the showcase's copy of the portal's glass sheet
+ * (ux-infonite-portal, design/README.md §16).
+ *
+ * A dimming surface is never a grey curtain, and what sits on it is never ONE card: it is a
+ * sheet of glass that takes the screen while the page stays visible through it, and the pieces
+ * float on the glass by themselves — the title and its X, the record's own cards, the action
+ * pills. The ground is essentially transparent at the top edge, gathers over the first stretch
+ * and fades to the page's own background further down, with a blur behind. The glass reveals
+ * first; the pieces rise through it as staggered bands on the house spring. The sheet itself
+ * scrolls, so a long record reads as a page would.
+ *
+ * Usage: `glass-layout` on the fixed, full-viewport layer (it scrolls), one `glass-column`
+ * inside (centered by viewport width), and in it: a header row (`glass-title`, `glass-subtitle`,
+ * `glass-close`), the content as loose cards, and an action row of `glass-pill`s. A small
+ * decision (a confirmation) floats mid-screen with `my-auto` on the column, and drops to a
+ * top-aligned scroll the moment it outgrows the viewport. Tailwind's `hidden` still hides the
+ * layer, and the entrance replays every time it is shown.
+ */
+
+:root {
+  --glass-ground: 248 250 252;            /* slate-50, the showcase page background */
+  --glass-blur: 18px;
+  --glass-ease-out: cubic-bezier(0.16, 1, 0.3, 1);   /* expo-out, the house entrance */
+  --glass-ink: 15 23 42;                  /* slate-900 */
+}
+
+.glass-layout {
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--glass-ground) / 0.42) 0%,
+    rgb(var(--glass-ground) / 0.78) 22%,
+    rgb(var(--glass-ground) / 0.92) 55%,
+    rgb(var(--glass-ground) / 0.97) 100%
+  );
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.15);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.15);
+  animation: glass-reveal 0.26s ease-out both;
+  overflow-anchor: none;
+}
+
+/* The pieces rise as bands: each direct child of the column a beat after the previous */
+.glass-column > * {
+  animation: glass-rise 0.55s var(--glass-ease-out) both;
+  animation-delay: 0.08s;
+}
+.glass-column > :nth-child(2) { animation-delay: 0.14s; }
+.glass-column > :nth-child(3) { animation-delay: 0.2s; }
+.glass-column > :nth-child(4) { animation-delay: 0.26s; }
+.glass-column > :nth-child(5) { animation-delay: 0.32s; }
+.glass-column > :nth-child(n + 6) { animation-delay: 0.38s; }
+
+/* A layer with no column (the document viewers) rises as one piece */
+.glass-layout > :not(.glass-column) {
+  animation: glass-rise 0.55s var(--glass-ease-out) 0.08s both;
+}
+
+@keyframes glass-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes glass-rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header: the title is the protagonist, written straight on the glass */
+.glass-title {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: rgb(var(--glass-ink));
+}
+
+.glass-subtitle {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgb(100 116 139);                /* slate-500 */
+}
+
+/* The one way out: a dark disc aligned with the column, never with the viewport corner */
+.glass-close {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border-radius: 9999px;
+  background: rgb(var(--glass-ink));
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  box-shadow: 0 6px 16px rgb(var(--glass-ink) / 0.18);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.glass-close:hover {
+  background: rgb(51 65 85);              /* slate-700 */
+  transform: scale(1.04);
+}
+
+/* Actions: pills on the glass, the neutral one dark, the main one in the brand */
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1;
+  background: rgb(var(--glass-ink));
+  color: #fff;
+  box-shadow: 0 6px 16px rgb(var(--glass-ink) / 0.16);
+  transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.glass-pill:hover { background: rgb(51 65 85); }
+.glass-pill:active { transform: translateY(1px); }
+
+.glass-pill-brand {
+  background: var(--primary, #00a76f);
+  box-shadow: 0 8px 20px rgb(var(--primary-rgb, 0 167 111) / 0.28);
+}
+.glass-pill-brand:hover { background: var(--primary, #00a76f); filter: brightness(1.08); }
+
+.glass-pill-danger {
+  background: rgb(239 68 68);             /* red-500 */
+  box-shadow: 0 8px 20px rgb(239 68 68 / 0.28);
+}
+.glass-pill-danger:hover { background: rgb(220 38 38); }
+
+.glass-pill-quiet {
+  background: #fff;
+  color: rgb(71 85 105);                  /* slate-600 */
+  border: 1px solid rgb(var(--glass-ink) / 0.1);
+  box-shadow: 0 1px 2px rgb(var(--glass-ink) / 0.05);
+}
+.glass-pill-quiet:hover { background: rgb(248 250 252); color: rgb(var(--glass-ink)); }
+
+.glass-pill[disabled],
+.glass-pill.cursor-not-allowed {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+/* A window onto something else (the widget's iframe) has no border and no drop shadow: a white
+   halo that fades into the glass, so the frame reads as floating light rather than a box */
+.glass-halo {
+  border: 0;
+  background: #fff;
+  /* The first rings are the card's own white, so there is no edge to see; then the white thins
+     out in steps and the last, widest ring is the glass itself */
+  box-shadow:
+    0 0 0 10px rgb(255 255 255),
+    0 0 0 22px rgb(255 255 255 / 0.92),
+    0 0 18px 34px rgb(255 255 255 / 0.8),
+    0 0 44px 52px rgb(255 255 255 / 0.6),
+    0 0 90px 72px rgb(255 255 255 / 0.35),
+    0 0 150px 96px rgb(var(--glass-ground) / 0.5);
+}
+.glass-halo iframe { background: #fff; }
+
+
+/* The widget renders at 80%: drawn a quarter larger and scaled down, so it shows more of itself
+   at the same size, sharper, instead of the phone-sized layout stretched to a desktop frame */
+.glass-frame-scaled {
+  width: 125% !important;
+  height: 125% !important;
+  transform: scale(0.8);
+  transform-origin: 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-layout,
+  .glass-layout > *,
+  .glass-column > * {
+    animation: none;
+  }
+}
