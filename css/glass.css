@@ -156,19 +156,20 @@
 /* A window onto something else (the widget's iframe) has no border and no drop shadow: a white
    halo that fades into the glass, so the frame reads as floating light rather than a box */
 .glass-halo {
+  --halo-ink: 255 255 255;   /* the widget's ground: white, or the contrast grey `glassHaloInk` reads from the app */
   border: 0;
-  background: #fff;
-  /* The first rings are the card's own white, so there is no edge to see; then the white thins
-     out in steps and the last, widest ring is the glass itself */
+  background: rgb(var(--halo-ink));
+  /* The first rings are the widget's own ground, so there is no edge to see; then that colour
+     thins out in steps and the last, widest ring is the glass itself */
   box-shadow:
-    0 0 0 10px rgb(255 255 255),
-    0 0 0 22px rgb(255 255 255 / 0.92),
-    0 0 18px 34px rgb(255 255 255 / 0.8),
-    0 0 44px 52px rgb(255 255 255 / 0.6),
-    0 0 90px 72px rgb(255 255 255 / 0.35),
+    0 0 0 10px rgb(var(--halo-ink)),
+    0 0 0 22px rgb(var(--halo-ink) / 0.92),
+    0 0 18px 34px rgb(var(--halo-ink) / 0.8),
+    0 0 44px 52px rgb(var(--halo-ink) / 0.6),
+    0 0 90px 72px rgb(var(--halo-ink) / 0.35),
     0 0 150px 96px rgb(var(--glass-ground) / 0.5);
 }
-.glass-halo iframe { background: #fff; }
+.glass-halo iframe { background: rgb(var(--halo-ink)); }
 
 
 /* The widget renders at 80%: drawn a quarter larger and scaled down, so it shows more of itself

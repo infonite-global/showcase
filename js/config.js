@@ -1002,6 +1002,16 @@ function deleteConfig(id) {
     );
 }
 
+// The halo around a widget frame is the widget's own ground, so the frame has no edge: white,
+// or the widget theme's grey 200 when the synced application settings (`/api/app`) say the
+// application runs in contrast mode. Only that: the theme mode is left alone on purpose.
+function glassHaloInk(shell) {
+    if (!shell) return;
+    const settings = (typeof InfoniteConfigManager !== 'undefined' && InfoniteConfigManager.getConfig()?.app_settings) || null;
+    shell.style.setProperty('--halo-ink', settings?.contrast_mode ? '244 246 248' : '255 255 255');
+}
+window.glassHaloInk = glassHaloInk;
+
 function showConfirmModal(title, message, confirmText, onConfirm, cancelText = "Cancel") {
     // A decision of no return floats mid-screen on the glass: the title and its X, one card with
     // the consequence, and the pills — the way out dark, the irreversible act in red.

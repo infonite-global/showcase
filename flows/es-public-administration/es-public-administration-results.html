@@ -3683,6 +3683,7 @@
         const modal = document.getElementById('iframeModalLauncher');
         const iframe = document.getElementById('widgetIframeTarget');
         if (modal && iframe) {
+            if (window.glassHaloInk) glassHaloInk(modal.querySelector('.glass-halo'));
             iframe.src = currentSessionData.widget_url;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
