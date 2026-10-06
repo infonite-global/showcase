@@ -58,26 +58,25 @@ function renderModulesGrid() {
         const opc = isChecked ? 'opacity-100' : 'opacity-0';
         const bgc = isChecked ? 'bg-[var(--primary)] text-white border-[var(--primary)]' : 'bg-white text-slate-300 border-black/10';
  
+        // A compact row: icon, name and what it reads, and the check on the right
         const cardHtml = `
         <label class="${labelClass} block relative group h-full">
             <input class="feature-checkbox sr-only" type="checkbox" value="${featureDef.code}" ${isChecked} ${isDisabled} onchange="toggleFeatureVisual(this)"/>
-            <div class="feature-card border border-black/10 rounded-2xl p-4 flex flex-col items-center text-center transition-all hover:bg-slate-50 hover:border-black/20 group-hover:shadow-md h-full gap-3 bg-white relative">
-                <div class="w-12 h-12 rounded-xl bg-slate-50 border border-black/5 flex items-center justify-center shrink-0 transition-all">
-                    <i class="${featureDef.icon} text-[var(--primary)] text-lg"></i>
+            <div class="feature-card border border-black/10 rounded-2xl px-3 py-2.5 flex items-center text-left transition-all hover:bg-slate-50 hover:border-black/20 group-hover:shadow-md h-full gap-3 bg-white relative">
+                <div class="w-9 h-9 rounded-xl bg-slate-50 border border-black/5 flex items-center justify-center shrink-0 transition-all">
+                    <i class="${featureDef.icon} text-[var(--primary)] text-sm"></i>
                 </div>
-                <div class="flex-1 flex flex-col justify-center">
-                    <h4 class="font-black text-slate-900 text-[10px] uppercase tracking-widest leading-tight mb-1.5">
+                <div class="flex-1 min-w-0 flex flex-col justify-center">
+                    <h4 class="font-black text-slate-900 text-[10px] uppercase tracking-wider leading-tight">
                       ${featureDef.name}
                     </h4>
-                    <p class="text-[9px] text-slate-500 font-medium leading-tight">${featureDef.workMessage.replace('Consulting your', '').replace('Retrieving your', '').trim()}</p>
+                    <p class="text-[9px] text-slate-500 font-medium leading-tight mt-0.5 truncate">${featureDef.workMessage.replace('Consulting your', '').replace('Retrieving your', '').trim()}</p>
                 </div>
-                <div class="absolute top-3 right-3 transition-opacity">
-                     ${isSoon ? '' : `
-                        <div class="indicator w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${bgc}">
-                           <i class="fa-solid fa-check text-[10px] ${opc} transition-opacity check-icon"></i>
-                        </div>
-                     `}
-                </div>
+                ${isSoon ? '' : `
+                    <div class="indicator w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${bgc}">
+                       <i class="fa-solid fa-check text-[10px] ${opc} transition-opacity check-icon"></i>
+                    </div>
+                `}
             </div>
         </label>
         `;
@@ -87,16 +86,24 @@ function renderModulesGrid() {
 
     if (notEnabledContent) {
         htmlContent += `
-        <div class="col-span-full relative mt-3 border border-dashed border-slate-300 rounded-3xl p-3 pt-5 bg-slate-50/40">
+        <div class="col-span-full relative mt-3 border border-dashed border-slate-300 rounded-2xl p-2 pt-5 bg-slate-50/40">
             <span class="absolute -top-2.5 left-5 px-2.5 py-0.5 bg-white border border-slate-200 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                 <i class="fa-solid fa-lock text-[8px]"></i> Not enabled for this demo
             </span>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">${notEnabledContent}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${notEnabledContent}</div>
         </div>`;
     }
 
     gridContainer.innerHTML = htmlContent;
     syncEmailRequirement();
+    syncSelectedCount();
+}
+
+function syncSelectedCount() {
+    const badge = document.getElementById('modules-selected-count');
+    if (!badge) return;
+    const n = document.querySelectorAll('#modulesGrid input.feature-checkbox:checked').length;
+    badge.textContent = `${n} selected`;
 }
 
 // Modules whose request needs the customer's email (the CIRBE request to the Bank of Spain carries it)
@@ -133,6 +140,7 @@ function syncEmailRequirement() {
 
 function toggleFeatureVisual(input) {
     syncEmailRequirement();
+    syncSelectedCount();
     const card = input.closest('label').querySelector('.indicator');
     const icon = card.querySelector('.check-icon');
     if (input.checked) {
@@ -629,6 +637,8 @@ window.closeNewLeadModal = function() {
 window.toggleAccordion = function(id) {
     // Fixed Parameters cannot be folded while the email it holds is required
     if (id === 'acc-fixed-parameters' && isEmailRequired()) return;
+    // Modules is not an accordion on desktop: it has its own column
+    if (id === 'acc-modules' && window.matchMedia('(min-width: 1024px)').matches) return;
     const content = document.getElementById(id);
     const icon = document.getElementById(id + '-icon');
     if (content && icon) {
@@ -846,6 +856,17 @@ window.generateLeadSession = async function() {
         document.getElementById('nl-footer-actions').classList.remove('flex');
         
         document.getElementById('nl-error-msg').textContent = displayMsg;
+
+        // A missing capability gets its own explanation instead of the raw answer
+        const detail = err.responseBody?.detail;
+        const missingCapability = typeof detail === 'string' && detail.startsWith('insufficient_capabilities@');
+        document.getElementById('nl-error-generic').classList.toggle('hidden', missingCapability);
+        document.getElementById('nl-error-permission').classList.toggle('hidden', !missingCapability);
+        document.getElementById('nl-error-permission').classList.toggle('flex', missingCapability);
+        if (missingCapability) {
+            document.getElementById('nl-error-permission-product').textContent =
+                detail.slice('insufficient_capabilities@'.length).replace(/^product:/, '');
+        }
         document.getElementById('nl-error-view').classList.remove('hidden');
         document.getElementById('nl-error-view').classList.add('flex');
         
