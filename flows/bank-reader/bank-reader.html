@@ -414,6 +414,15 @@
   <div id="app-nav-container"></div>
 </div>
 
+<!-- Experimental notice: this flow goes away when Financial Rider launches on Monday
+     12 October 2026. Remove together with the card on the index. -->
+<div class="w-full bg-amber-50 border-y border-amber-200 text-amber-800 print:hidden">
+  <div class="max-w-6xl mx-auto px-4 md:px-8 py-2.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs">
+    <span class="text-[9px] font-black uppercase tracking-widest bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-md w-fit shrink-0"><i class="fa-solid fa-flask mr-1"></i> Experimental flow</span>
+    <span class="font-medium">An experimental flow, open until <strong>Monday, 12 October 2026</strong>. That day it is retired and replaced by <strong>Financial Rider</strong>, the definitive multi-market solution: far more powerful, configurable and versatile.</span>
+  </div>
+</div>
+
 <!-- Sticky Flow Subheader -->
 <div class="w-full border-b border-black/5 bg-white/50 backdrop-blur-md sticky top-0 z-[40] transition-colors" style="margin-top: -10px; padding-top: 20px; padding-bottom: 20px;" id="nl-header">
   <div class="max-w-6xl mx-auto px-4 md:px-8 relative">
@@ -502,10 +511,10 @@
   </div>
 </div>
 
-<div class="fixed inset-0 glass-layout z-[999] hidden overflow-y-auto custom-scrollbar" id="settingsModal">
-<div class="glass-column w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 flex flex-col gap-6">
-    <!-- Header, on the glass -->
-    <div id="settings-header" class="flex items-start justify-between gap-6">
+<div class="fixed inset-0 glass-layout z-[999] hidden flex-col" id="settingsModal">
+<div class="glass-column flex-1 min-h-0 w-full flex flex-col">
+    <!-- Header, fixed on the glass: title on the left, the actions of the current view on the right -->
+    <div id="settings-header" class="shrink-0 w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4 text-left min-w-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
           <i class="fa-solid fa-sliders text-[var(--primary)] text-lg"></i>
@@ -515,8 +524,23 @@
           <p class="glass-subtitle">The environments, credentials and look of this demo. Stored in this browser only.</p>
         </div>
       </div>
-      <button class="glass-close" onclick="closeSettings()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+      <!-- LIST: the one way out -->
+      <div id="modal-header-actions-list" class="flex items-center shrink-0">
+        <button class="glass-close" onclick="closeSettings()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <!-- EDITOR: compact pills, icons for the secondary acts and the word only on Save -->
+      <div id="modal-header-actions-edit" class="hidden flex items-center gap-2 shrink-0">
+        <button id="exportConfigBtn" class="hidden glass-pill glass-pill-quiet glass-pill-icon items-center" onclick="exportActiveConfigUrl()" title="Copy setup URL">
+          <i class="fa-solid fa-link"></i>
+        </button>
+        <button class="glass-pill glass-pill-icon" onclick="showListView()" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+        <button id="saveConfigBtn" class="glass-pill glass-pill-brand glass-pill-compact" onclick="saveCurrentConfig()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
     </div>
+
+    <!-- Body, the only part that scrolls -->
+    <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+    <div class="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10 flex flex-col gap-6">
 
 <!-- VIEW: LIST -->
 <div class="space-y-5 fade-in" id="settings-list-view">
@@ -690,14 +714,8 @@
 </div>
 </div>
 </div>
-<!-- EDIT ACTIONS, on the glass -->
-<div id="modal-header-actions-edit" class="hidden flex items-center justify-end gap-3">
-  <button id="exportConfigBtn" class="hidden glass-pill glass-pill-quiet items-center" onclick="exportActiveConfigUrl()">
-    <i class="fa-solid fa-link"></i> Export URL
-  </button>
-  <button class="glass-pill" onclick="showListView()">Cancel</button>
-  <button id="saveConfigBtn" class="glass-pill glass-pill-brand" onclick="saveCurrentConfig()">Save</button>
-</div>
+    </div>
+    </div>
 </div>
 </div>
 
@@ -770,10 +788,10 @@
   </div>
 </div>
 <!-- NEW LEAD MODAL -->
-<div class="fixed inset-0 glass-layout z-[200] hidden overflow-y-auto custom-scrollbar" id="newLeadModal">
-  <div class="glass-column w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 flex flex-col gap-6">
-    <!-- Header, on the glass -->
-    <div id="nl-header" class="flex items-start justify-between gap-6">
+<div class="fixed inset-0 glass-layout z-[200] hidden flex-col" id="newLeadModal">
+  <div class="glass-column flex-1 min-h-0 w-full flex flex-col">
+    <!-- Header, fixed on the glass: title on the left, the actions on the right -->
+    <div class="shrink-0 w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4 text-left min-w-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
           <i class="fa-solid fa-wand-magic-sparkles text-[var(--primary)] text-lg"></i>
@@ -783,13 +801,27 @@
           <p class="glass-subtitle">Configure the session and generate the link your user opens.</p>
         </div>
       </div>
-      <button class="glass-close" onclick="closeNewLeadModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+      <div class="flex items-center gap-3 shrink-0" id="nl-footer-actions">
+        <button class="glass-pill" onclick="closeNewLeadModal()">Cancel</button>
+        <button class="glass-pill glass-pill-brand" id="generateLeadBtn" onclick="generateLeadSession();">
+          <span class="hidden sm:inline">Generate Session</span>
+          <span class="inline sm:hidden">Generate</span>
+          <i class="fa-solid fa-bolt text-amber-300"></i>
+        </button>
+      </div>
     </div>
+
+    <!-- Body, the only part that scrolls -->
+    <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+    <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10">
 
     <!-- FORM VIEW -->
     <div id="nl-form-view" class="flex flex-col">
+     <!-- Two columns on desktop: the modules on the right, everything else stacked on the left.
+          One flat grid, so a phone still reads Market, Customer ID, Modules, Advanced. -->
+     <div class="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] gap-x-6 gap-y-4 items-start">
       <!-- Bank Market Selection -->
-      <div class="mb-6 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
+      <div class="lg:col-start-1 lg:row-start-1 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
         <label class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
            <i class="fa-solid fa-earth-americas text-[var(--primary)]"></i> Market Selection
         </label>
@@ -817,7 +849,7 @@
         </div>
       </div>
       <!-- Customer ID -->
-      <div class="mb-6 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
+      <div class="lg:col-start-1 lg:row-start-2 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
         <label for="generate-customer-id" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
            <i class="fa-solid fa-fingerprint text-[var(--primary)]"></i> Customer ID
         </label>
@@ -856,9 +888,9 @@
         </div>
       </div>
       
-      <!-- MODULES Accordion -->
-      <div class="mb-4">
-        <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-modules')">
+      <!-- MODULES Accordion: always open on desktop, where there is room for it -->
+      <div class="lg:col-start-2 lg:row-start-1 lg:row-span-3">
+        <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 lg:hover:bg-white lg:cursor-default transition-colors shadow-sm group" onclick="toggleAccordion('acc-modules')">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
               <i class="fa-solid fa-shapes"></i>
@@ -868,16 +900,19 @@
                <p class="text-[9px] text-slate-500 font-medium">Select functionality to query</p>
             </div>
           </div>
-          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300 rotate-180" id="acc-modules-icon"></i>
+          <div class="flex items-center gap-3">
+            <span id="modules-selected-count" class="text-[9px] font-black uppercase tracking-widest text-[var(--primary)] bg-[var(--primary-container)] rounded-full px-2.5 py-1"></span>
+            <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300 rotate-180 lg:hidden" id="acc-modules-icon"></i>
+          </div>
         </button>
-        <div id="acc-modules" class="mt-3 transition-all duration-300">
+        <div id="acc-modules" class="mt-3 transition-all duration-300 lg:!block">
            <!-- Grid injected by JS -->
-           <div id="modulesGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+           <div id="modulesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
         </div>
       </div>
 
       <!-- ADVANCED Accordion -->
-      <div>
+      <div class="lg:col-start-1 lg:row-start-3">
         <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-advanced')">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">
@@ -984,11 +1019,12 @@
             </div>
          </div>
       </div>
+     </div>
       </div>
       <!-- END FORM VIEW -->
 
       <!-- SUCCESS VIEW -->
-      <div id="nl-success-view" class="hidden flex-col items-center justify-center text-center py-10 fade-in">
+      <div id="nl-success-view" class="hidden flex-col items-center justify-center text-center py-10 fade-in max-w-2xl mx-auto w-full">
         <div class="w-20 h-20 rounded-full bg-green-50 border-[4px] border-green-100 flex items-center justify-center mb-6 shadow-inner">
            <i class="fa-solid fa-check text-4xl text-green-500"></i>
         </div>
@@ -1016,7 +1052,7 @@
       <!-- END SUCCESS VIEW -->
 
       <!-- ERROR VIEW -->
-      <div id="nl-error-view" class="hidden flex-col items-center justify-center text-center py-10 fade-in">
+      <div id="nl-error-view" class="hidden flex-col items-center justify-center text-center py-10 fade-in max-w-2xl mx-auto w-full">
         <div class="w-20 h-20 rounded-full bg-red-50 border-[4px] border-red-100 flex items-center justify-center mb-6 shadow-inner">
            <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 pt-1"></i>
         </div>
@@ -1046,27 +1082,19 @@
         </div>
       </div>
       <!-- END ERROR VIEW -->
-
-    <!-- Actions, on the glass -->
-    <div class="flex items-center justify-end gap-3" id="nl-footer-actions">
-      <button class="glass-pill" onclick="closeNewLeadModal()">Cancel</button>
-      <button class="glass-pill glass-pill-brand" id="generateLeadBtn" onclick="generateLeadSession();">
-        <span class="hidden sm:inline">Generate Session</span>
-        <span class="inline sm:hidden">Generate</span>
-        <i class="fa-solid fa-bolt text-amber-300"></i>
-      </button>
+    </div>
     </div>
   </div>
 </div>
 
 
 
-<script src="../../js/config.js?v=5"></script>
+<script src="../../js/config.js?v=6"></script>
 <script src="../../js/engine-lists.js?v=1"></script>
 <script src="../../js/features.js?v=5"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
 <script src="../../js/flows-manager.js?v=5"></script>
 <script src="../../js/status.js"></script>
-<script src="../../js/bank-reader.js?v=5"></script>
+<script src="../../js/bank-reader.js?v=6"></script>
 </body>
 </html>

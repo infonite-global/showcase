@@ -145,6 +145,18 @@
 }
 .glass-pill-quiet:hover { background: rgb(248 250 252); color: rgb(var(--glass-ink)); }
 
+/* Compact pills for a crowded header: an icon alone, or an icon with one word */
+.glass-pill-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  justify-content: center;
+  font-size: 0.8125rem;
+}
+.glass-pill-compact {
+  padding: 0.7rem 1.1rem;
+}
+
 .glass-pill[disabled],
 .glass-pill.cursor-not-allowed {
   opacity: 0.5;

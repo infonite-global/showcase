@@ -233,6 +233,40 @@
         .rider-rig, .rider-horse::after, .rider-word { animation: none !important; }
       }
 
+      /* Experimental Bank Reader card: a curved arrow drawn from it up to Financial Rider. The
+         Rider card sits above the experimental one in every layout — directly above on one
+         column, above the right half on two — so the arrow hangs from the card's top edge
+         and crosses the gap; only where it hangs changes with the breakpoint. */
+      .legacy-card { overflow: visible; }
+      .legacy-arrow {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 84px;
+        height: 96px;
+        transform: translate(-50%, -60%) rotate(-18deg);
+        color: var(--primary);
+        pointer-events: none;
+        z-index: 2;
+        filter: drop-shadow(0 2px 3px rgba(255, 255, 255, 0.9));
+      }
+      @media (min-width: 768px) {
+        .legacy-arrow { left: 66%; width: 132px; height: 112px; transform: translate(-50%, -56%) rotate(0deg); }
+      }
+      .legacy-arrow path { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .legacy-arrow .legacy-arrow-shaft {
+        stroke-dasharray: 6 7;
+        animation: legacy-flow 1.2s linear infinite;
+      }
+      .legacy-arrow .legacy-arrow-head { stroke-width: 3.2; }
+      @keyframes legacy-flow { to { stroke-dashoffset: -13; } }
+      @media (prefers-reduced-motion: reduce) { .legacy-arrow .legacy-arrow-shaft { animation: none; } }
+      /* The target answers: hovering the legacy card lights the Rider card up */
+      .rider-card.is-pointed {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
+      }
+
       .pulse-ring {
         display: inline-block;
         width: 10px;
@@ -504,7 +538,7 @@
       <h1 id="hero-text-fallback" class="hidden text-5xl font-black font-['Outfit'] text-white tracking-normal mb-6 mx-auto">infonite</h1>
       <p class="font-medium text-sm md:text-base mb-8 text-white/90">Data Extraction &amp; Process Automation Solutions</p>
       <div class="inline-flex items-center justify-center w-fit mx-auto gap-2 bg-white/10 border border-white/20 text-white px-3 py-1.5 rounded-full text-[10px] font-bold shadow-sm backdrop-blur-md">
-          2026.9.600
+          2026.9.700
       </div>
     </div>
   </div>
@@ -538,7 +572,7 @@
      and the title says so: it reads "Reader" for a beat on arrival, then rides into "Rider";
      hovering shows the word it is NOT, and leaving brings the rider back. -->
 <div class="glass-panel p-8 rounded-3xl block relative cursor-default select-none rider-card" id="financialRiderCard" aria-disabled="true">
-<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 border border-slate-200/70 px-2 py-1 rounded-md">Soon</span>
+<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 border border-slate-200/70 px-2 py-1 rounded-md">Launches Mon 12 Oct</span>
 <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
 <i class="fa-solid fa-building-columns text-2xl text-[var(--primary)]"></i>
 </div>
@@ -548,9 +582,15 @@
   <span class="rider-word" aria-hidden="true">R<span class="rider-slot"><span class="rider-glyph rider-glyph-rider">i</span><span class="rider-glyph rider-glyph-reader">ea</span></span>der</span>
   <span class="rider-horse" aria-hidden="true"><span class="rider-rig"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c7.svg" alt="" draggable="false"></span></span>
 </h3>
-<p class="text-sm text-slate-500 mb-6">Open Banking in a widget we host: your customer connects their banks and you read one financial position.</p>
+<p class="text-sm text-slate-500 mb-6">Open Banking in a widget we host: your customer connects their banks and you read one financial position. The definitive multi-market solution.</p>
+<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-regular fa-clock"></i> The demo will soon be available here
+                    <i class="fa-solid fa-rocket"></i> Launch on Monday, 12 Oct
+</div>
+<!-- The docs are already public: the one thing on this card a visitor can act on today -->
+<a class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2 cursor-pointer hover:underline underline-offset-4" href="https://infonite.dev/flows/financial-rider/overview" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-book-open"></i> Docs already available <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+</a>
 </div>
 </div>
 <script>
@@ -584,6 +624,38 @@
     card.addEventListener('mouseenter', () => { clearTimeout(riding); card.classList.remove('is-riding'); show('reader'); });
     card.addEventListener('mouseleave', ride);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fit(card.classList.contains('is-reader') ? 'reader' : 'rider'));
+  })();
+</script>
+<!-- Bank Reader: the experimental bank flow, kept open until Financial Rider launches on
+     Monday 12 October 2026. Deliberately muted and marked as experimental: it is here to be
+     approved against, not to be chosen over the one that replaces it. Remove this card with
+     the flow when Financial Rider opens. -->
+<a class="glass-panel p-8 rounded-3xl hover:border-amber-400 transition-all group shadow-sm hover:shadow-md block relative md:col-span-2 legacy-card border-dashed opacity-90 hover:opacity-100" id="bankReaderLegacyCard" href="flows/bank-reader/bank-reader.html">
+<svg class="legacy-arrow" viewBox="0 0 110 96" aria-hidden="true" focusable="false">
+  <path class="legacy-arrow-shaft" d="M14 86 C 18 48, 48 22, 92 14"/>
+  <path class="legacy-arrow-head" d="M78 6 L 94 13 L 84 27"/>
+</svg>
+<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1.5"><i class="fa-solid fa-flask"></i> Experimental · retires 12 Oct</span>
+<div class="flex flex-col md:flex-row md:items-start gap-6">
+<div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
+<i class="fa-solid fa-building-columns text-2xl text-slate-400"></i>
+</div>
+<div class="min-w-0">
+<h3 class="text-lg font-bold text-slate-700 mb-2">Bank Reader <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest ml-1">experimental</span></h3>
+<p class="text-sm text-slate-500 mb-3">An experimental bank aggregation flow. It stays open until Financial Rider launches on Monday, 12 October 2026, and is retired that day.</p>
+<p class="text-xs text-amber-700/90 bg-amber-50/70 border border-amber-100 rounded-xl px-3 py-2 mb-6 flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i><span>Financial Rider is the definitive multi-market solution: far more powerful, configurable and versatile. Treat what you see here as an experiment, not a product: no new integration should be built on it.</span></p>
+<div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    Open experimental flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+</div>
+</div>
+</div>
+</a>
+<script>
+  (function () {
+    const legacy = document.getElementById('bankReaderLegacyCard');
+    const rider = document.getElementById('financialRiderCard');
+    legacy.addEventListener('mouseenter', () => rider.classList.add('is-pointed'));
+    legacy.addEventListener('mouseleave', () => rider.classList.remove('is-pointed'));
   })();
 </script>
 </div>
@@ -637,10 +709,10 @@
 
 
 <!-- Settings Modal -->
-<div class="fixed inset-0 glass-layout z-[999] hidden overflow-y-auto custom-scrollbar" id="settingsModal">
-<div class="glass-column w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 flex flex-col gap-6">
-    <!-- Header, on the glass -->
-    <div id="settings-header" class="flex items-start justify-between gap-6">
+<div class="fixed inset-0 glass-layout z-[999] hidden flex-col" id="settingsModal">
+<div class="glass-column flex-1 min-h-0 w-full flex flex-col">
+    <!-- Header, fixed on the glass: title on the left, the actions of the current view on the right -->
+    <div id="settings-header" class="shrink-0 w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4 text-left min-w-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
           <i class="fa-solid fa-sliders text-[var(--primary)] text-lg"></i>
@@ -650,8 +722,23 @@
           <p class="glass-subtitle">The environments, credentials and look of this demo. Stored in this browser only.</p>
         </div>
       </div>
-      <button class="glass-close" onclick="closeSettings()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+      <!-- LIST: the one way out -->
+      <div id="modal-header-actions-list" class="flex items-center shrink-0">
+        <button class="glass-close" onclick="closeSettings()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <!-- EDITOR: compact pills, icons for the secondary acts and the word only on Save -->
+      <div id="modal-header-actions-edit" class="hidden flex items-center gap-2 shrink-0">
+        <button id="exportConfigBtn" class="hidden glass-pill glass-pill-quiet glass-pill-icon items-center" onclick="exportActiveConfigUrl()" title="Copy setup URL">
+          <i class="fa-solid fa-link"></i>
+        </button>
+        <button class="glass-pill glass-pill-icon" onclick="showListView()" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+        <button id="saveConfigBtn" class="glass-pill glass-pill-brand glass-pill-compact" onclick="saveCurrentConfig()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
     </div>
+
+    <!-- Body, the only part that scrolls -->
+    <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+    <div class="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10 flex flex-col gap-6">
 
 <!-- VIEW: LIST -->
 <div class="space-y-5 fade-in" id="settings-list-view">
@@ -825,20 +912,14 @@
 </div>
 </div>
 </div>
-<!-- EDIT ACTIONS, on the glass -->
-<div id="modal-header-actions-edit" class="hidden flex items-center justify-end gap-3">
-  <button id="exportConfigBtn" class="hidden glass-pill glass-pill-quiet items-center" onclick="exportActiveConfigUrl()">
-    <i class="fa-solid fa-link"></i> Export URL
-  </button>
-  <button class="glass-pill" onclick="showListView()">Cancel</button>
-  <button id="saveConfigBtn" class="glass-pill glass-pill-brand" onclick="saveCurrentConfig()">Save</button>
+    </div>
+    </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<script src="js/config.js?v=5"></script>
+<script src="js/config.js?v=6"></script>
 <script src="js/nav-banner.js?v=5"></script>
 <script>
       // --- CONFIGURATION & CONSTANTS ---

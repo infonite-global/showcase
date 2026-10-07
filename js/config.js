@@ -1,4 +1,4 @@
-const INFONITE_VERSION = "2026.9.600";
+const INFONITE_VERSION = "2026.9.700";
 
 const DEFAULT_CONFIG_ITEM = {
     id: "default",
@@ -1232,7 +1232,7 @@ window.exportActiveConfigUrl = function() {
         const btn = document.getElementById("exportConfigBtn");
         if(btn) {
             const originalHtml = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-check text-[var(--primary)]"></i> Copied`;
+            btn.innerHTML = `<i class="fa-solid fa-check text-[var(--primary)]"></i>`;
             setTimeout(() => btn.innerHTML = originalHtml, 2000);
         }
     }).catch(err => {
