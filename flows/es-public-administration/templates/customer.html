@@ -25,10 +25,20 @@
                 <div class="bg-indigo-100/50 p-2 text-center border-b border-indigo-100/50">
                     <span class="text-[10px] font-black uppercase tracking-widest text-indigo-800" id="mainDocType">UNVERIFIED</span>
                 </div>
-                <div class="flex-1 flex flex-col items-center justify-center p-3 gap-1 relative">
+                <div class="flex-1 flex flex-col items-center justify-center p-3 gap-1 relative" id="mainDocBody">
                     <i class="fa-regular fa-id-badge text-3xl text-indigo-300 mb-1" id="mainDocIcon"></i>
                     <span class="text-[11px] font-bold font-mono text-slate-800 tracking-tight text-center break-all" id="mainDocValue">--</span>
                     <div id="mainDocValidationBadge" class="hidden text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded mt-1 flex items-center"></div>
+                </div>
+                <!-- With the DGT's photograph: the photo fills the card and the document number sits on it, as on a real ID -->
+                <div id="mainDocPhotoMode" class="hidden relative w-full aspect-square bg-slate-200 overflow-hidden">
+                    <img id="mainDocPhotoImg" class="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="Photograph">
+                    <span class="absolute top-1.5 right-1.5 rounded bg-slate-900/50 px-1 py-px text-[6px] font-black uppercase tracking-widest text-white">DGT</span>
+                    <!-- A thin strip at the very foot of the photo: the face stays clear -->
+                    <div class="absolute inset-x-0 bottom-0 bg-slate-950/70 backdrop-blur-[1px] px-2 py-1 flex items-center justify-center gap-1.5">
+                        <span id="mainDocPhotoValue" class="text-[11px] font-black font-mono tracking-wide text-white leading-none">--</span>
+                        <i id="mainDocPhotoValidated" class="hidden fa-solid fa-circle-check text-[9px] text-emerald-400" title="Validated"></i>
+                    </div>
                 </div>
                 <div class="bg-white p-2 text-center border-t border-indigo-50">
                     <span class="text-[8px] font-bold uppercase tracking-widest text-slate-400 block mb-0.5">Expires</span>

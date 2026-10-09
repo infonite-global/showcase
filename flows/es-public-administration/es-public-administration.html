@@ -407,7 +407,7 @@
 <!-- Print-only Header -->
 <div class="hidden print:flex fixed top-0 left-0 right-0 p-6 items-center justify-between z-[9999] border-b-4" id="printHeader">
 <div class="flex flex-col">
-<h1 class="font-black text-xl uppercase tracking-[0.2em] leading-none">Spain Public Administration</h1>
+<h1 class="font-black text-xl uppercase tracking-[0.2em] leading-none" data-preset-title>Spain Public Administration</h1>
 <span class="text-[9px] uppercase font-bold tracking-widest mt-1" style="color: var(--c40)">Verification Report</span>
 </div>
 <div class="flex items-center gap-4">
@@ -431,12 +431,12 @@
     <div id="nl-header-default" class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in">
       <!-- Icon & Title -->
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center text-[var(--primary)] text-xl shadow-sm shrink-0">
+        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center text-[var(--primary)] text-xl shadow-sm shrink-0" data-preset-icon>
           <i class="fa-solid fa-person-shelter"></i>
         </div>
         <div>
-          <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Spain Public Administration</h1>
-          <p class="text-xs md:text-sm font-medium text-slate-500">Spain public administration data extraction widget demo</p>
+          <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none mb-1" data-preset-title>Spain Public Administration</h1>
+          <p class="text-xs md:text-sm font-medium text-slate-500" data-preset-subtitle>Spain public administration data extraction widget demo</p>
         </div>
       </div>
       <!-- Actions -->
@@ -920,8 +920,8 @@
               <i class="fa-solid fa-shapes"></i>
             </div>
             <div class="text-left">
-               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest">Modules</h4>
-               <p class="text-[9px] text-slate-500 font-medium">Select functionality to query</p>
+               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest" id="modules-title">Modules</h4>
+               <p class="text-[9px] text-slate-500 font-medium" id="modules-subtitle">Select functionality to query</p>
             </div>
           </div>
           <div class="flex items-center gap-3">
@@ -1183,11 +1183,12 @@
 </div>
 
 <script src="../../js/config.js?v=6"></script>
-<script src="../../js/features.js?v=5"></script>
+<script src="../../js/features.js?v=6"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
-<script src="../../js/flows-manager.js?v=5"></script>
-<script src="../../js/enums.js?v=7"></script>
+<script src="../../js/flows-manager.js?v=6"></script>
+<script src="../../js/enums.js?v=8"></script>
 <script src="../../js/status.js"></script>
-<script src="../../js/es-public-administration.js?v=5"></script>
+<script src="../../js/es-public-administration-presets.js?v=2"></script>
+<script src="../../js/es-public-administration.js?v=6"></script>
 </body>
 </html>

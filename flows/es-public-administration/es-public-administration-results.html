@@ -170,12 +170,12 @@
       
       <!-- Icon & Title -->
       <div class="flex items-center gap-4 shrink-0">
-        <a href="es-public-administration.html" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 border border-black/5 text-slate-400 hover:text-[var(--brand-dark)] hover:bg-white transition-all shadow-sm shrink-0" title="Back to Spain Public Administration">
+        <a href="es-public-administration.html" data-preset-link class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 border border-black/5 text-slate-400 hover:text-[var(--brand-dark)] hover:bg-white transition-all shadow-sm shrink-0" title="Back to Spain Public Administration">
             <i class="fa-solid fa-chevron-left text-lg"></i>
         </a>
         <div>
-          <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">Spain Public Administration <span class="text-slate-400 font-medium text-lg ml-2">/ Results</span></h1>
-          <p class="text-xs md:text-sm font-medium text-slate-500">Spain public administration data extraction widget demo</p>
+          <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none mb-1"><span data-preset-title>Spain Public Administration</span> <span class="text-slate-400 font-medium text-lg ml-2">/ Results</span></h1>
+          <p class="text-xs md:text-sm font-medium text-slate-500" data-preset-subtitle>Spain public administration data extraction widget demo</p>
         </div>
       </div>
       
@@ -516,11 +516,12 @@
 </div>
 </div>
 <script src="../../js/config.js?v=5"></script>
-<script src="../../js/enums.js?v=7"></script>
+<script src="../../js/enums.js?v=8"></script>
 <script src="../../js/status.js"></script>
-<script src="../../js/features.js?v=5"></script>
+<script src="../../js/features.js?v=6"></script>
 <script src="../../js/nav-banner.js?v=5"></script>
-<script src="../../js/flows-manager.js?v=5"></script>
+<script src="../../js/flows-manager.js?v=6"></script>
+<script src="../../js/es-public-administration-presets.js?v=2"></script>
 <script>
     let pollTimer = null;
     let configObj = null;
@@ -564,7 +565,7 @@
         }
 
         // 1. Read immediate cached state
-        const sessions = window.InfoniteFlowsManager.getSessions(configObj.appId, 'es-public-administration', configObj.widgetUrl) || [];
+        const sessions = window.InfoniteFlowsManager.getSessions(configObj.appId, window.ES_PA_HISTORY_CONTEXT, configObj.widgetUrl) || [];
         let session = sessions.find(s => s.session_id === sessionId);
 
         if (!session) {
@@ -586,7 +587,7 @@
             const liveState = await window.InfoniteFlowsManager.pollSessionState(
                 configObj.widgetUrl, 
                 configObj.secret, 
-                'es-public-administration', 
+                window.ES_PA_HISTORY_CONTEXT, 
                 cachedSession.session_id, 
                 configObj.appId
             );
@@ -1047,7 +1048,9 @@
 
         let html = `<h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 px-3">Categories</h3>`;
 
-        MENU_MAPPING.forEach(item => {
+        // A product preset shows its own categories and nothing else
+        const presetCategories = window.ES_PA_PRESET ? window.ES_PA_PRESET.categories : null;
+        MENU_MAPPING.filter(item => !presetCategories || presetCategories.includes(item.id)).forEach(item => {
             const isRequested = item.dependsOn.some(feature => retrieved.includes(feature));
             if (isRequested) {
                 const isCirbeLoading = item.id === 'credit_registry' && 
@@ -1136,7 +1139,7 @@
             const resultData = await window.InfoniteFlowsManager.fetchSessionResults(
                 configObj.widgetUrl,
                 configObj.secret,
-                'es-public-administration',
+                window.ES_PA_HISTORY_CONTEXT,
                 session.session_id
             );
             
@@ -1326,7 +1329,7 @@
             await window.InfoniteFlowsManager.cancelSession(
                 configObj.widgetUrl, 
                 configObj.secret, 
-                'es-public-administration', 
+                window.ES_PA_HISTORY_CONTEXT, 
                 currentSessionData.session_id
             );
             
@@ -1384,9 +1387,73 @@
             'attachment:es-tgss-life-report': { name: 'Work Life Report', icon: 'fa-briefcase', color: 'red' },
             'attachment:es-tgss-contribution-base-report': { name: 'Contribution Base Report', icon: 'fa-receipt', color: 'blue' },
             'attachment:es-aeat-model-100': { name: 'Model 100 Tax Declaration', icon: 'fa-file-signature', color: 'red' },
-            'attachment:es-cirbe-report': { name: 'CIRBE Credit Report', icon: 'fa-building-columns', color: 'amber' }
+            'attachment:es-cirbe-report': { name: 'CIRBE Credit Report', icon: 'fa-building-columns', color: 'amber' },
+            'attachment:person-certified-photo': { name: 'Driver Photograph', icon: 'fa-id-badge', color: 'slate' }
         };
         return map[subFamily] || { name: subFamily, icon: 'fa-file', color: 'slate' };
+    };
+
+    // The driver's photograph (`attachment:person-certified-photo`), fetched like any attachment
+    // once per session and shared by every view that shows it. Null when there is none or it fails.
+    const driverPhotoUrls = {};
+    window.driverPhotoAttachment = function(payload) {
+        return (payload?.data?.driver?.data?.attachments || []).find(a => a.sub_family === 'attachment:person-certified-photo') || null;
+    };
+    window.fetchDriverPhotoUrl = async function(attachment) {
+        const configObj = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
+        if (!attachment || !currentSessionData || !configObj || !configObj.secret || !configObj.widgetUrl) return null;
+        if (!(attachment.id in driverPhotoUrls)) {
+            driverPhotoUrls[attachment.id] = (async () => {
+                try {
+                    const response = await fetch(`${configObj.widgetUrl}/api/flows/attachments/${currentSessionData.session_id}/${attachment.id}`, {
+                        headers: {'X-APP-SECRET': configObj.secret, 'Accept': 'image/*'},
+                    });
+                    return response.ok ? URL.createObjectURL(await response.blob()) : null;
+                } catch (error) {
+                    console.error('Error loading the driver photograph:', error);
+                    return null;
+                }
+            })();
+        }
+        return driverPhotoUrls[attachment.id];
+    };
+
+    // Driver Data header: the photograph in its frame, the neutral frame otherwise
+    window.loadDriverPhoto = async function(attachment) {
+        const img = document.getElementById('driverPhoto');
+        const placeholder = document.getElementById('driverPhotoPlaceholder');
+        if (!img || !placeholder) return;
+        const showPlaceholder = () => { img.classList.add('hidden'); placeholder.classList.remove('hidden'); };
+        showPlaceholder();
+        const url = await window.fetchDriverPhotoUrl(attachment);
+        if (!url) return;
+        img.onload = () => { img.classList.remove('hidden'); placeholder.classList.add('hidden'); };
+        img.onerror = showPlaceholder;
+        img.src = url;
+    };
+
+    // Customer Info document card: with the photograph, it fills the card and the document number
+    // sits on it; without one, the card stays exactly as it is
+    window.loadCustomerDocPhoto = async function(attachment) {
+        const body = document.getElementById('mainDocBody');
+        const photoMode = document.getElementById('mainDocPhotoMode');
+        const img = document.getElementById('mainDocPhotoImg');
+        const badge = document.getElementById('mainDocBadge');
+        if (!body || !photoMode || !img || !badge) return;
+        photoMode.classList.add('hidden');
+        body.classList.remove('hidden');
+        const url = await window.fetchDriverPhotoUrl(attachment);
+        if (!url) return;
+        img.onload = () => {
+            document.getElementById('mainDocPhotoValue').textContent = document.getElementById('mainDocValue').textContent;
+            const validated = document.getElementById('mainDocValidationBadge');
+            const isValidated = validated && !validated.classList.contains('hidden') && validated.textContent.includes('Validated');
+            document.getElementById('mainDocPhotoValidated').classList.toggle('hidden', !isValidated);
+            body.classList.add('hidden');
+            photoMode.classList.remove('hidden');
+            badge.classList.replace('w-32', 'w-36');
+        };
+        img.src = url;
     };
 
     window.downloadAttachment = async function(attachmentId, contentName, btnId) {
@@ -1883,78 +1950,46 @@
         const lblDriverName = document.getElementById('lblDriverName');
         if (lblDriverName) lblDriverName.textContent = (driver.name || '') + ' ' + (driver.name_extra || '');
 
-        // 2. Licenses Pills in Header (More compact)
-        const headerLicensesList = document.getElementById('driverLicensesHeaderList');
-        if (headerLicensesList) {
+        // 2. The DGT's photograph, when the connection brought one; the neutral frame otherwise
+        window.loadDriverPhoto(window.driverPhotoAttachment(payload));
+
+        // 3. Driving licences: small chips on one line — the category, and until when it is valid
+        const licencesList = document.getElementById('driverLicencesList');
+        if (licencesList) {
+            const today = new Date().toISOString().substring(0, 10);
             if (driver.licences && driver.licences.length > 0) {
-                headerLicensesList.innerHTML = driver.licences.map(lic => {
-                    const isExpired = false; // Add logic if needed: new Date(lic.expires) < new Date()
+                licencesList.innerHTML = driver.licences.map(lic => {
+                    const expired = Boolean(lic.expires && lic.expires < today);
+                    const title = [lic.date && `Since ${lic.date}`, lic.expires ? `${expired ? 'Expired' : 'Until'} ${lic.expires}` : 'No expiry'].filter(Boolean).join(' · ');
                     return `
-                    <div class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white border ${isExpired ? 'border-red-200 bg-red-50' : 'border-slate-200 shadow-sm'}">
-                        <span class="text-[10px] font-black text-slate-700 font-mono tracking-tighter leading-none">${lic.category}</span>
-                        ${lic.expires ? `<span class="text-[7px] font-bold text-slate-400 uppercase border-l border-slate-100 pl-1 ml-0.5 leading-none pt-[1px]" title="Expires: ${lic.expires}">Exp: ${lic.expires.substring(2,4)}</span>` : ''}
-                    </div>
-                    `;
+                    <span title="${title}" class="inline-flex items-baseline gap-1.5 rounded-full border px-2.5 py-1 ${expired ? 'border-slate-200 bg-slate-50' : 'border-slate-200 bg-white'}">
+                        <span class="text-xs font-black font-mono leading-none ${expired ? 'text-slate-300 line-through' : 'text-slate-800'}">${lic.category}</span>
+                        <span class="text-[9px] font-semibold leading-none ${expired ? 'text-slate-300' : 'text-slate-400'}">${lic.expires ? lic.expires.substring(0, 4) : '∞'}</span>
+                    </span>`;
                 }).join('');
             } else {
-                headerLicensesList.innerHTML = '<span class="px-2 py-0.5 text-[10px] font-bold text-slate-400 italic">No licenses</span>';
+                licencesList.innerHTML = '<span class="text-xs text-slate-400 italic">None</span>';
             }
         }
 
-        // 3. Special Authorizations Booleans
-        const badgeDangerous = document.getElementById('badgeDangerousGoods');
-        const badgeSchool = document.getElementById('badgeSchoolTransport');
-        const lblDangerous = document.getElementById('lblDangerousGoodsState');
-        const lblSchool = document.getElementById('lblSchoolTransportState');
-        
-        // Active styles
-        const activeDangerousClass = ['border-amber-200', 'bg-amber-50', 'text-amber-700'];
-        const inactiveDangerousClass = ['border-red-200', 'bg-red-50', 'text-red-700'];
-        
-        const activeSchoolClass = ['border-purple-200', 'bg-purple-50', 'text-purple-700'];
-        const inactiveSchoolClass = ['border-red-200', 'bg-red-50', 'text-red-700'];
-
-        if (driver.dangerous_goods_authorized) {
-            if (badgeDangerous) {
-                badgeDangerous.classList.remove(...inactiveDangerousClass);
-                badgeDangerous.classList.add(...activeDangerousClass);
-            }
-            if (lblDangerous) {
-                lblDangerous.textContent = "YES";
-                lblDangerous.classList.remove('text-red-700');
-            }
-        } else {
-            if (badgeDangerous) {
-                badgeDangerous.classList.remove(...activeDangerousClass);
-                badgeDangerous.classList.add(...inactiveDangerousClass);
-            }
-            if (lblDangerous) {
-                lblDangerous.textContent = "NO";
-                lblDangerous.classList.add('text-red-700');
-            }
-        }
-        
-        if (driver.school_transport_authorized) {
-            if (badgeSchool) {
-                badgeSchool.classList.remove(...inactiveSchoolClass);
-                badgeSchool.classList.add(...activeSchoolClass);
-            }
-            if (lblSchool) {
-                lblSchool.textContent = "YES";
-                lblSchool.classList.remove('text-red-700');
-            }
-        } else {
-            if (badgeSchool) {
-                badgeSchool.classList.remove(...activeSchoolClass);
-                badgeSchool.classList.add(...inactiveSchoolClass);
-            }
-            if (lblSchool) {
-                lblSchool.textContent = "NO";
-                lblSchool.classList.add('text-red-700');
-            }
+        // 4. Special authorizations: shown only when the connection reports them (null is "not known", not "no")
+        const authContainer = document.getElementById('specialAuthContainer');
+        const authList = document.getElementById('specialAuthList');
+        if (authContainer && authList) {
+            const authorizations = [
+                {value: driver.dangerous_goods_authorized, label: 'Dangerous goods', icon: 'fa-triangle-exclamation'},
+                {value: driver.school_transport_authorized, label: 'School transport', icon: 'fa-bus'},
+            ].filter(a => a.value === true || a.value === false);
+            authContainer.classList.toggle('hidden', authorizations.length === 0);
+            authList.innerHTML = authorizations.map(a => `
+                <span title="${a.label}: ${a.value ? 'authorized' : 'not authorized'}" class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${a.value ? 'border-emerald-200 bg-emerald-50/60 text-emerald-700' : 'border-slate-200 bg-white text-slate-400'}">
+                    <i class="fa-solid ${a.icon} text-[9px]"></i>
+                    <span>${a.label}</span>
+                    <i class="fa-solid ${a.value ? 'fa-check' : 'fa-xmark'} text-[9px]"></i>
+                </span>`).join('');
         }
 
-        // 4. Point Movements Timeline
+        // 5. Point Movements Timeline
         const pointsList = document.getElementById('pointsList');
         if (pointsList) {
             if (driver.point_movements && driver.point_movements.length > 0) {
@@ -2001,7 +2036,7 @@
             }
         }
 
-        // 5. Vehicles Grid
+        // 6. Vehicles Grid
         const vehiclesGrid = document.getElementById('vehiclesGrid');
         const vehicles = payload.data.driver.vehicles;
         if (vehiclesGrid) {
@@ -2010,6 +2045,9 @@
                     const hasInsurance = veh.insurance && veh.insurance.is_active;
                     const report = veh.simple_vehicle_report;
                     const reportDate = report && report.report_date ? report.report_date.substring(0, 10) : null;
+                    // What the registry flags on the vehicle: red flags, shown on the card and detailed in the report
+                    const flagDefs = window.INFONITE_ENUMS?.VEHICLE_INCIDENT_FLAGS || {};
+                    const redFlags = (report?.flags || []).map(f => ({code: f, ...(flagDefs[f] || {label: f, icon: 'fa-flag', text: ''})}));
                     
                     // Decode DGT Emission Label using Red Sara's CDN
                     let dgtLabelHtml = veh.emission_class ? `<span class="text-[10px] font-bold text-slate-800 px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200 uppercase shrink-0" title="Emission Class">${veh.emission_class.replace('ES:', '')}</span>` : '';
@@ -2029,7 +2067,16 @@
                     const logoUrl = `https://cdn.simpleicons.org/${cleanMake}`;
 
                     return `
-                    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                    <div class="bg-white border ${redFlags.length ? 'border-red-300 ring-1 ring-red-200' : 'border-slate-200/80'} rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        ${redFlags.length ? `
+                        <!-- Red flags: the first thing read on the card -->
+                        <div class="-mx-5 -mt-5 mb-4 px-5 py-2.5 bg-red-600 text-white flex items-center gap-2.5 flex-wrap">
+                            <i class="fa-solid fa-flag text-xs"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest">${redFlags.length === 1 ? 'Red flag' : `${redFlags.length} red flags`}</span>
+                            <span class="w-px h-3.5 bg-white/30"></span>
+                            ${redFlags.map(f => `<span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider"><i class="fa-solid ${f.icon} text-[9px]"></i>${f.label}</span>`).join('')}
+                        </div>
+                        ` : ''}
                         <!-- Header: Make, Model, Plate, Mileage -->
                         <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4">
                             <div class="flex items-center gap-4 flex-wrap">
@@ -2105,6 +2152,18 @@
                                 <p class="text-[10px] font-medium ${report.has_incidents ? 'text-red-700/80' : 'text-emerald-800/70'} leading-snug mt-1.5">${report.has_incidents
                                     ? 'The registry holds annotations that prevent administrative processing or the circulation of this vehicle. Request a full vehicle report for the details.'
                                     : 'No annotations preventing administrative processing or circulation were recorded at the time of the query.'}</p>
+                                ${redFlags.length ? `
+                                <div class="mt-2.5 flex flex-col gap-1.5">
+                                    ${redFlags.map(f => `
+                                    <div class="flex items-start gap-2.5 rounded-lg bg-white border border-red-200 px-2.5 py-2">
+                                        <div class="w-6 h-6 rounded-md bg-red-600 text-white flex items-center justify-center shrink-0"><i class="fa-solid ${f.icon} text-[10px]"></i></div>
+                                        <div class="min-w-0">
+                                            <span class="block text-[10px] font-black uppercase tracking-wider text-red-700">${f.label}</span>
+                                            ${f.text ? `<span class="block text-[10px] font-medium text-red-900/70 leading-snug mt-0.5">${f.text}</span>` : ''}
+                                        </div>
+                                    </div>`).join('')}
+                                </div>
+                                ` : ''}
                             </div>
                             ` : `
                             <div class="mt-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3.5 py-2.5">
@@ -2320,6 +2379,9 @@
                 if (validationBadge) validationBadge.classList.add('hidden');
             }
         }
+
+        // The DGT's photograph, when the driver data was read and brought one
+        window.loadCustomerDocPhoto(window.driverPhotoAttachment(payload));
 
         // Identifiers
         const idsList = document.getElementById('listIds');
@@ -3615,7 +3677,7 @@
                 const data = await window.InfoniteFlowsManager.fetchSessionResults(
                     configObj.widgetUrl,
                     configObj.secret,
-                    'es-public-administration',
+                    window.ES_PA_HISTORY_CONTEXT,
                     currentSessionData.session_id
                 );
                 window.currentResultData = data;

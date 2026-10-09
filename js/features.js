@@ -167,7 +167,6 @@ const INFONITE_FEATURES = {
         name: 'Yearly Tax Situation',
         workMessage: 'Consulting your tax situation',
         icon: 'fa-solid fa-file-invoice-dollar',
-        soon: true,
         defaultConfig: {}
     },
     vehicles_data: {
@@ -189,7 +188,6 @@ const INFONITE_FEATURES = {
         name: 'Academic Data',
         workMessage: 'Consulting your academic data',
         icon: 'fa-solid fa-graduation-cap',
-        soon: true,
         defaultConfig: {}
     },
     properties_data: {
@@ -197,7 +195,6 @@ const INFONITE_FEATURES = {
         name: 'Properties Data',
         workMessage: 'Consulting your properties data',
         icon: 'fa-solid fa-house',
-        soon: true,
         defaultConfig: {}
     },
     credit_registry_data: {

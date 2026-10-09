@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function renderModulesGrid() {
     const gridContainer = document.getElementById("modulesGrid");
     if (!gridContainer) return;
+    if (window.ES_PA_PRESET) return renderPresetModules(gridContainer, window.ES_PA_PRESET);
 
     if (typeof window.INFONITE_FEATURES === 'undefined') {
         gridContainer.innerHTML = '<p class="text-[10px] text-red-500 font-bold p-4">Error: Features dictionary not loaded.</p>';
@@ -99,11 +100,43 @@ function renderModulesGrid() {
     syncSelectedCount();
 }
 
+/**
+ * A product preset's modules: fixed, so they are shown rather than offered — one under another,
+ * each saying what it reads. The checked inputs stay, hidden and locked, so the session payload is
+ * built exactly as for any selection.
+ */
+function renderPresetModules(gridContainer, preset) {
+    const title = document.getElementById('modules-title');
+    const subtitle = document.getElementById('modules-subtitle');
+    if (title) title.textContent = preset.modulesTitle;
+    if (subtitle) subtitle.textContent = preset.modulesSubtitle;
+
+    gridContainer.className = 'flex flex-col rounded-2xl border border-black/10 bg-white divide-y divide-black/5 overflow-hidden';
+    gridContainer.innerHTML = preset.modules.map(code => {
+        const featureDef = window.INFONITE_FEATURES && window.INFONITE_FEATURES[code];
+        if (!featureDef) return '';
+        return `
+        <div class="flex items-center gap-3 px-4 py-3">
+            <input class="feature-checkbox sr-only" type="checkbox" value="${featureDef.code}" checked disabled/>
+            <div class="w-9 h-9 rounded-xl bg-[var(--primary-container)] flex items-center justify-center shrink-0">
+                <i class="${featureDef.icon} text-[var(--primary)] text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="font-black text-slate-900 text-[10px] uppercase tracking-wider leading-tight">${featureDef.name}</h4>
+                <p class="text-[10px] text-slate-500 font-medium leading-snug mt-0.5">${(preset.moduleDescriptions || {})[code] || featureDef.workMessage.replace('Consulting your', '').replace('Retrieving your', '').trim()}</p>
+            </div>
+            <i class="fa-solid fa-circle-check text-[var(--primary)] text-sm shrink-0"></i>
+        </div>`;
+    }).join('');
+    syncEmailRequirement();
+    syncSelectedCount();
+}
+
 function syncSelectedCount() {
     const badge = document.getElementById('modules-selected-count');
     if (!badge) return;
     const n = document.querySelectorAll('#modulesGrid input.feature-checkbox:checked').length;
-    badge.textContent = `${n} selected`;
+    badge.textContent = window.ES_PA_PRESET ? `${n} included` : `${n} selected`;
 }
 
 // Modules whose request needs the customer's email (the CIRBE request to the Bank of Spain carries it)
@@ -231,7 +264,7 @@ window.renderHistory = function() {
     const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
     if (!config) return;
     
-    const sessions = window.InfoniteFlowsManager ? window.InfoniteFlowsManager.getSessions(config.appId, 'es-public-administration', config.widgetUrl) : [];
+    const sessions = window.InfoniteFlowsManager ? window.InfoniteFlowsManager.getSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, config.widgetUrl) : [];
     const emptyState = document.getElementById('dashboardEmptyState');
     const tableState = document.getElementById('dashboardTableState');
     const tbody = document.getElementById('sessionHistory');
@@ -435,7 +468,7 @@ window.syncActiveSession = async function(sid) {
     if (!config) return;
     try {
         if (window.InfoniteFlowsManager) {
-            await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', sid, config.appId);
+            await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, sid, config.appId);
             renderHistory();
         }
     } catch (e) {
@@ -460,9 +493,9 @@ window.deleteLocalSession = function(sid) {
                 }
                 
                 if (window.InfoniteFlowsManager) {
-                    let sessions = window.InfoniteFlowsManager.getSessions(config.appId, 'es-public-administration', config.widgetUrl) || [];
+                    let sessions = window.InfoniteFlowsManager.getSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, config.widgetUrl) || [];
                     sessions = sessions.filter(s => s.session_id !== sid);
-                    window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', sessions, config.widgetUrl);
+                    window.InfoniteFlowsManager.saveSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, sessions, config.widgetUrl);
                     
                     if (typeof renderHistory === 'function') {
                         renderHistory();
@@ -479,7 +512,7 @@ async function pollLoop(sid, config) {
     if (!window.activePollers[sid]) return; // Stop if cancelled/cleared
     try {
         if (window.InfoniteFlowsManager) {
-            const state = await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', sid, config.appId);
+            const state = await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, sid, config.appId);
             
             // Re-render immediately to reflect realtime changes (like ping_date updating USER_ONLINE indicator)
             if (typeof renderHistory === 'function') {
@@ -521,9 +554,9 @@ window.cancelActiveSession = function(sid) {
                 delete window.activePollers[sid]; // stop local
                 try {
                     if (window.InfoniteFlowsManager) {
-                        await window.InfoniteFlowsManager.cancelSession(config.widgetUrl, config.secret, 'es-public-administration', sid);
+                        await window.InfoniteFlowsManager.cancelSession(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, sid);
                         // Re-poll immediately to update UI
-                        await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', sid, config.appId);
+                        await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, sid, config.appId);
                         renderHistory();
                     }
                 } catch (e) {
@@ -549,7 +582,7 @@ window.clearHistory = function() {
                 window.activePollers = {};
                 const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
                 if (config && window.InfoniteFlowsManager) {
-                    window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', [], config.widgetUrl);
+                    window.InfoniteFlowsManager.saveSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, [], config.widgetUrl);
                     renderHistory();
                 }
             }
@@ -559,7 +592,7 @@ window.clearHistory = function() {
         window.activePollers = {};
         const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
         if (config && window.InfoniteFlowsManager) {
-            window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', [], config.widgetUrl);
+            window.InfoniteFlowsManager.saveSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, [], config.widgetUrl);
             renderHistory();
         }
     }
@@ -776,7 +809,7 @@ window.generateLeadSession = async function() {
             config.widgetUrl,
             config.secret,
             config.appId,
-            "es-public-administration",
+            window.ES_PA_HISTORY_CONTEXT,
             payload
         );
 
@@ -787,7 +820,7 @@ window.generateLeadSession = async function() {
             // Poll session status once IMMEDIATELY to update the underlying session state from Infonite
             if(window.InfoniteFlowsManager && window.InfoniteFlowsManager.pollSessionState) {
                try {
-                    await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, 'es-public-administration', result.session_id, config.appId);
+                    await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, result.session_id, config.appId);
                } catch (e) {
                    console.error("Initial polling failed:", e);
                }
@@ -883,7 +916,7 @@ window.generateLeadSession = async function() {
 
 window.viewSession = function(sid) {
     if (!sid) return;
-    window.location.href = `es-public-administration-results.html?session_id=${sid}`;
+    window.location.href = `es-public-administration-results.html?session_id=${sid}${window.esPaPresetQuery('&')}`;
 };
 
 // --------------------------------------------------------------------------------
@@ -942,7 +975,7 @@ window.submitImportSession = async function() {
         const stateData = await window.InfoniteFlowsManager.pollSessionState(
             config.widgetUrl,
             config.secret,
-            'es-public-administration',
+            window.ES_PA_HISTORY_CONTEXT,
             sessionId
         );
 
@@ -959,7 +992,7 @@ window.submitImportSession = async function() {
                 const settings = await window.InfoniteFlowsManager.fetchSessionSettings(
                     config.widgetUrl,
                     config.secret,
-                    'es-public-administration',
+                    window.ES_PA_HISTORY_CONTEXT,
                     sessionId
                 );
                 if (settings) {
@@ -975,7 +1008,7 @@ window.submitImportSession = async function() {
         }
 
         // Add to Session History locally
-        const sessions = window.InfoniteFlowsManager.getSessions(config.appId, 'es-public-administration', config.widgetUrl) || [];
+        const sessions = window.InfoniteFlowsManager.getSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, config.widgetUrl) || [];
         
         // Remove if duplicate exists (updates with latest)
         const existingIdx = sessions.findIndex(s => s.session_id === sessionId);
@@ -994,7 +1027,7 @@ window.submitImportSession = async function() {
             sessions.unshift(newSession);
         }
 
-        window.InfoniteFlowsManager.saveSessions(config.appId, 'es-public-administration', sessions, config.widgetUrl);
+        window.InfoniteFlowsManager.saveSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, sessions, config.widgetUrl);
 
         // Switch to Success View
         document.getElementById('import-loading-view').classList.add('hidden');

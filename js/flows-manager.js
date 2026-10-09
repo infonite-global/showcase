@@ -7,6 +7,16 @@ class FlowSessionManager {
     constructor() {}
 
     /**
+     * The flow a kind calls. A kind may carry a context after a colon (`es-public-administration:driver`):
+     * the context separates the stored history, the API is the flow's own.
+     * @param {string} kind
+     * @returns {string}
+     */
+    _apiKind(kind) {
+        return String(kind).split(':')[0];
+    }
+
+    /**
      * Generates a storage key scoped to the specific API environment
      * @param {string} appId 
      * @param {string} kind 
@@ -66,7 +76,7 @@ class FlowSessionManager {
             throw new Error('Widget URL, App Secret, App ID, and Payload are required to initialize a session.');
         }
 
-        const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/init`, {
+        const response = await fetch(`${widgetUrl}/api/flows/${this._apiKind(kind)}/v1/manager/init`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -122,7 +132,7 @@ class FlowSessionManager {
 
         let stateData = null;
         while (true) {
-            const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}`, {
+            const response = await fetch(`${widgetUrl}/api/flows/${this._apiKind(kind)}/v1/manager/${sessionId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -188,7 +198,7 @@ class FlowSessionManager {
     async cancelSession(widgetUrl, appSecret, kind, sessionId) {
         if (!sessionId || !appSecret || !widgetUrl) throw new Error("Missing parameters");
         
-        const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}/cancel`, {
+        const response = await fetch(`${widgetUrl}/api/flows/${this._apiKind(kind)}/v1/manager/${sessionId}/cancel`, {
             method: 'PATCH',
             headers: { 
                 'X-APP-SECRET': appSecret, 
@@ -214,7 +224,7 @@ class FlowSessionManager {
         if (!sessionId || !appSecret || !widgetUrl) throw new Error("Missing parameters");
         
         while (true) {
-            const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}/results`, {
+            const response = await fetch(`${widgetUrl}/api/flows/${this._apiKind(kind)}/v1/manager/${sessionId}/results`, {
                 method: "GET",
                 headers: { "X-APP-SECRET": appSecret }
             });
@@ -251,7 +261,7 @@ class FlowSessionManager {
     async fetchSessionSettings(widgetUrl, appSecret, kind, sessionId) {
         if (!sessionId || !appSecret || !widgetUrl) throw new Error("Missing parameters");
         
-        const response = await fetch(`${widgetUrl}/api/flows/${kind}/v1/manager/${sessionId}/settings`, {
+        const response = await fetch(`${widgetUrl}/api/flows/${this._apiKind(kind)}/v1/manager/${sessionId}/settings`, {
             method: "GET",
             headers: { "X-APP-SECRET": appSecret }
         });

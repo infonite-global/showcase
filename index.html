@@ -233,10 +233,9 @@
         .rider-rig, .rider-horse::after, .rider-word { animation: none !important; }
       }
 
-      /* Experimental Bank Reader card: a curved arrow drawn from it up to Financial Rider. The
-         Rider card sits above the experimental one in every layout — directly above on one
-         column, above the right half on two — so the arrow hangs from the card's top edge
-         and crosses the gap; only where it hangs changes with the breakpoint. */
+      /* Experimental Bank Reader card: a curved arrow drawn from it up to Financial Rider, which
+         sits directly above it in every layout (both in the right column on two, one after the
+         other on one), so the arrow hangs from the middle of the card's top edge. */
       .legacy-card { overflow: visible; }
       .legacy-arrow {
         position: absolute;
@@ -249,9 +248,6 @@
         pointer-events: none;
         z-index: 2;
         filter: drop-shadow(0 2px 3px rgba(255, 255, 255, 0.9));
-      }
-      @media (min-width: 768px) {
-        .legacy-arrow { left: 66%; width: 132px; height: 112px; transform: translate(-50%, -56%) rotate(0deg); }
       }
       .legacy-arrow path { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
       .legacy-arrow .legacy-arrow-shaft {
@@ -558,12 +554,30 @@
   <p class="text-sm text-slate-500 mt-2">Select a module to test the integration in the current environment</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full px-6">
-<a class="glass-panel p-8 rounded-3xl hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md block" href="flows/es-public-administration/es-public-administration.html">
+<a class="glass-panel p-8 rounded-3xl hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md block md:col-start-1 md:row-start-1" href="flows/es-public-administration/es-public-administration.html">
 <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
 <i class="fa-solid fa-person-shelter text-2xl text-[var(--primary)]"></i>
 </div>
 <h3 class="text-lg font-bold text-slate-900 mb-2">Spain Public Administration</h3>
-<p class="text-sm text-slate-500 mb-6">Spain public administration data extraction widget demo and technical documentation.</p>
+<p class="text-sm text-slate-500 mb-6">Official Spanish records, read with your customer's consent in a widget we host: work history and contribution bases, public pensions, the CIRBE credit registry, driving licence and vehicles, tax data, properties and official degrees. For onboarding, underwriting and background checks.</p>
+<div class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2">
+                    Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+</div>
+</a>
+<!-- Spanish Driver Information: not a flow of its own but a configuration of Spain Public
+     Administration, adapted to one use case (the DGT products alone): the same pages with the
+     `driver` preset, its own session history. Below its parent on two columns, right after it on one. -->
+<a class="glass-panel p-8 rounded-3xl hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md block relative md:col-start-1 md:row-start-2" id="driverInformationCard" href="flows/es-public-administration/es-public-administration.html?preset=driver">
+<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-[var(--primary)] bg-[var(--primary-container)] px-2 py-1 rounded-md">Use case</span>
+<div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
+<svg class="w-7 h-7 text-[var(--primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <circle cx="12" cy="12" r="9"/>
+  <circle cx="12" cy="12" r="2.5"/>
+  <path d="M3.4 10.2 9.6 11.4M14.4 11.4l6.2-1.2M12 14.5V21"/>
+</svg>
+</div>
+<h3 class="text-lg font-bold text-slate-900 mb-2">Spanish Driver Information</h3>
+<p class="text-sm text-slate-500 mb-6">The complete driver profile from the DGT: driving licences and their validity, the points balance, and every vehicle registered to the person, with its inspection, insurance and incidents. A configuration of the Spain Public Administration flow, adapted to this use case.</p>
 <div class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2">
                     Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
 </div>
@@ -571,7 +585,7 @@
 <!-- Financial Rider: not open yet. The horse is on purpose — the name is Rider, not Reader,
      and the title says so: it reads "Reader" for a beat on arrival, then rides into "Rider";
      hovering shows the word it is NOT, and leaving brings the rider back. -->
-<div class="glass-panel p-8 rounded-3xl block relative cursor-default select-none rider-card" id="financialRiderCard" aria-disabled="true">
+<div class="glass-panel p-8 rounded-3xl block relative cursor-default select-none rider-card md:col-start-2 md:row-start-1" id="financialRiderCard" aria-disabled="true">
 <span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 border border-slate-200/70 px-2 py-1 rounded-md">Launches Mon 12 Oct</span>
 <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
 <i class="fa-solid fa-building-columns text-2xl text-[var(--primary)]"></i>
@@ -630,13 +644,13 @@
      Monday 12 October 2026. Deliberately muted and marked as experimental: it is here to be
      approved against, not to be chosen over the one that replaces it. Remove this card with
      the flow when Financial Rider opens. -->
-<a class="glass-panel p-8 rounded-3xl hover:border-amber-400 transition-all group shadow-sm hover:shadow-md block relative md:col-span-2 legacy-card border-dashed opacity-90 hover:opacity-100" id="bankReaderLegacyCard" href="flows/bank-reader/bank-reader.html">
+<a class="glass-panel p-8 rounded-3xl hover:border-amber-400 transition-all group shadow-sm hover:shadow-md block relative md:col-start-2 md:row-start-2 legacy-card border-dashed opacity-90 hover:opacity-100" id="bankReaderLegacyCard" href="flows/bank-reader/bank-reader.html">
 <svg class="legacy-arrow" viewBox="0 0 110 96" aria-hidden="true" focusable="false">
   <path class="legacy-arrow-shaft" d="M14 86 C 18 48, 48 22, 92 14"/>
   <path class="legacy-arrow-head" d="M78 6 L 94 13 L 84 27"/>
 </svg>
 <span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1.5"><i class="fa-solid fa-flask"></i> Experimental · retires 12 Oct</span>
-<div class="flex flex-col md:flex-row md:items-start gap-6">
+<div class="flex flex-col gap-6">
 <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
 <i class="fa-solid fa-building-columns text-2xl text-slate-400"></i>
 </div>

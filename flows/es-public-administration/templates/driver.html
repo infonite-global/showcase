@@ -20,61 +20,57 @@
             <i class="fa-solid fa-car"></i>
         </div>
 
-        <div class="flex flex-col sm:flex-row relative z-10 w-full">
-            
-            <!-- LEFT COLUMN: Identity & Licenses -->
-            <div class="flex flex-col justify-between h-full gap-4 sm:gap-5 flex-1 pr-0 sm:pr-8">
-                <!-- Data Identificativos -->
-                <div class="flex flex-col items-start">
-                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-0.5" id="lblDriverIdType">DATOS IDENTIFICATIVOS</span>
+        <div class="flex flex-col sm:flex-row sm:items-center relative z-10 w-full">
+
+            <!-- LEFT: the person — photograph, document and name -->
+            <div class="flex items-center gap-4 sm:gap-5 flex-1 min-w-0 pr-0 sm:pr-8">
+                <!-- The DGT's photograph when the connection brings one; a neutral frame otherwise -->
+                <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden shrink-0 flex items-center justify-center">
+                    <img id="driverPhoto" class="hidden w-full h-full object-cover" alt="Driver photograph">
+                    <div id="driverPhotoPlaceholder" class="flex flex-col items-center justify-center gap-1.5 text-slate-300">
+                        <i class="fa-solid fa-user text-3xl"></i>
+                        <span class="text-[8px] font-bold uppercase tracking-widest text-slate-400">No photo</span>
+                    </div>
+                </div>
+                <div class="flex flex-col min-w-0">
                     <span class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight leading-none" id="lblDriverIdValue">------</span>
-                    <span class="text-sm font-bold text-slate-600 mt-1" id="lblDriverName">--</span>
-                </div>
-                
-                <!-- Licenses -->
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1.5 align-bottom">Active Licenses</span>
-                    <div class="flex flex-wrap gap-1.5" id="driverLicensesHeaderList">
-                        <!-- Javascript will inject small pills here -->
-                        <span class="px-2 py-0.5 rounded border border-slate-200 bg-white text-[10px] font-bold text-slate-400">Loading licenses...</span>
-                    </div>
+                    <span class="text-sm font-bold text-slate-600 mt-1.5 truncate" id="lblDriverName">--</span>
                 </div>
             </div>
-            
+
             <!-- DIVIDER -->
-            <div class="w-full h-px sm:w-px sm:h-auto bg-slate-200/60 my-6 sm:my-0"></div>
-            
-            <!-- RIGHT COLUMN: Points & Authorizations -->
-            <div class="flex flex-col justify-between h-full gap-4 sm:gap-5 flex-1 pl-0 sm:pl-8 items-start sm:items-end">
-                <!-- Saldo en Puntos -->
-                <div class="flex items-center gap-4 shrink-0 sm:flex-row-reverse">
-                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center shadow-sm">
-                        <i class="fa-solid fa-gauge-high text-xl sm:text-2xl text-slate-300" id="driverStatusIcon"></i>
-                    </div>
-                    <div class="flex flex-col text-left sm:text-right pt-1">
-                        <h3 class="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-none" id="lblPointBalance">--</h3>
-                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Point Balance</span>
-                    </div>
+            <div class="w-full h-px sm:w-px sm:self-stretch bg-slate-200/60 my-6 sm:my-0"></div>
+
+            <!-- RIGHT: Points -->
+            <div class="flex items-center gap-4 shrink-0 pl-0 sm:pl-8 sm:flex-row-reverse">
+                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white border border-slate-200 flex flex-col items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-gauge-high text-xl sm:text-2xl text-slate-300" id="driverStatusIcon"></i>
                 </div>
-                                
-                <!-- Special Authorizations (Smaller) -->
-                <div class="flex flex-col sm:items-end w-full" id="specialAuthContainer">
-                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mb-1.5 align-bottom">Special Authorizations</span>
-                    <div class="flex flex-wrap sm:flex-nowrap gap-1.5 justify-start sm:justify-end">
-                        <div id="badgeDangerousGoods" class="flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition-colors">
-                            <i class="fa-solid fa-triangle-exclamation text-[9px]"></i>
-                            <span class="text-[9px] font-black uppercase tracking-widest leading-none pt-[1px]">Dangerous:</span>
-                            <span id="lblDangerousGoodsState" class="text-[8px] font-bold uppercase leading-none pt-[1px]">--</span>
-                        </div>
-                        <div id="badgeSchoolTransport" class="flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 shadow-sm transition-colors">
-                            <i class="fa-solid fa-bus text-[9px]"></i>
-                            <span class="text-[9px] font-black uppercase tracking-widest leading-none pt-[1px]">School:</span>
-                            <span id="lblSchoolTransportState" class="text-[8px] font-bold uppercase leading-none pt-[1px]">--</span>
-                        </div>
-                    </div>
+                <div class="flex flex-col text-left sm:text-right pt-1">
+                    <h3 class="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-none" id="lblPointBalance">--</h3>
+                    <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-1">Point Balance</span>
                 </div>
             </div>
-            
+
+        </div>
+    </div>
+
+    <!-- Licences and special authorizations: one quiet line under the header -->
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-3 px-1 mb-8">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 min-w-0">
+            <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase flex items-center gap-1.5">
+                <i class="fa-solid fa-id-card"></i> Licences
+            </span>
+            <div id="driverLicencesList" class="flex flex-wrap items-center gap-1.5">
+                <span class="text-xs text-slate-400 italic">Loading...</span>
+            </div>
+        </div>
+        <!-- Hidden when the connection does not report them (null): absent is not the same as "no" -->
+        <div id="specialAuthContainer" class="hidden flex flex-wrap items-center gap-x-3 gap-y-2 sm:ml-auto">
+            <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved"></i> Authorizations
+            </span>
+            <div id="specialAuthList" class="flex flex-wrap items-center gap-1.5"></div>
         </div>
     </div>
 
