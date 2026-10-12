@@ -774,6 +774,11 @@ window.generateLeadSession = async function() {
             }
         };
 
+        // A product preset decides which administrations its sessions sign in to
+        if (window.ES_PA_PRESET && Array.isArray(window.ES_PA_PRESET.sources)) {
+            payload.settings.allowed_sources = window.ES_PA_PRESET.sources;
+        }
+
         if (userDoc !== "") {
             if (!validateSpanishDocument(userDoc)) {
                 throw new Error("The specified User Document is not a valid Spanish DNI or NIE.");

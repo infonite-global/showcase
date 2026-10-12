@@ -13,8 +13,11 @@
             title: 'Spanish Driver Information',
             subtitle: 'The complete DGT driver profile: licences, points and vehicles',
             icon: STEERING_WHEEL,
-            // Exactly what takes the DGT's own connection in the flow: the DGT products and the profile
+            // What the DGT returns: its own products and the profile
             modules: ['customer_information_read', 'driver_data', 'vehicles_data'],
+            // Sent as `settings.allowed_sources`: the DGT alone. The flow's default list does not include it,
+            // so without this the same features would be read at the Social Security
+            sources: ['dgt'],
             moduleDescriptions: {
                 customer_information_read: 'Name, document, address and contact details',
                 driver_data: 'Licences and their validity, points balance and photograph',
@@ -23,6 +26,21 @@
             modulesTitle: 'Included Data',
             modulesSubtitle: 'Every session of this product reads all of it',
             categories: ['customer', 'driver'],
+        },
+        cirbe: {
+            title: 'Spanish Credit Risk Report',
+            subtitle: "The CIRBE report from the Banco de España's own service",
+            icon: '<i class="fa-solid fa-file-invoice-dollar"></i>',
+            // The report alone: no profile, nothing else to sign in for
+            modules: ['credit_registry_data'],
+            moduleDescriptions: {
+                credit_registry_data: 'Every loan, credit and guarantee the Banco de España holds in the person\'s name',
+            },
+            modulesTitle: 'Included Data',
+            modulesSubtitle: 'Every session of this product reads all of it',
+            categories: ['credit_registry'],
+            // The Banco de España alone: with `bde` allowed, the report is read there and nowhere else
+            sources: ['bde'],
         },
     };
 
