@@ -831,7 +831,7 @@
             let statusIcon = 'fa-solid fa-circle-notch';
             if (trackingState === 'COMPLETED') statusIcon = 'fa-solid fa-circle-check';
             else if (trackingState === 'FAILED' || trackingState === 'ERROR') statusIcon = 'fa-solid fa-circle-xmark';
-            else if (trackingState === 'CLIENT_CANCELLED' || trackingState === 'SYSTEM_CANCELLED') statusIcon = 'fa-solid fa-ban';
+            else if (['CLIENT_CANCELLED', 'CUSTOMER_CANCELLED', 'SYSTEM_CANCELLED'].includes(trackingState)) statusIcon = 'fa-solid fa-ban';
             else if (animateClass === 'animate-pulse') statusIcon = 'fa-solid fa-circle-notch animate-spin';
             else statusIcon = 'fa-solid fa-hourglass';
             
@@ -927,8 +927,14 @@
         const stContainer = document.getElementById('stateContainer');
         const subActions = document.getElementById('subheader-actions');
         
-        const isShowResultsState = (trackingState === 'COMPLETED' || cursorVal === 'es-public-administration:connect:wait');
-        
+        // A session the customer or the system cancelled still answers its results: the audit
+        // (consent and connections) always, and the data its sources delivered before the end when
+        // the API serves it. Shown under the header that already says how it ended. Asked once:
+        // a session cancelled before the consent has nothing to show and keeps the status card.
+        const isShowResultsState = trackingState === 'COMPLETED'
+            || cursorVal === 'es-public-administration:connect:wait'
+            || (isCancelledSession(session) && (!window.cancelledResultsChecked || !!window.currentResultData));
+
         if (isShowResultsState) {
             if (isSessionFinished) {
                 if (subActions) {
@@ -980,8 +986,27 @@
     // --- Data Fetching Logic ---
     window.currentResultData = null;
     window.currentResultDataIsFinal = false;
+    window.cancelledResultsChecked = false;
     let isFetchingResults = false;
-    
+
+    // Final statuses whose partial data, when there is any, is shown like a completed session's
+    const CANCELLED_STATES = ['CUSTOMER_CANCELLED', 'SYSTEM_CANCELLED'];
+
+    function isCancelledSession(session) {
+        const isClosed = session.infonite_state?.is_closed === true || session.is_closed === true;
+        return isClosed && CANCELLED_STATES.includes(session.infonite_state?.status_code);
+    }
+
+    function hasResultData(resultData) {
+        if (!resultData) return false;
+        return (resultData.retrieved_features || []).length > 0 || Object.keys(resultData.data || {}).length > 0;
+    }
+
+    // What the audit view draws: the consent, and the connections made under it
+    function hasAuditData(resultData) {
+        return !!resultData?.consent;
+    }
+
     const MENU_MAPPING = [
         {
             id: 'customer',
@@ -1033,6 +1058,8 @@
             ...(window.currentResultData.consent?.accepted_features || []),
             ...(window.currentResultData.retrieved_features || [])
         ];
+        // Without data (a cancelled session the API serves no data for), the audit is what there is
+        if (!hasResultData(window.currentResultData)) return 'audit';
         const firstActive = MENU_MAPPING.find(item => item.dependsOn.some(feature => retrieved.includes(feature)));
         return firstActive ? firstActive.id : 'audit';
     }
@@ -1142,7 +1169,16 @@
                 window.ES_PA_HISTORY_CONTEXT,
                 session.session_id
             );
-            
+
+            if (isCancelledSession(session)) {
+                window.cancelledResultsChecked = true;
+                // Cancelled before the consent: nothing to show, back to the status card
+                if (!hasResultData(resultData) && !hasAuditData(resultData)) {
+                    renderSessionState(session);
+                    return;
+                }
+            }
+
             window.currentResultData = resultData;
             
             const isClosed = session.infonite_state?.is_closed === true || session.is_closed === true;
@@ -1161,10 +1197,11 @@
             
         } catch (error) {
             console.error("Failed to retrieve dashboard results payload:", error);
+            if (isCancelledSession(session)) window.cancelledResultsChecked = true;
             // Re-render the critical crash screen natively over the polling ring
             renderCriticalCrash(
-                "Data Unreachable", 
-                `The session completed successfully, but the final data payload could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Decryption or Networking Error'}</span>`
+                "Data Unreachable",
+                `The data payload of this session could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Decryption or Networking Error'}</span>`
             );
         } finally {
             isFetchingResults = false;
@@ -1258,6 +1295,22 @@
                         </div>
                     `;
                     return; // skip calling render functions
+                }
+
+                // A cancelled session's results carry the audit but no data: say so instead of an empty module
+                if (categoryId !== 'audit' && !hasResultData(window.currentResultData)) {
+                    rootContainer.innerHTML = `
+                        <div class="h-full w-full rounded-[2rem] bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center fade-in min-h-[400px]">
+                            <div class="flex flex-col items-center gap-4 max-w-sm">
+                                <div class="w-16 h-16 rounded-full bg-slate-200/50 flex items-center justify-center mb-2">
+                                    <i class="fa-solid fa-ban text-3xl text-slate-400"></i>
+                                </div>
+                                <h3 class="text-xl font-black text-slate-700 tracking-tight">No Data Delivered</h3>
+                                <p class="text-sm font-medium text-slate-500">The session was cancelled, so its results carry no records for this module. The Audit Log shows the consent and the connections made.</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
                 }
 
                 switch(categoryId) {
