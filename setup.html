@@ -120,8 +120,10 @@
             try {
                 // 1. Parse URL Payload
                 const urlParams = new URLSearchParams(window.location.search);
-                const encodedPayload = urlParams.get('c');
-                
+                // A link exported before the payload was encoded carries a raw «+», which
+                // URLSearchParams hands back as a space; base64 never contains spaces.
+                const encodedPayload = (urlParams.get('c') || '').replace(/ /g, '+');
+
                 if (!encodedPayload) {
                     throw new Error("No configuration payload provided in the URL.");
                 }

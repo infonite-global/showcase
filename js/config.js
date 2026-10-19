@@ -1183,7 +1183,8 @@ window.exportActiveConfigUrl = function() {
        appRootPath = baseUrlStr.substring(0, baseUrlStr.lastIndexOf('/') + 1);
     }
     
-    const url = new URL(`setup.html?c=${encoded}`, appRootPath);
+    // Base64 may carry «+», which a query string reads as a space: encode the payload.
+    const url = new URL(`setup.html?c=${encodeURIComponent(encoded)}`, appRootPath);
     
     navigator.clipboard.writeText(url.href).then(() => {
         const btn = document.getElementById("exportConfigBtn");
