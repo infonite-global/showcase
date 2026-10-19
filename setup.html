@@ -106,7 +106,7 @@
     </div>
 
     <!-- Load Config Manager -->
-    <script src="js/config.js"></script>
+    <script src="js/config.js?v=14"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             function showView(id) {
@@ -129,9 +129,16 @@
                 const decodedString = atob(encodedPayload);
                 const payload = JSON.parse(decodedString);
                 
-                // Validate Minimum Required Fields (secret and widgetUrl)
-                if (!payload.s || !payload.u) {
-                    throw new Error("Payload is missing required authentication parameters.");
+                if (!payload.s) {
+                    throw new Error("Payload is missing the application secret.");
+                }
+
+                // The host decides the service: production (the default when none is named)
+                // and develop resolve to their fixed URL and any URL in the link is ignored;
+                // only a custom host takes its URL from the link, and needs one.
+                const host = InfoniteConfigManager.resolveHost(payload.ht, payload.u);
+                if (!host) {
+                    throw new Error("A custom host needs the widgets service URL in the link.");
                 }
 
                 // 2. Hydrate Temporary Config Object
@@ -139,15 +146,10 @@
                     ...InfoniteConfigManager.DEFAULT_CONFIG_ITEM,
                     id: crypto.randomUUID(),
                     secret: payload.s,
-                    widgetUrl: payload.u,
-                    hostType: payload.ht || 'production',
+                    widgetUrl: host.widgetUrl,
+                    hostType: host.hostType,
                     isMock: false
                 };
-                
-                // Apply visual theme to loading screen if banner color exists
-                if(payload.bc) {
-                    document.documentElement.style.setProperty('--primary', payload.bc);
-                }
 
                 // 3. Verify Against Remote (Fetch Real AppId & Details)
                 const verifyRes = await fetch(`${tempConfig.widgetUrl}/api/app`, {

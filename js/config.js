@@ -23,6 +23,22 @@ const DEFAULT_CONFIG_ITEM = {
 
 const STORAGE_KEY = "infonite_configs";
 
+// The widgets service behind each named host. Production and develop are FIXED: a setup link
+// or a saved environment that names one of them never carries its own URL (and one that does
+// is ignored); only `custom` brings a URL, and without one it is incomplete.
+const HOST_URLS = {
+    production: "https://widgets.infonite.tech",
+    develop: "https://widgets-dev.infonite.tech"
+};
+
+/** The host and URL an environment resolves to from what a link or a form gives; `null` when a custom host has no URL. */
+function resolveHost(hostType, widgetUrl) {
+    const ht = hostType === "develop" || hostType === "custom" ? hostType : "production";
+    if (ht !== "custom") return { hostType: ht, widgetUrl: HOST_URLS[ht] };
+    const url = (widgetUrl || "").trim();
+    return url ? { hostType: ht, widgetUrl: url } : null;
+}
+
 function getStorageData() {
     const defaultData = {
         activeId: "default",
@@ -280,6 +296,8 @@ setTimeout(syncActiveApp, 1000);
 
 window.InfoniteConfigManager = {
     DEFAULT_CONFIG_ITEM,
+    HOST_URLS,
+    resolveHost,
     getStorageData,
     saveStorageData,
     getConfig,
@@ -1149,11 +1167,9 @@ window.exportActiveConfigUrl = function() {
         return;
     }
     
-    const payload = {
-        s: config.secret,
-        u: config.widgetUrl,
-        ht: config.hostType
-    };
+    // the URL travels only for a custom host; the named hosts resolve to their fixed service
+    const payload = { s: config.secret, ht: config.hostType || "production" };
+    if (payload.ht === "custom") payload.u = config.widgetUrl;
     
     const encoded = btoa(JSON.stringify(payload));
     
