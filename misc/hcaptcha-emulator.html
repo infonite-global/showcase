@@ -209,10 +209,22 @@
             const redirectMode = urlParams.get('redirect');
 
             if (redirectMode === 'true') {
-                // If the proxy needs a clean redirect or replacement to stop loading
-                document.open();
-                document.write('<!DOCTYPE html><html><head><title>Captcha' + 'Solved</title></head><body style="font-family: sans-serif; padding: 20px;"><h1>Captcha Solution</h1><pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto;"><code>' + token + '</code></pre></body></html>');
-                document.close();
+                // The proxy wants a bare page with nothing but the token: the body is REPLACED
+                // through the DOM. No closing tag is spelled out anywhere in this script, not
+                // even in a comment, on purpose: a dev server that injects its live-reload
+                // snippet before the first closing body tag it finds in the file would land it
+                // in here, and the snippet's own closing script tag would cut this script
+                // short and print the rest of it as page text.
+                document.title = 'Captcha Solved';
+                document.body.style.cssText = 'font-family: sans-serif; padding: 20px; background: #fff; color: #000; display: block;';
+                const heading = document.createElement('h1');
+                heading.textContent = 'Captcha Solution';
+                const pre = document.createElement('pre');
+                pre.style.cssText = 'background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto;';
+                const code = document.createElement('code');
+                code.textContent = token;
+                pre.appendChild(code);
+                document.body.replaceChildren(heading, pre);
             } else {
                 document.getElementById('token-result').style.display = 'block';
                 document.getElementById('token-display').value = token;
