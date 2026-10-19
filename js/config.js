@@ -7,8 +7,6 @@ const DEFAULT_CONFIG_ITEM = {
     widgetUrl: "https://widgets.infonite.tech",
     primaryColor: "#00a76f",
     darkColor: "#1C252E",
-    bannerColor: "#1C252E",
-    bannerColorScheme: "dark",
     logo_square_light_base64: null,
     logo_rectangle_light_base64: null,
     logo_square_dark_base64: null,
@@ -20,8 +18,7 @@ const DEFAULT_CONFIG_ITEM = {
     app_settings: null,
     isSynced: false,
     hostType: "production",
-    isMock: true,
-    saturateLogo: true
+    isMock: true
 };
 
 const STORAGE_KEY = "infonite_configs";
@@ -63,6 +60,16 @@ function getConfig() {
     return active || data.list[0] || DEFAULT_CONFIG_ITEM;
 }
 
+// What an environment is called: the app's name under its host pill once the app has answered,
+// and "Unavailable App" only while it never has
+function environmentName(config) {
+    if (!config.appName) return "Unavailable App";
+    let prefix = "[CSM]";
+    if (config.hostType === "production") prefix = "[PRO]";
+    if (config.hostType === "develop") prefix = "[DEV]";
+    return `${prefix} ${config.appName}`;
+}
+
 async function syncActiveApp() {
     const config = InfoniteConfigManager.getConfig();
     if (!config || !config.widgetUrl || config.isMock) return;
@@ -76,37 +83,36 @@ async function syncActiveApp() {
             headers: { 'X-APP-SECRET': config.secret }
         });
         
+        const wasOnline = config.appDetails.isOnline === true;
+        const lastOnlineAt = config.appDetails.lastOnlineAt || null;
         if (response.ok) {
             const data = await response.json();
-            config.appDetails = { ...data, isOnline: true, status: data.status || 'unknown', lastError: null };
+            config.appDetails = { ...data, isOnline: true, status: data.status || 'unknown', lastError: null, lastOnlineAt: new Date().toISOString() };
             if(data.id && data.id !== config.appId) {
                 config.appId = data.id;
             }
             config.appName = data.display_name || "";
-            
-            // Reapply naming rule based on HostType instead of environment string
-            let prefix = "[CSM]";
-            if(config.hostType === "production") prefix = "[PRO]";
-            if(config.hostType === "develop") prefix = "[DEV]";
-            
-            if (config.appName) {
-                config.name = `${prefix} ${config.appName}`;
-            } else {
-                config.name = "Unknown App";
+            config.name = environmentName(config);
+            // back after an outage: the look may have changed meanwhile
+            if (!wasOnline && config.app_settings) {
+                syncAppSettings(config, true).then((ok) => ok && syncAppLogos(InfoniteConfigManager.getConfig())).catch(() => {});
             }
         } else {
-            // Track the explicit error if not OK (e.g 401 Unauthorized)
+            // Track the explicit error if not OK (e.g 401 Unauthorized). The name is kept: an
+            // app that answered once is still that app while it is away.
             config.appDetails.isOnline = false;
             config.appDetails.status = 'unreachable';
             config.appDetails.lastError = `HTTP ${response.status} - ${response.statusText || 'API Error'}`;
-            config.name = "Unavailable App";
+            config.appDetails.lastOnlineAt = lastOnlineAt;
+            config.name = environmentName(config);
         }
     } catch (error) {
         // Network error, invalid URL, etc
         config.appDetails.isOnline = false;
         config.appDetails.status = 'unreachable';
         config.appDetails.lastError = `Network Error: ${error.message}`;
-        config.name = "Unavailable App";
+        config.appDetails.lastOnlineAt = config.appDetails.lastOnlineAt || null;
+        config.name = environmentName(config);
     }
     
     // Persist and push to reactive state
@@ -119,10 +125,55 @@ async function syncActiveApp() {
     }
     saveStorageData(data);
     updateActiveConfigUI();
+    renderConnectivity();
+    if (window.InfoniteNavBanner && typeof window.InfoniteNavBanner.render === 'function') window.InfoniteNavBanner.render();
     
     if(typeof window.br_updateActiveConfigUI === 'function') window.br_updateActiveConfigUI();
     if (window.setGlobalConfig) window.setGlobalConfig(config);
 }
+
+// THE ENVIRONMENT'S REACH, said by the whole page (css/offline.css). The root carries it as
+// `data-app-online`; while the app is unreachable a red band stands in the page's head slot
+// (`#offline-slot`, one per page) saying which host is not answering, since when, and what
+// that stops — and every control that needs the service is put out of reach.
+function renderConnectivity() {
+    // always the environment in use as persisted: a theme preview (`applyTheme` on a draft) or
+    // a stale object captured before a poll must not flip what the page says about reach
+    const config = InfoniteConfigManager.getConfig();
+    const root = document.documentElement;
+    const details = config && config.appDetails;
+    let reach = 'unknown';
+    if (!config || config.isMock) reach = 'mock';
+    else if (details && details.isOnline === true) reach = 'online';
+    else if (details && (details.status === 'unreachable' || details.isOnline === false)) reach = 'offline';
+    root.dataset.appOnline = reach;
+
+    const slot = document.getElementById('offline-slot');
+    if (!slot) return;
+    if (reach !== 'offline') { slot.innerHTML = ''; return; }
+
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let host = config.widgetUrl || '';
+    try { host = new URL(config.widgetUrl).host; } catch (e) { /* shown as given */ }
+    const reason = details.lastError ? ` (${esc(details.lastError.replace(/^Network Error: /, ''))})` : '';
+    let seen = 'Never seen online';
+    if (details.lastOnlineAt) {
+        const at = new Date(details.lastOnlineAt);
+        const today = at.toDateString() === new Date().toDateString();
+        seen = 'Last seen ' + (today ? at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : at.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }));
+    }
+    slot.innerHTML = `
+        <div class="offline-bar" role="status" aria-live="polite">
+            <span class="offline-bar-dot" aria-hidden="true"></span>
+            <div class="offline-bar-text">
+                <strong>Environment offline.</strong>
+                <code>${esc(host)}</code> is not answering${reason}. Sessions cannot be created or refreshed until it is back; the look you see is the last one synced.
+            </div>
+            <span class="offline-bar-meta">${esc(seen)}</span>
+            <button type="button" class="offline-bar-retry" onclick="this.disabled = true; InfoniteConfigManager.syncActiveApp().finally(() => { this.disabled = false; });"><i class="fa-solid fa-rotate-right"></i> Retry now</button>
+        </div>`;
+}
+window.renderConnectivity = renderConnectivity;
 
 async function syncAppSettings(customConfig = null, renderAfter = false) {
     const config = customConfig || InfoniteConfigManager.getConfig();
@@ -200,11 +251,12 @@ async function syncAppLogos(config) {
     await pause(500);
     const rectDark = await fetchLogo('rectangle', 'dark');
 
-    // Update config properties with base64 URIs
-    config.logo_square_light_base64 = sqLight;
-    config.logo_rectangle_light_base64 = rectLight;
-    config.logo_square_dark_base64 = sqDark;
-    config.logo_rectangle_dark_base64 = rectDark;
+    // Update config properties with base64 URIs. A fetch that brings nothing keeps the logo
+    // already held: a refresh during an outage must not blank the app's marks.
+    if (sqLight) config.logo_square_light_base64 = sqLight;
+    if (rectLight) config.logo_rectangle_light_base64 = rectLight;
+    if (sqDark) config.logo_square_dark_base64 = sqDark;
+    if (rectDark) config.logo_rectangle_dark_base64 = rectDark;
     
     // Persist to storage
     const currentData = getStorageData();
@@ -281,85 +333,6 @@ function getBasePath() {
     return "../".repeat(Math.max(0, depth));
 }
 
-window.selectBannerScheme = function(scheme) {
-    if(!['light', 'dark'].includes(scheme)) return;
-    
-    const activeConfig = window.InfoniteConfigManager.getConfig();
-    const squarePreview = document.getElementById(`preview-logo-square-${scheme}`);
-    const rectPreview = document.getElementById(`preview-logo-rectangle-${scheme}`);
-    const squareFallback = document.getElementById(`fallback-logo-square-${scheme}`);
-    const rectFallback = document.getElementById(`fallback-logo-rectangle-${scheme}`);
-    
-    // Use dynamic Path for images inside flows
-    const basePath = getBasePath();
-
-    // Check if logos exist in config
-    const hasSquare = activeConfig[`logo_square_${scheme}_base64`];
-    const hasRect = activeConfig[`logo_rectangle_${scheme}_base64`];
-
-    // Hide all previews and fallbacks initially
-    [squarePreview, rectPreview, squareFallback, rectFallback].forEach(el => {
-        if (el) el.classList.add('hidden');
-    });
-
-    // Show actual logos if available
-    if (hasSquare && squarePreview) {
-        squarePreview.src = activeConfig[`logo_square_${scheme}_base64`];
-        squarePreview.classList.remove('hidden');
-    }
-    if (hasRect && rectPreview) {
-        rectPreview.src = activeConfig[`logo_rectangle_${scheme}_base64`];
-        rectPreview.classList.remove('hidden');
-    }
-
-    // Show fallbacks if actual logos are not available
-    if(!hasSquare && squareFallback) {
-        const isDarkScheme = scheme === 'dark';
-        squareFallback.src = isDarkScheme ? `${basePath}assets/logo/logo-dark.svg` : `${basePath}assets/logo/logo-light.svg`;
-        squareFallback.classList.remove('hidden');
-    }
-    
-    if(!hasRect && rectFallback) {
-        const isDarkScheme = scheme === 'dark';
-        const rectClass = isDarkScheme ? 'fa-image text-slate-800/40 text-xl' : 'fa-image text-white/50 text-xl';
-        rectFallback.className = `fa-solid ${rectClass}`;
-        rectFallback.classList.remove('hidden');
-    }
-    
-    document.querySelectorAll('.scheme-row-selector').forEach(row => {
-        row.classList.remove('border-[var(--primary)]', 'ring-2', 'ring-[rgba(var(--primary-rgb),0.5)]');
-        row.classList.add('border-slate-100');
-        row.dataset.selected = 'false';
-    });
-    
-    ['light', 'dark'].forEach(d => {
-        const dot = document.getElementById(`radio-dot-${d}`);
-        const indicator = document.getElementById(`radio-indicator-${d}`);
-        if (dot) dot.classList.add('hidden');
-        if (indicator) {
-            indicator.classList.remove('border-[var(--primary)]');
-            indicator.classList.add('border-slate-300');
-        }
-    });
-    
-    const activeRow = document.getElementById(`row-scheme-${scheme}`);
-    if(activeRow) {
-        activeRow.classList.remove('border-slate-100');
-        activeRow.classList.add('border-[var(--primary)]', 'ring-2', 'ring-[rgba(var(--primary-rgb),0.5)]');
-        activeRow.dataset.selected = 'true';
-    }
-    
-    const activeDot = document.getElementById(`radio-dot-${scheme}`);
-    const activeIndicator = document.getElementById(`radio-indicator-${scheme}`);
-    if (activeDot) activeDot.classList.remove('hidden');
-    if (activeIndicator) {
-        activeIndicator.classList.remove('border-slate-300');
-        activeIndicator.classList.add('border-[var(--primary)]');
-    }
-    
-    updateBannerPreview();
-};
-
 function showListView() {
     const listView = document.getElementById("settings-list-view");
     const editorView = document.getElementById("settings-editor-view");
@@ -405,9 +378,9 @@ function renderConfigList() {
     
     container.innerHTML = data.list.map(cfg => {
         const isActive = cfg.id === data.activeId;
-        const bScheme = cfg.bannerColorScheme || 'light';
-        const logoData = cfg[`logo_square_${bScheme}_base64`] || (window.InfoniteNavBanner ? window.InfoniteNavBanner.getDefaultLogoPath(bScheme, basePath) : `${basePath}assets/images/logo-infonite-blue.svg`);
-        const bColor = cfg.bannerColor || cfg.darkColor || DEFAULT_CONFIG_ITEM.bannerColor;
+        // each entry shows its dark-scheme square logo on the house dark, the app's or the house one
+        const logoData = cfg.logo_square_dark_base64 || `${basePath}assets/logo/logo-dark.svg`;
+        const bColor = DEFAULT_CONFIG_ITEM.darkColor;
         const logoElement = `<img src="${logoData}" class="w-full h-full object-contain" />`;
         
         let hostPill = '';
@@ -466,7 +439,8 @@ function renderConfigList() {
 function applyTheme(config) {
     if(!config) return;
     const DEFAULT_CONFIG_ITEM = InfoniteConfigManager.DEFAULT_CONFIG_ITEM;
-    const isSynced = config.isSynced && config.app_settings;
+    // the settings synced last, kept while the service is away
+    const isSynced = !!config.app_settings;
 
     const primary = (isSynced && config.app_settings.color_primary) ? config.app_settings.color_primary.main : (config.primaryColor || DEFAULT_CONFIG_ITEM.primaryColor);
     const dark = (isSynced && config.app_settings.color_secondary) ? config.app_settings.color_secondary.main : (config.darkColor || DEFAULT_CONFIG_ITEM.darkColor);
@@ -474,10 +448,6 @@ function applyTheme(config) {
     // Extracted contrast text from synced structure or implicitly calculated
     const primaryContrastText = (isSynced && config.app_settings.color_primary) ? config.app_settings.color_primary.contrastText : null;
     const darkContrastText = (isSynced && config.app_settings.color_secondary) ? config.app_settings.color_secondary.contrastText : null;
-
-    const banner = config.bannerColor || config.darkColor || DEFAULT_CONFIG_ITEM.bannerColor;
-    const bannerColorScheme = config.bannerColorScheme || DEFAULT_CONFIG_ITEM.bannerColorScheme || 'light';
-    const bannerTextDark = config.bannerTextDark ?? DEFAULT_CONFIG_ITEM.bannerTextDark;
 
     const hexToArr = hex => [
         parseInt(hex.slice(1,3),16) || 0,
@@ -502,7 +472,6 @@ function applyTheme(config) {
     try {
         const primaryArr = hexToArr(primary);
         const darkArr = hexToArr(dark);
-        const bannerArr = hexToArr(banner);
         const root = document.documentElement;
         
         root.style.setProperty('--primary', primary);
@@ -514,48 +483,101 @@ function applyTheme(config) {
         root.style.setProperty('--brand-dark', dark);
         root.style.setProperty('--brand-dark-rgb', arrToRgbStr(darkArr));
         root.style.setProperty('--brand-dark-contrast', darkContrastText || contrastColor(dark));
-        root.style.setProperty('--banner-color', banner);
-        root.style.setProperty('--banner-rgb', arrToRgbStr(bannerArr));
-        root.style.setProperty('--banner-contrast', bannerColorScheme === 'dark' ? '#ffffff' : '#1C252E');
+        // the "banner" the flow screens still name is the app's accent: the secondary and its ink
+        root.style.setProperty('--banner-color', dark);
+        root.style.setProperty('--banner-rgb', arrToRgbStr(darkArr));
+        root.style.setProperty('--banner-contrast', darkContrastText || contrastColor(dark));
         root.style.setProperty('--brand-green-glow', `rgba(${arrToRgbStr(primaryArr)}, 0.1)`);
+
+        // The ground under the page and the scene the hero wears, as the widget would paint
+        // them for this app (js/theme.js)
+        if (window.InfoniteTheme) {
+            const theme = window.InfoniteTheme.resolve(config);
+            root.style.setProperty('--page-ground', theme.page.ground);
+            root.style.setProperty('--glass-ground', window.InfoniteTheme.hexToChannel(theme.page.ground));
+            root.style.setProperty('--hero-ground', theme.hero.ground);
+            root.style.setProperty('--hero-c1', theme.hero.c1);
+            root.style.setProperty('--hero-c2', theme.hero.c2);
+            root.style.setProperty('--hero-ink', theme.hero.ink);
+            root.style.setProperty('--hero-ink-foot', theme.hero.inkFoot);
+            document.body.style.backgroundColor = theme.page.ground;
+            renderHero(config, theme);
+        }
+        renderConnectivity();
 
         // Force a re-render of the nav banner if it exists so it picks up the root variables
         if(window.InfoniteNavBanner && typeof window.InfoniteNavBanner.render === 'function') {
             window.InfoniteNavBanner.render();
         }
 
-        const heroLogo = document.getElementById('hero-logo');
-        if (heroLogo) {
-            const fallback = document.getElementById('hero-text-fallback');
-            
-            heroLogo.onerror = function() {
-                this.style.display = 'none';
-                if(fallback) fallback.classList.remove('hidden');
-            };
+    } catch(e) { console.error("Theme apply error:", e); }
+}
 
-            const isDarkScheme = (bannerColorScheme === 'dark');
-            const basePath = typeof getBasePath === 'function' ? getBasePath() : '';
-            const defaultSymbolSrc = isDarkScheme ? `${basePath}assets/logo/text-logo-dark.svg` : `${basePath}assets/logo/text-logo-light.svg`;
-            
-            const newSrc = isDarkScheme 
-                ? (config.logo_rectangle_dark_base64 || defaultSymbolSrc)
-                : (config.logo_rectangle_light_base64 || defaultSymbolSrc);
+// The hero's own pieces: the app's logo in the scene's scheme, what the app is called, and the
+// chips — version, website and contact. Only the home page has a hero; elsewhere this is a no-op.
+function renderHero(config, theme) {
+    const scene = document.getElementById('hero-scene');
+    if (!scene) return;
+    const hero = theme.hero;
+    scene.dataset.style = hero.style;
+    scene.dataset.source = hero.source;
+    scene.dataset.mode = hero.mode;
 
-            if(heroLogo.getAttribute('src') !== newSrc) {
-                heroLogo.src = newSrc;
+    const heroLogo = document.getElementById('hero-logo');
+    const fallback = document.getElementById('hero-text-fallback');
+    if (heroLogo) {
+        heroLogo.onerror = function () {
+            this.style.display = 'none';
+            if (fallback) fallback.classList.remove('hidden');
+        };
+        // the logo is asked for in the scene's scheme, in the variant the app shows itself in
+        // (the other variant stands in when that one is missing); the house wordmark otherwise
+        const basePath = typeof getBasePath === 'function' ? getBasePath() : '';
+        const other = theme.logoVariant === 'square' ? 'rectangle' : 'square';
+        const own = config[`logo_${theme.logoVariant}_${hero.logoScheme}_base64`];
+        const stand = config[`logo_${other}_${hero.logoScheme}_base64`];
+        const houseSrc = `${basePath}assets/logo/text-logo-${hero.logoScheme}.svg`;
+        const newSrc = own || stand || houseSrc;
+        heroLogo.dataset.variant = own ? theme.logoVariant : stand ? other : 'rectangle';
+        heroLogo.alt = theme.app && theme.app.app && theme.app.app.display_name ? theme.app.app.display_name : 'INFONITE';
+        if (heroLogo.getAttribute('src') !== newSrc) heroLogo.src = newSrc;
+        heroLogo.style.display = 'block';
+        if (fallback) fallback.classList.add('hidden');
+    }
+
+    const app = theme.app && theme.app.app ? theme.app.app : null;
+    const tagline = document.getElementById('hero-tagline');
+    if (tagline) {
+        tagline.textContent = app
+            ? `Interactive demo environment of ${app.display_name || app.company_name || 'this application'}`
+            : 'Data Extraction & Process Automation Solutions';
+    }
+
+    const chips = document.getElementById('hero-chips');
+    if (chips) {
+        const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const items = [`<span class="hero-chip hero-chip-version" id="hero-version">${esc(InfoniteConfigManager.VERSION)}</span>`];
+        if (app) {
+            if (app.company_name && app.company_name !== app.display_name) {
+                items.push(`<span class="hero-chip"><i class="fa-solid fa-building"></i>${esc(app.company_name)}</span>`);
             }
-            
-            heroLogo.style.display = 'block';
-            if(fallback) fallback.classList.add('hidden');
-            
-            if (config.saturateLogo !== false) {
-                heroLogo.style.filter = isDarkScheme ? 'brightness(0) invert(1)' : 'brightness(0.2)';
-            } else {
-                heroLogo.style.filter = 'none';
+            if (app.website) {
+                let host = app.website;
+                try { host = new URL(app.website).hostname; } catch (e) { /* shown as given */ }
+                items.push(`<a class="hero-chip" href="${esc(app.website)}" target="_blank" rel="noopener"><i class="fa-solid fa-globe"></i>${esc(host)}</a>`);
+            }
+            if (app.contact_email) {
+                items.push(`<a class="hero-chip" href="mailto:${esc(app.contact_email)}"><i class="fa-solid fa-envelope"></i>${esc(app.contact_email)}</a>`);
             }
         }
+        chips.innerHTML = items.join('');
+    }
+}
 
-    } catch(e) { console.error("Theme apply error:", e); }
+// The special screen may apply on phones only, or on desktops only: crossing the widget's
+// breakpoint re-reads the theme
+if (window.InfoniteTheme && typeof window.matchMedia === 'function') {
+    window.matchMedia(window.InfoniteTheme.MOBILE_QUERY).addEventListener('change', () => applyTheme(InfoniteConfigManager.getConfig()));
 }
 
 function setActiveConfig(id) {
@@ -586,59 +608,11 @@ function setActiveConfig(id) {
     }
 }
 
-window.selectBannerScheme = function(scheme) {
-    if(!['light', 'dark'].includes(scheme)) return;
-    
-    document.querySelectorAll('.scheme-row-selector').forEach(row => {
-        row.classList.remove('border-[var(--primary)]', 'ring-2', 'ring-[rgba(var(--primary-rgb),0.5)]');
-        row.classList.add('border-slate-100');
-        row.dataset.selected = 'false';
-    });
-    
-    ['light', 'dark'].forEach(d => {
-        const dot = document.getElementById(`radio-dot-${d}`);
-        const indicator = document.getElementById(`radio-indicator-${d}`);
-        if (dot) dot.classList.add('hidden');
-        if (indicator) {
-            indicator.classList.remove('border-[var(--primary)]');
-            indicator.classList.add('border-slate-300');
-        }
-    });
-    
-    const activeRow = document.getElementById(`row-scheme-${scheme}`);
-    if(activeRow) {
-        activeRow.classList.remove('border-slate-100');
-        activeRow.classList.add('border-[var(--primary)]', 'ring-2', 'ring-[rgba(var(--primary-rgb),0.5)]');
-        activeRow.dataset.selected = 'true';
-    }
-    
-    const activeDot = document.getElementById(`radio-dot-${scheme}`);
-    const activeIndicator = document.getElementById(`radio-indicator-${scheme}`);
-    if (activeDot) activeDot.classList.remove('hidden');
-    if (activeIndicator) {
-        activeIndicator.classList.remove('border-slate-300');
-        activeIndicator.classList.add('border-[var(--primary)]');
-    }
-    
-    updateBannerPreview();
-};
-
-function updateBannerPreview() {
-    const input = document.getElementById('config-banner-color');
-    if(!input) return;
-    const color = input.value || '#1C252E';
-    
-    // Update all occurrences of the banner color preview within the scheme rows
-    document.querySelectorAll('.banner-color-preview').forEach(preview => {
-        preview.style.background = color;
-    });
-}
-
 function openEditor(id = null) {
     const data = InfoniteConfigManager.getStorageData();
     const DEFAULT_CONFIG_ITEM = InfoniteConfigManager.DEFAULT_CONFIG_ITEM;
     const isNew = !id;
-    const config = isNew ? { ...DEFAULT_CONFIG_ITEM, name: "New Environment", id: crypto.randomUUID(), secret: "", widgetUrl: "https://widgets.infonite.tech", hostType: "production", isMock: false, saturateLogo: true } : data.list.find(c => c.id === id);
+    const config = isNew ? { ...DEFAULT_CONFIG_ITEM, name: "New Environment", id: crypto.randomUUID(), secret: "", widgetUrl: "https://widgets.infonite.tech", hostType: "production", isMock: false } : data.list.find(c => c.id === id);
     
     if (!config) return; 
 
@@ -730,74 +704,6 @@ function openEditor(id = null) {
     }
     
     
-    const pc = config.primaryColor || DEFAULT_CONFIG_ITEM.primaryColor;
-    const dc = config.darkColor || DEFAULT_CONFIG_ITEM.darkColor;
-    const bc = config.bannerColor || config.darkColor || DEFAULT_CONFIG_ITEM.bannerColor;
-    const bScheme = config.bannerColorScheme || DEFAULT_CONFIG_ITEM.bannerColorScheme || 'light';
-    
-    // Map colors considering sync overrides for disabled view
-    const isSynced = config.isSynced && config.app_settings;
-    const actualPc = (isSynced && config.app_settings.color_primary) ? config.app_settings.color_primary.main : pc;
-    const actualDc = (isSynced && config.app_settings.color_secondary) ? config.app_settings.color_secondary.main : dc;
-    
-    const pcSwatch = document.getElementById("swatch-primary-color");
-    const pcText = document.getElementById("swatch-primary-color-text");
-    const dcSwatch = document.getElementById("swatch-dark-color");
-    const dcText = document.getElementById("swatch-dark-color-text");
-    
-    if(pcSwatch) {
-        pcSwatch.style.backgroundColor = actualPc;
-    }
-    if(pcText) {
-        pcText.textContent = actualPc;
-    }
-    
-    if(dcSwatch) {
-        dcSwatch.style.backgroundColor = actualDc;
-    }
-    if(dcText) {
-        dcText.textContent = actualDc;
-    }
-    
-    document.getElementById("config-banner-color").value = bc;
-    document.getElementById("config-banner-color-text").value = bc;
-    
-    // Assign active Scheme Row
-    if(typeof window.selectBannerScheme === 'function') {
-        window.selectBannerScheme(bScheme);
-    }
-    
-    // Logo Previews mapping
-    const setLogoPreview = (idSuffix, base64) => {
-        const previewObj = document.getElementById(`preview-logo-${idSuffix}`);
-        const fallbackObj = document.getElementById(`fallback-logo-${idSuffix}`);
-        if(previewObj && fallbackObj) {
-            if(base64) {
-                previewObj.src = base64;
-                previewObj.classList.remove('hidden');
-                fallbackObj.classList.add('hidden');
-            } else {
-                previewObj.src = '';
-                previewObj.classList.add('hidden');
-                fallbackObj.classList.remove('hidden');
-            }
-        }
-    };
-    
-    setLogoPreview('square-light', config.logo_square_light_base64);
-    setLogoPreview('rectangle-light', config.logo_rectangle_light_base64);
-    setLogoPreview('square-dark', config.logo_square_dark_base64);
-    setLogoPreview('rectangle-dark', config.logo_rectangle_dark_base64);
-    
-    updateBannerPreview();
-    
-    const saturateCheckbox = document.getElementById("config-saturate-logo");
-    if(saturateCheckbox) {
-        saturateCheckbox.checked = config.saturateLogo !== false;
-        // Trigger manual visual update of custom checkbox
-        if(saturateCheckbox.onchange) saturateCheckbox.onchange();
-    }
-    
     showEditorView();
 }
 
@@ -849,15 +755,15 @@ async function saveCurrentConfig() {
     const data = InfoniteConfigManager.getStorageData();
     
     const configFromList = data.list.find(c => c.id === idInput);
+    const syncedSettings = (window.tempSyncedConfig && window.tempSyncedConfig.app_settings) || (configFromList && configFromList.app_settings) || null;
     
     const newConfig = {
         id: realId,
         name: isNew ? "New Environment" : (configFromList?.name || "Unnamed"),
         secret: document.getElementById("config-secret").value.trim(),
-        primaryColor: (document.getElementById("swatch-primary-color-text") ? document.getElementById("swatch-primary-color-text").textContent : DEFAULT_CONFIG_ITEM.primaryColor) || DEFAULT_CONFIG_ITEM.primaryColor,
-        darkColor: (document.getElementById("swatch-dark-color-text") ? document.getElementById("swatch-dark-color-text").textContent : DEFAULT_CONFIG_ITEM.darkColor) || DEFAULT_CONFIG_ITEM.darkColor,
-        bannerColor: document.getElementById("config-banner-color").value || DEFAULT_CONFIG_ITEM.bannerColor,
-        bannerColorScheme: document.querySelector('.scheme-row-selector[data-selected="true"]') ? document.querySelector('.scheme-row-selector[data-selected="true"]').id.replace('row-scheme-', '') : "light",
+        // the colours are the app's, as synced; the house pair until it has answered
+        primaryColor: syncedSettings?.color_primary?.main || DEFAULT_CONFIG_ITEM.primaryColor,
+        darkColor: syncedSettings?.color_secondary?.main || DEFAULT_CONFIG_ITEM.darkColor,
         hostType: document.getElementById("target-host-type") ? document.getElementById("target-host-type").value : "custom",
         logo_square_light_base64: window.tempSyncedConfig && window.tempSyncedConfig.logo_square_light_base64 ? window.tempSyncedConfig.logo_square_light_base64 : (configFromList ? configFromList.logo_square_light_base64 : null),
         logo_rectangle_light_base64: window.tempSyncedConfig && window.tempSyncedConfig.logo_rectangle_light_base64 ? window.tempSyncedConfig.logo_rectangle_light_base64 : (configFromList ? configFromList.logo_rectangle_light_base64 : null),
@@ -866,7 +772,6 @@ async function saveCurrentConfig() {
         isSynced: window.tempSyncedConfig ? window.tempSyncedConfig.isSynced : (configFromList ? configFromList.isSynced : false),
         appDetails: window.tempSyncedConfig ? window.tempSyncedConfig.appDetails : (configFromList ? configFromList.appDetails : null),
         app_settings: window.tempSyncedConfig ? window.tempSyncedConfig.app_settings : (configFromList ? configFromList.app_settings : null),
-        saturateLogo: document.getElementById("config-saturate-logo") ? document.getElementById("config-saturate-logo").checked : true,
         appId: "",
         appName: "",
         sessionPrefix: "",
@@ -970,6 +875,46 @@ async function saveCurrentConfig() {
     }
 }
 
+// EVERYTHING AN ENVIRONMENT LEFT IN THIS BROWSER, found by its keys: the session histories
+// every flow kept for it (`infonite_sessions_<host>_<appId>_<kind>`, js/flows-manager.js) and,
+// when it is the environment in use, the tokens of the sessions in flight. Deleting the
+// environment is a person's decision to leave nothing behind, so the purge is run — and
+// reported — rather than trusted to the flows' own "clear" buttons.
+function environmentStorageKeys(config) {
+    const keys = [];
+    if (!config || !config.appId) return keys;
+    // the same key the flows write, spelled here too because the home page (where an
+    // environment is deleted) does not load js/flows-manager.js — keep both in step
+    let envKey = 'UNKNOWN_ENV';
+    if (config.widgetUrl) {
+        try { envKey = new URL(config.widgetUrl).host.replace(/[^a-zA-Z0-9]/g, '_'); }
+        catch (e) { envKey = String(config.widgetUrl).replace(/[^a-zA-Z0-9]/g, '_'); }
+    }
+    const prefix = `infonite_sessions_${envKey}_${config.appId}_`;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix)) keys.push(key);
+    }
+    return keys;
+}
+
+function countStoredSessions(keys) {
+    return keys.reduce((total, key) => {
+        try { const list = JSON.parse(localStorage.getItem(key) || '[]'); return total + (Array.isArray(list) ? list.length : 0); }
+        catch (e) { return total; }
+    }, 0);
+}
+
+function purgeEnvironmentData(config, wasActive) {
+    const keys = environmentStorageKeys(config);
+    keys.forEach((key) => localStorage.removeItem(key));
+    if (wasActive) {
+        // the live-session tokens belong to the environment in use
+        ['active_session_es-public-administration', 'active_session_bank_reader'].forEach((key) => localStorage.removeItem(key));
+    }
+    return keys.length;
+}
+
 function deleteConfig(id) {
     const data = InfoniteConfigManager.getStorageData();
     const configToDelete = data.list.find(c => c.id === id);
@@ -979,11 +924,19 @@ function deleteConfig(id) {
         return;
     }
 
+    const sessionKeys = environmentStorageKeys(configToDelete);
+    const sessions = countStoredSessions(sessionKeys);
+    const wipe = sessions > 0
+        ? `Its ${sessions} stored session${sessions === 1 ? '' : 's'} and every result kept for them will be wiped from this browser as well.`
+        : 'Everything it left in this browser (credentials, synced settings, logos, session history) is wiped with it.';
+
     showConfirmModal(
-        "Delete Configuration",
-        "Are you sure you want to delete this environment? This action cannot be undone.",
-        "Delete",
+        "Delete Environment",
+        `This removes the environment and its secret from this browser. ${wipe} Nothing can be recovered afterwards.`,
+        "Delete everything",
         () => {
+            const wasActive = data.activeId === id;
+            purgeEnvironmentData(configToDelete, wasActive);
             data.list = data.list.filter(c => c.id !== id);
             
             if (data.list.length === 0) {
@@ -1003,12 +956,16 @@ function deleteConfig(id) {
 }
 
 // The halo around a widget frame is the widget's own ground, so the frame has no edge: white,
-// or the widget theme's grey 200 when the synced application settings (`/api/app`) say the
-// application runs in contrast mode. Only that: the theme mode is left alone on purpose.
+// or the app's contrast ground — its contrast colour toned, or the house grey — when the synced
+// application settings say the application runs in contrast mode. Only that: the theme mode is
+// left alone on purpose.
 function glassHaloInk(shell) {
     if (!shell) return;
     const settings = (typeof InfoniteConfigManager !== 'undefined' && InfoniteConfigManager.getConfig()?.app_settings) || null;
-    shell.style.setProperty('--halo-ink', settings?.contrast_mode ? '244 246 248' : '255 255 255');
+    const ground = settings?.contrast_mode && window.InfoniteTheme
+        ? window.InfoniteTheme.contrastGround(settings.contrast_color, 'light')
+        : '#FFFFFF';
+    shell.style.setProperty('--halo-ink', window.InfoniteTheme ? window.InfoniteTheme.hexToChannel(ground) : '255 255 255');
 }
 window.glassHaloInk = glassHaloInk;
 
@@ -1152,31 +1109,6 @@ async function handleManualSync() {
             saveBtn.classList.remove("opacity-50", "cursor-not-allowed");
         }
         
-        // Push UI live to the swatch boxes to prove it worked in real time
-        if (tempConfig.app_settings) {
-             const prim = tempConfig.app_settings.color_primary ? tempConfig.app_settings.color_primary.main : '#00a76f';
-             const sec = tempConfig.app_settings.color_secondary ? tempConfig.app_settings.color_secondary.main : '#1C252E';
-             
-             const swatchP = document.getElementById("swatch-primary-color");
-             const swatchPText = document.getElementById("swatch-primary-color-text");
-             if(swatchP) swatchP.style.backgroundColor = prim;
-             if(swatchPText) swatchPText.textContent = prim;
-             
-             const swatchD = document.getElementById("swatch-dark-color");
-             const swatchDText = document.getElementById("swatch-dark-color-text");
-             if(swatchD) swatchD.style.backgroundColor = sec;
-             if(swatchDText) swatchDText.textContent = sec;
-             
-             // Implicitly update banner sync preview
-             const bannerP = document.getElementById("config-banner-color");
-             const bannerPText = document.getElementById("config-banner-color-text");
-             if(bannerP && tempConfig.app_settings.color_secondary) bannerP.value = sec;
-             if(bannerPText && tempConfig.app_settings.color_secondary) {
-                 bannerPText.value = sec;
-                 if(typeof updateBannerPreview === 'function') updateBannerPreview();
-             }
-        }
-        
         // Background logo fetch. Force awaiting to complete the full context
         await InfoniteConfigManager.syncAppLogos(window.tempSyncedConfig);
     } else {
@@ -1189,10 +1121,22 @@ async function handleManualSync() {
     }
 }
 
+// THE LOOK IS REFRESHED ONCE PER PAGE LOAD: the page paints what it holds at once, then asks
+// the service for the app's settings and logos again, so a change made in the console reaches
+// the demo on the next refresh and never lags behind. Nothing is dropped if the service is
+// away — what was held stays on, and the page says it is offline.
+async function refreshActiveAppLook() {
+    const config = InfoniteConfigManager.getConfig();
+    if (!config || config.isMock || !config.secret || !config.widgetUrl) return;
+    const synced = await InfoniteConfigManager.syncAppSettings(config, true);
+    if (synced) await InfoniteConfigManager.syncAppLogos(InfoniteConfigManager.getConfig());
+}
+
 // Ensure UI mounts correctly immediately
 document.addEventListener("DOMContentLoaded", () => {
     updateActiveConfigUI();
     applyTheme(InfoniteConfigManager.getConfig());
+    refreshActiveAppLook();
 });
 
 window.exportActiveConfigUrl = function() {
@@ -1208,10 +1152,7 @@ window.exportActiveConfigUrl = function() {
     const payload = {
         s: config.secret,
         u: config.widgetUrl,
-        ht: config.hostType,
-        sl: config.saturateLogo,
-        bc: config.bannerColor,
-        bs: config.bannerColorScheme
+        ht: config.hostType
     };
     
     const encoded = btoa(JSON.stringify(payload));

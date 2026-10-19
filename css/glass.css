@@ -19,8 +19,8 @@
  */
 
 :root {
-  --glass-ground: 248 250 252;            /* slate-50, the showcase page background */
-  --glass-blur: 18px;
+  --glass-ground: 244 246 248;            /* the page's ground: `applyTheme` writes the app's over it */
+  --glass-blur: 28px;                     /* frosted enough that a dark page behind reads as light glass */
   --glass-ease-out: cubic-bezier(0.16, 1, 0.3, 1);   /* expo-out, the house entrance */
   --glass-ink: 15 23 42;                  /* slate-900 */
 }
@@ -28,13 +28,13 @@
 .glass-layout {
   background: linear-gradient(
     to bottom,
-    rgb(var(--glass-ground) / 0.42) 0%,
-    rgb(var(--glass-ground) / 0.78) 22%,
-    rgb(var(--glass-ground) / 0.92) 55%,
-    rgb(var(--glass-ground) / 0.97) 100%
+    rgb(var(--glass-ground) / 0.8) 0%,
+    rgb(var(--glass-ground) / 0.9) 22%,
+    rgb(var(--glass-ground) / 0.95) 55%,
+    rgb(var(--glass-ground) / 0.98) 100%
   );
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.15);
-  backdrop-filter: blur(var(--glass-blur)) saturate(1.15);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.05);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.05);
   animation: glass-reveal 0.26s ease-out both;
   overflow-anchor: none;
 }

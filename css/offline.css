@@ -1,0 +1,98 @@
+/*
+ * THE ENVIRONMENT IS OFFLINE — and the whole page says so, not one pill in the navigation.
+ *
+ * `applyTheme` / `syncActiveApp` (js/config.js, `renderConnectivity`) write the app's reach on
+ * the root as `data-app-online`: `online`, `offline`, `unknown` (not checked yet) or `mock` (no
+ * app selected). While it is `offline`: a red band stands where the page's own head is, the
+ * hero's scene loses its colour, and every control that needs the widgets service is put out
+ * of reach (`data-needs-api`). The app's theme is NOT dropped: what was synced last stays on,
+ * so the page keeps looking like the app while it waits for it.
+ */
+
+.hero-scene { transition: filter 0.6s ease; }
+[data-app-online="offline"] .hero-scene { filter: grayscale(0.8) brightness(0.92); }
+
+[data-app-online="offline"] [data-needs-api] {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
+.offline-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 1.1rem 0.85rem 1rem;
+  border-radius: 1rem;
+  background: #DC2626;                   /* red-600 */
+  color: #fff;
+  box-shadow: 0 12px 32px rgb(220 38 38 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  text-align: left;
+  animation: offline-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.offline-bar-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 9999px;
+  background: #fff;
+  flex: none;
+  box-shadow: 0 0 0 0 rgb(255 255 255 / 0.6);
+  animation: offline-pulse 1.6s ease-out infinite;
+}
+.offline-bar-text {
+  flex: 1 1 18rem;
+  min-width: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.offline-bar-text strong {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+}
+.offline-bar-text code {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  background: rgb(0 0 0 / 0.18);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.4rem;
+}
+.offline-bar-meta {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+.offline-bar-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 9999px;
+  background: #fff;
+  color: #B91C1C;                        /* red-700 */
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.offline-bar-retry:hover { background: #FEE2E2; transform: translateY(-1px); }
+.offline-bar-retry[disabled] { opacity: 0.6; pointer-events: none; }
+
+@keyframes offline-pulse {
+  0% { box-shadow: 0 0 0 0 rgb(255 255 255 / 0.6); }
+  100% { box-shadow: 0 0 0 10px rgb(255 255 255 / 0); }
+}
+@keyframes offline-rise {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .offline-bar, .offline-bar-dot { animation: none; }
+}

@@ -1,6 +1,16 @@
 /**
  * Infonite Shared Navigation Banner
  * Dynamically injected into #app-nav-container
+ *
+ * A floating pill of glass over whatever the page puts under it: the hero on the home page
+ * (fixed to the viewport on a desktop, pinned to the hero's top edge on a phone), the flow
+ * head elsewhere (part of the page). It never takes an app colour as its ground — the glass
+ * is the surface below, thinned out, in that surface's scheme — so no visual setting an app
+ * picks can make it unreadable (js/theme.js, `nav`). The one app colour on it is the primary,
+ * with the ink the app sent for it, on the active link.
+ *
+ * A container that carries `data-nav-position="static"` keeps the bar in the flow of its
+ * parent (a sticky head that already floats on its own).
  */
 
 (function () {
@@ -46,6 +56,13 @@
             return "../".repeat(Math.max(0, depth));
         },
 
+        /** Where the bar sits for this page and width, honouring a container that keeps it static. */
+        positionClass: function (isHome) {
+            if (this.container && this.container.dataset.navPosition === 'static') return 'relative';
+            const isMobile = window.innerWidth < 768;
+            return isHome ? (isMobile ? 'absolute' : 'fixed') : (isMobile ? 'relative' : 'sticky');
+        },
+
         render: function () {
             if (!this.container) {
                 this.container = document.getElementById('app-nav-container');
@@ -54,17 +71,32 @@
             
             const basePath = this.getBasePath();
             const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
-            
-            const bScheme = config && config.bannerColorScheme ? config.bannerColorScheme : 'light';
-            const logoPath = config && config[`logo_square_${bScheme}_base64`] ? config[`logo_square_${bScheme}_base64`] : this.getDefaultLogoPath(bScheme, basePath);
-            
-            const bannerColor = config && config.bannerColor ? config.bannerColor : 'rgba(255, 255, 255, 0.8)';
-            const isTextDark = bScheme === 'light';
-            
-            const textColor = isTextDark ? '#1e293b' : '#ffffff';
-            const hoverBg = isTextDark ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)';
-            const borderColor = isTextDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)';
-            const iconColor = isTextDark ? '#64748b' : 'rgba(255,255,255,0.7)';
+
+            const currentPath = window.location.pathname;
+            // the home page is the root, whether the URL names index.html or not
+            const isHome = basePath === '';
+            const isFlows = currentPath.includes('/flows/');
+
+            // The glass: the surface below, thinned out, in its scheme (js/theme.js)
+            const theme = window.InfoniteTheme ? window.InfoniteTheme.resolve(config) : null;
+            const nav = theme
+                ? window.InfoniteTheme.nav(theme, isHome ? 'hero' : 'page')
+                : { scheme: 'light', ground: '#FFFFFF', ink: '#1C252E', primary: { main: '#00a76f', ink: '#FFFFFF' }, logoScheme: 'light' };
+            const isDark = nav.scheme === 'dark';
+            const mix = (pct) => `color-mix(in srgb, ${nav.ink} ${pct}%, transparent)`;
+
+            const glassBg = `color-mix(in srgb, ${nav.ground} ${isDark ? 62 : 74}%, transparent)`;
+            const textColor = nav.ink;
+            const mutedColor = mix(60);
+            const hoverBg = mix(isDark ? 10 : 6);
+            const borderColor = mix(isDark ? 14 : 9);
+            const shadow = isDark ? '0 12px 32px rgb(0 0 0 / 0.28)' : '0 12px 32px rgb(28 37 46 / 0.10)';
+            const activeStyle = `color: ${nav.primary.ink}; background: ${nav.primary.main};`;
+            const linkStyle = (active) => active ? activeStyle : `color: ${textColor}; background: transparent;`;
+
+            const logoPath = config && config[`logo_square_${nav.logoScheme}_base64`]
+                ? config[`logo_square_${nav.logoScheme}_base64`]
+                : this.getDefaultLogoPath(nav.logoScheme, basePath);
             
             // App connectivity status
             const isOnline = config && config.appDetails && config.appDetails.isOnline;
@@ -81,10 +113,6 @@
             }
             const lastErrorStr = config && config.appDetails && config.appDetails.lastError ? config.appDetails.lastError.replace(/"/g, '&quot;') : '';
 
-            const currentPath = window.location.pathname;
-            const isHome = currentPath.endsWith('index.html') && basePath === '';
-            const isFlows = currentPath.includes('/flows/');
-            
             const homeLink = isHome ? '#' : `${basePath}index.html`;
             const flowsHash = isHome ? '#flows' : `${basePath}index.html#flows`;
             
@@ -110,14 +138,23 @@
                 cleanAppName = cleanAppName.replace(/^\[(PRO|DEV|CSM)\]\s*/i, '');
             }
             
-            const isMobile = window.innerWidth < 768;
-            const positionClass = isMobile ? 'relative' : (isHome ? 'fixed' : 'sticky');
+            const positionClass = this.positionClass(isHome);
+
+            // The bar is asked to render on every poll of the app (every few seconds, and in a
+            // burst when a background tab comes back). It is repainted only when something it
+            // shows has changed, and a repaint after the first never replays the entrance.
+            const signature = JSON.stringify([nav, logoPath, statusText, lastErrorStr, cleanAppName, hostPill, isHome, isFlows, positionClass, config && config.isMock]);
+            if (signature === this.lastSignature && document.getElementById('nav-banner-wrapper')) return;
+            const first = !this.lastSignature;
+            this.lastSignature = signature;
+            const entrance = first ? 'max-height: 0px; opacity: 0; transform: translateY(-20px);' : 'max-height: 500px; opacity: 1; transform: translateY(0);';
+            const clip = first ? ' overflow-hidden' : '';
             
             // Render regular top banner
             const bannerHtml = `
-                <div id="nav-banner-wrapper" class="${positionClass} top-0 z-[100] transition-all duration-500 overflow-hidden pt-2 px-2 pb-2 md:pt-4 md:px-4 md:pb-2 w-full pointer-events-none" style="max-height: 0px; opacity: 0; transform: translateY(-20px);">
-                    <div class="glass-panel rounded-[2rem] p-3 md:p-4 flex flex-row items-center shadow-xl mx-auto max-w-7xl pointer-events-auto" 
-                         style="background: ${bannerColor}; border: 1px solid ${borderColor}; backdrop-filter: blur(20px); flex-wrap: wrap;">
+                <div id="nav-banner-wrapper" class="${positionClass} top-0 z-[100] transition-all duration-500${clip} pt-2 px-2 pb-2 md:pt-4 md:px-4 md:pb-2 w-full pointer-events-none" style="${entrance}" data-scheme="${nav.scheme}">
+                    <div class="rounded-[2rem] p-3 md:p-4 flex flex-row items-center mx-auto max-w-7xl pointer-events-auto" 
+                         style="background: ${glassBg}; border: 1px solid ${borderColor}; box-shadow: ${shadow}; -webkit-backdrop-filter: blur(20px) saturate(1.2); backdrop-filter: blur(20px) saturate(1.2); color: ${textColor}; flex-wrap: wrap;">
                          
                         <div class="flex items-center px-4 py-1 overflow-hidden shrink-0">
                           <a href="${homeLink}">
@@ -127,26 +164,26 @@
                         
                         <!-- Desktop Nav -->
                         <nav class="hidden md:flex items-center gap-1 md:ml-4 pl-4 h-8" style="border-left: 1px solid ${borderColor}">
-                          <a href="${homeLink}" class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isHome ? hoverBg : 'transparent'}">Home</a>
-                          <a href="${flowsHash}" class="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isFlows ? hoverBg : 'transparent'}">Flows</a>
+                          <a href="${homeLink}" class="nav-link px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all" style="${linkStyle(isHome)}">Home</a>
+                          <a href="${flowsHash}" class="nav-link px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all" style="${linkStyle(isFlows)}">Flows</a>
                         </nav>
                         
                         <!-- Mobile Menu Toggle -->
                         <div class="md:hidden ml-auto pr-2">
-                          <button class="w-8 h-8 flex items-center justify-center transition-colors rounded hover:bg-black/5" style="color: ${iconColor}" onclick="window.InfoniteNavBanner.toggleMobileMenu()">
+                          <button class="w-8 h-8 flex items-center justify-center transition-colors rounded-lg" style="color: ${mutedColor}" onclick="window.InfoniteNavBanner.toggleMobileMenu()">
                             <i class="fa-solid fa-bars text-lg"></i>
                           </button>
                         </div>
                         
                         <!-- Desktop Status & Settings (Hidden on Mobile) -->
-                        <div class="hidden md:flex items-center gap-4 px-4 w-auto ml-auto border-l border-[var(--nav-border-color)] pl-4" style="--nav-border-color: ${borderColor};">
+                        <div class="hidden md:flex items-center gap-4 px-4 w-auto ml-auto pl-4" style="border-left: 1px solid ${borderColor};">
                           ${config && config.isMock ? `
                             <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mr-2" style="color: ${textColor}">
                               Select an App <i class="fa-solid fa-arrow-right-long ml-1"></i>
                             </div>
                           ` : `
                             <div class="flex flex-col items-end justify-center mr-2">
-                              <div class="flex items-center gap-2 text-[9px] font-medium uppercase tracking-[0.2em]" style="color: ${iconColor}">
+                              <div class="flex items-center gap-2 text-[9px] font-medium uppercase tracking-[0.2em]" style="color: ${mutedColor}">
                                 ${hostPill} <span id="activeConfigName">${cleanAppName}</span>
                               </div>
                               <div class="flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded-md transition-colors cursor-help" style="border: 1px solid ${borderColor}" title="${lastErrorStr}">
@@ -165,8 +202,8 @@
                         
                         <!-- Mobile Menu Dropdown (Includes Navigation Links, Status, and Settings) -->
                         <div id="nav-banner-mobile-menu" class="w-full hidden mt-3 flex-col gap-3 pt-3 border-t md:hidden" style="border-top-color: ${borderColor};">
-                            <a href="${homeLink}" class="block w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isHome ? hoverBg : 'transparent'}; border: 1px solid ${borderColor}">Home</a>
-                            <a href="${flowsHash}" class="block w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="color: ${textColor}; background: ${isFlows ? hoverBg : 'transparent'}; border: 1px solid ${borderColor}">Flows</a>
+                            <a href="${homeLink}" class="block w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="${linkStyle(isHome)} border: 1px solid ${borderColor}">Home</a>
+                            <a href="${flowsHash}" class="block w-full text-center px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all" style="${linkStyle(isFlows)} border: 1px solid ${borderColor}">Flows</a>
                             
                             ${config && !config.isMock ? `
                               <div class="flex items-center justify-between px-4 py-2 rounded-xl border" style="border-color: ${borderColor}; background: ${hoverBg}">
@@ -191,25 +228,28 @@
             `;
             
             this.container.innerHTML = bannerHtml;
+
+            // The inactive links light up on hover with the ink thinned out, never with a colour
+            this.container.querySelectorAll('.nav-link').forEach((link) => {
+                if (link.style.background !== 'transparent') return;
+                link.addEventListener('mouseenter', () => { link.style.background = hoverBg; });
+                link.addEventListener('mouseleave', () => { link.style.background = 'transparent'; });
+            });
             
             // Add dynamic positioning class resize handler
             const updatePositionClass = () => {
                 const wrapper = document.getElementById('nav-banner-wrapper');
                 if (wrapper) {
-                    const isMobile = window.innerWidth < 768;
-                    const newClass = isMobile ? 'relative' : (isHome ? 'fixed' : 'sticky');
-                    wrapper.classList.remove('relative', 'fixed', 'sticky');
-                    wrapper.classList.add(newClass);
+                    wrapper.classList.remove('relative', 'fixed', 'sticky', 'absolute');
+                    wrapper.classList.add(this.positionClass(isHome));
                 }
             };
             window.removeEventListener('resize', window._infoniteNavResizeHandler);
             window._infoniteNavResizeHandler = updatePositionClass;
             window.addEventListener('resize', updatePositionClass);
             
-            // Check initial visibility logic
-            // On index.html, it's hidden unless hash is #flows
-            // On flows pages, it's always shown
-            setTimeout(() => this.checkVisibility(), 50);
+            // The entrance, once
+            if (first) setTimeout(() => this.checkVisibility(), 50);
         },
         
         getDefaultLogoPath: function(scheme = 'light', basePath = '') {
