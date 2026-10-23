@@ -18,7 +18,7 @@ window.INFONITE_ENUMS = {
     'other': { label: 'Other', icon: 'fa-briefcase' },
     'unknown': { label: 'Unknown', icon: 'fa-circle-question' }
   },
-  // VehicleIncidentFlag (core): what the registry flags on a vehicle. Every one is a red flag.
+  // VehicleIncidentFlag (core): what the registry flags on a vehicle, and an expired inspection. Every one is a red flag.
   VEHICLE_INCIDENT_FLAGS: {
     'seizure': { label: 'Seizure', icon: 'fa-gavel', text: 'Seized by a court or an administration: the vehicle answers for a debt.' },
     'seal': { label: 'Seal', icon: 'fa-lock', text: 'Under an order that immobilises it.' },
@@ -26,6 +26,7 @@ window.INFONITE_ENUMS = {
     'temporary_deregistration': { label: 'Temporarily deregistered', icon: 'fa-circle-pause', text: 'Off the road for now: it may not circulate.' },
     'permanent_deregistration': { label: 'Permanently deregistered', icon: 'fa-ban', text: 'Off the road for good: it can never circulate again.' },
     'theft_deregistration': { label: 'Reported stolen', icon: 'fa-user-secret', text: 'Deregistered after being reported stolen.' },
-    'transfer_deregistration': { label: 'Transfer pending', icon: 'fa-right-left', text: 'Deregistered while a change of owner is pending.' }
+    'transfer_deregistration': { label: 'Transfer pending', icon: 'fa-right-left', text: 'Deregistered while a change of owner is pending.' },
+    'inspection_expired': { label: 'Inspection expired', icon: 'fa-calendar-xmark', text: 'Its inspection (ITV) had expired when the report was taken: it may not circulate.' }
   }
 };
