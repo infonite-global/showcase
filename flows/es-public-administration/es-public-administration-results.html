@@ -162,12 +162,12 @@
      above it. -->
 <div class="w-full sticky top-0 z-[40] border-b border-black/5 bg-white/80 backdrop-blur-md" id="flow-head">
 <div class="mx-auto px-0 md:px-8 w-full">
-  <div id="app-nav-container" data-nav-position="static"></div>
+  <div id="app-nav-container" data-nav-position="static" data-nav-width="wide"></div>
 </div>
 
 <!-- The title row and the session's technical card -->
 <div class="w-full transition-all duration-300" style="padding-top: 6px; padding-bottom: 12px;" id="nl-header">
-  <div class="max-w-6xl mx-auto px-4 md:px-8 relative py-3">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8 relative py-3">
     
     <!-- Default Subheader (Visible on Dashboard) -->
     <div id="nl-header-default" class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in w-full mb-3 relative z-[10]">
@@ -237,10 +237,10 @@
     </div>
   </div>
 </div>
-<div id="offline-slot" class="max-w-6xl mx-auto px-4 md:px-8 pb-4 w-full empty:hidden"></div>
+<div id="offline-slot" class="max-w-[1440px] mx-auto px-4 md:px-8 pb-4 w-full empty:hidden"></div>
 </div>
 
-<div class="max-w-6xl mx-auto p-4 md:p-8 w-full relative z-[10]">
+<div class="max-w-[1440px] mx-auto p-4 md:p-8 w-full relative z-[10]">
   <!-- Dynamic State Container -->
   <div class="fade-in space-y-6 lg:col-span-12" id="stateContainer">
     <div class="p-8 rounded-3xl min-h-[400px] flex flex-col items-center justify-center text-center transition-opacity" id="stateCard">
@@ -405,12 +405,12 @@
 </div>
 </div>
 <script src="../../js/theme.js?v=6"></script>
-<script src="../../js/config.js?v=14"></script>
+<script src="../../js/config.js?v=16"></script>
 <script src="../../js/enums.js?v=8"></script>
 <script src="../../js/status.js"></script>
 <script src="../../js/features.js?v=6"></script>
-<script src="../../js/nav-banner.js?v=8"></script>
-<script src="../../js/flows-manager.js?v=6"></script>
+<script src="../../js/nav-banner.js?v=10"></script>
+<script src="../../js/flows-manager.js?v=7"></script>
 <script src="../../js/es-public-administration-presets.js?v=3"></script>
 <script>
     let pollTimer = null;
@@ -3683,6 +3683,13 @@
     function launchWidget() {
         if (!currentSessionData || !currentSessionData.widget_url) {
             alert("Widget URL not available yet.");
+            return;
+        }
+        // Only a session that stays on its final screen opens in the dialog: a redirect inside the
+        // dialog's iframe would carry the frame away, and the dialog with it. A redirecting session,
+        // or one whose settings are not known yet, opens in a tab of its own.
+        if (currentSessionData.session_settings?.completion_mode !== 'do_nothing') {
+            window.open(currentSessionData.widget_url, '_blank', 'noopener');
             return;
         }
         const modal = document.getElementById('iframeModalLauncher');

@@ -288,6 +288,75 @@ async function syncAppLogos(config) {
     return true;
 }
 
+// The environment's name in this browser's keys: its host, as the session histories spell it
+// (`infonite_sessions_<host>_<appId>_<kind>`, js/flows-manager.js — keep both in step)
+function environmentKey(config) {
+    if (!config || !config.widgetUrl) return 'UNKNOWN_ENV';
+    try { return new URL(config.widgetUrl).host.replace(/[^a-zA-Z0-9]/g, '_'); }
+    catch (e) { return String(config.widgetUrl).replace(/[^a-zA-Z0-9]/g, '_'); }
+}
+
+// WHAT A FLOW KEEPS FOR AN ENVIRONMENT, beside its session history and under the same host and app:
+// Financial Rider's entity selection, and how its last session ended. A key of its own rather than
+// a field of the environment, so the syncs that rewrite the environment every few seconds can never
+// race it away; it goes when the environment is deleted, and travels in its setup link (`fs`).
+function flowSettingsKey(config, flow) {
+    return config && config.appId ? `infonite_flow_settings_${environmentKey(config)}_${config.appId}_${flow}` : null;
+}
+
+function getFlowSettings(flow, config = getConfig()) {
+    try {
+        const key = flowSettingsKey(config, flow);
+        const value = key ? JSON.parse(localStorage.getItem(key) || '{}') : {};
+        return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveFlowSettings(flow, settings, config = getConfig()) {
+    const key = flowSettingsKey(config, flow);
+    if (!key) return false;
+    try {
+        localStorage.setItem(key, JSON.stringify(settings || {}));
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+const ENGINE_CODE = /^[A-Z0-9_]{24}$/;
+const ICONIFY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * What a setup link may carry for the flows (`fs`), read as strictly as the platform reads it: only
+ * Financial Rider's entity selection, and inside it only what a session request takes — the
+ * layout, up to 20 engine codes first, up to 3 highlighted with a text of 2 to 24 characters.
+ */
+function sanitizeFlowSettings(raw) {
+    const out = {};
+    const selection = raw && raw['financial-rider'] && raw['financial-rider'].selection;
+    if (!selection || typeof selection !== 'object') return out;
+    const clean = {};
+    if (['list', '1-row-list', '2-row-list', '3-row-list'].includes(selection.engines_layout)) clean.engines_layout = selection.engines_layout;
+    if (Array.isArray(selection.priority_engines)) {
+        clean.priority_engines = [...new Set(selection.priority_engines.filter(code => ENGINE_CODE.test(code)))].slice(0, 20);
+    }
+    if (selection.featured_engines && typeof selection.featured_engines === 'object') {
+        clean.featured_engines = Object.fromEntries(Object.entries(selection.featured_engines)
+            .filter(([code, mark]) => ENGINE_CODE.test(code) && mark && typeof mark.text === 'string' && mark.text.trim().length >= 2)
+            .slice(0, 3)
+            .map(([code, mark]) => [code, {
+                text: mark.text.trim().slice(0, 24),
+                ...(typeof mark.icon === 'string' && ICONIFY_NAME.test(mark.icon) ? { icon: mark.icon } : {}),
+                vertical_position: mark.vertical_position === 'bottom' ? 'bottom' : 'top',
+                horizontal_position: ['left', 'right'].includes(mark.horizontal_position) ? mark.horizontal_position : 'center',
+            }]));
+    }
+    out['financial-rider'] = { selection: clean };
+    return out;
+}
+
 // Start polling
 setInterval(syncActiveApp, 5000);
 
@@ -304,6 +373,9 @@ window.InfoniteConfigManager = {
     syncActiveApp,
     syncAppSettings,
     syncAppLogos,
+    getFlowSettings,
+    saveFlowSettings,
+    sanitizeFlowSettings,
     VERSION: INFONITE_VERSION
 };
 
@@ -901,17 +973,14 @@ async function saveCurrentConfig() {
 function environmentStorageKeys(config) {
     const keys = [];
     if (!config || !config.appId) return keys;
-    // the same key the flows write, spelled here too because the home page (where an
-    // environment is deleted) does not load js/flows-manager.js — keep both in step
-    let envKey = 'UNKNOWN_ENV';
-    if (config.widgetUrl) {
-        try { envKey = new URL(config.widgetUrl).host.replace(/[^a-zA-Z0-9]/g, '_'); }
-        catch (e) { envKey = String(config.widgetUrl).replace(/[^a-zA-Z0-9]/g, '_'); }
-    }
-    const prefix = `infonite_sessions_${envKey}_${config.appId}_`;
+    // the same keys the flows write, spelled here too because the home page (where an
+    // environment is deleted) does not load js/flows-manager.js — keep both in step. What the
+    // flows keep for it beside the histories (`infonite_flow_settings_…`) goes with it.
+    const envKey = environmentKey(config);
+    const prefixes = [`infonite_sessions_${envKey}_${config.appId}_`, `infonite_flow_settings_${envKey}_${config.appId}_`];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith(prefix)) keys.push(key);
+        if (key && prefixes.some(prefix => key.startsWith(prefix))) keys.push(key);
     }
     return keys;
 }
@@ -928,7 +997,7 @@ function purgeEnvironmentData(config, wasActive) {
     keys.forEach((key) => localStorage.removeItem(key));
     if (wasActive) {
         // the live-session tokens belong to the environment in use
-        ['active_session_es-public-administration', 'active_session_bank_reader'].forEach((key) => localStorage.removeItem(key));
+        ['active_session_es-public-administration', 'active_session_financial-rider', 'active_session_bank_reader'].forEach((key) => localStorage.removeItem(key));
     }
     return keys.length;
 }
@@ -1170,6 +1239,9 @@ window.exportActiveConfigUrl = function() {
     // the URL travels only for a custom host; the named hosts resolve to their fixed service
     const payload = { s: config.secret, ht: config.hostType || "production" };
     if (payload.ht === "custom") payload.u = config.widgetUrl;
+    // and what the flows keep for it: Financial Rider's entity selection, when one is saved
+    const selection = getFlowSettings('financial-rider', config).selection;
+    if (selection) payload.fs = { 'financial-rider': { selection } };
     
     const encoded = btoa(JSON.stringify(payload));
     

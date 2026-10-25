@@ -106,7 +106,7 @@
     </div>
 
     <!-- Load Config Manager -->
-    <script src="js/config.js?v=14"></script>
+    <script src="js/config.js?v=16"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             function showView(id) {
@@ -190,6 +190,10 @@
                 if(tempConfig.hostType === "develop") prefix = "[DEV]";
                 tempConfig.name = tempConfig.appName ? `${prefix} ${tempConfig.appName}` : "Unknown App";
                 
+                // What the link carries for the flows (`fs`), read as strictly as a session reads it
+                const carried = InfoniteConfigManager.sanitizeFlowSettings(payload.fs);
+                Object.entries(carried).forEach(([flow, settings]) => InfoniteConfigManager.saveFlowSettings(flow, settings, tempConfig));
+
                 // Save it first so sync logic can find it inside storage
                 storageConfig.list.push(tempConfig);
                 storageConfig.activeId = tempConfig.id;

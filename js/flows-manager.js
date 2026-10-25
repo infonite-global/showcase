@@ -256,6 +256,24 @@ class FlowSessionManager {
     }
 
     /**
+     * Downloads one document a session retrieved — a direct debit's receipt — as a Blob. The API
+     * serves each document once every 5 seconds: a second try inside that window is told to wait.
+     */
+    async downloadAttachment(widgetUrl, appSecret, sessionId, attachmentId) {
+        if (!sessionId || !appSecret || !widgetUrl || !attachmentId) throw new Error("Missing parameters");
+
+        const response = await fetch(`${widgetUrl}/api/flows/attachments/${sessionId}/${attachmentId}`, {
+            method: "GET",
+            headers: { "X-APP-SECRET": appSecret }
+        });
+
+        if (response.status === 429) throw new Error("Try again in 5 s");
+        if (response.status === 404) throw new Error("Not available");
+        if (!response.ok) throw new Error("Download failed");
+        return response.blob();
+    }
+
+    /**
      * Fetches backend configurations and limitations tied to a specific session.
      */
     async fetchSessionSettings(widgetUrl, appSecret, kind, sessionId) {

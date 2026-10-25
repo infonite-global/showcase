@@ -25,6 +25,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. Render the modules dynamically based on features.js
     renderModulesGrid();
 
+    // 2. Where the session ends: the presets every flow shares (js/session-ending.js)
+    InfoniteSessionEnding.mount({
+        container: 'session-ending',
+        flow: 'es-public-administration',
+        docs: 'https://infonite.dev/flows/spain-public-administration',
+        event: 'es-public-administration:ended',
+    });
+
     // Try rendering session history on load if available
     if (typeof renderHistory === 'function') {
         renderHistory();
@@ -602,6 +610,9 @@ window.clearHistory = function() {
 // UI Modals
 // --------------------------------------------------------------------------------
 
+/** While the dialog is open, the ending follows the application's details, refreshed every few seconds (js/config.js). */
+let endingWatch = null;
+
 window.openNewLeadModal = function() {
     const modal = document.getElementById('newLeadModal');
     if (modal) {
@@ -612,38 +623,20 @@ window.openNewLeadModal = function() {
             cidField.value = `ES-PUBLIC-ADMINISTRATION-${randomDigits}`;
         }
 
-        // Setup completion URLs dropdown correctly
-        populateCompletionUrls();
+        // Where the session ends follows the application's redirect URLs, which may arrive late
+        InfoniteSessionEnding.sync();
+        clearInterval(endingWatch);
+        endingWatch = setInterval(() => InfoniteSessionEnding.sync(), 2000);
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
 };
 
-function populateCompletionUrls() {
-    const select = document.getElementById('generate-completion-url');
-    if (!select) return;
-
-    select.innerHTML = '';
-    const config = InfoniteConfigManager.getConfig();
-    const urls = config?.app_settings?.redirect_urls || [];
-
-    if (urls.length === 0) {
-        select.innerHTML = '<option value="">-- No options available in this environment --</option>';
-        return;
-    }
-
-    urls.forEach(url => {
-        const opt = document.createElement('option');
-        opt.value = url;
-        opt.textContent = url;
-        select.appendChild(opt);
-    });
-}
-
 window.closeNewLeadModal = function() {
     const modal = document.getElementById('newLeadModal');
     if (!modal) return;
+    clearInterval(endingWatch);
     
     // Explicitly restore header width
     const header = document.getElementById('nl-header');
@@ -723,10 +716,6 @@ window.generateLeadSession = async function() {
         // 1. Collect Payload Properties
         const customerId = document.getElementById('generate-customer-id').value.trim();
         const aesKey = document.getElementById('generate-aes-key').value.trim();
-        const completionMode = document.getElementById('generate-completion-mode').value;
-        const completionUrl = document.getElementById('generate-completion-url').value;
-        const pathInput = document.getElementById('generate-completion-path');
-        const completionPath = pathInput ? pathInput.value.trim() : '';
         const sandboxToggle = document.getElementById('generate-sandbox-mode');
         const isSandbox = sandboxToggle ? sandboxToggle.checked : false;
 
@@ -764,12 +753,7 @@ window.generateLeadSession = async function() {
                     "session": "{session_id}",
                     "customer": "{customer_id}"
                 },
-                completion_mode: completionMode,
-                completion_extra_data: {
-                    "session": "{session_id}",
-                    "status": "{status_code}",
-                    "customer": "{customer_id}"
-                },
+                ...InfoniteSessionEnding.settings(),
                 executions_features: selectedFeatures
             }
         };
@@ -800,15 +784,6 @@ window.generateLeadSession = async function() {
             payload.settings.aes_key = aesKey;
         }
 
-        if (completionMode === "redirect") {
-            if (!completionUrl) throw new Error("A valid completion URL is required if mode is set to redirect.");
-            let finalUrl = completionUrl;
-            if (completionPath) {
-                finalUrl = finalUrl.replace(/\/$/, '') + '/' + completionPath.replace(/^\//, '');
-            }
-            payload.settings.completion_url = finalUrl;
-        }
-
         // 4. Dispatch using FlowManager
         const result = await InfoniteFlowsManager.initSession(
             config.widgetUrl,
@@ -821,6 +796,8 @@ window.generateLeadSession = async function() {
         if (result && result.widget_url) {
             // Store token actively locally as current
             localStorage.setItem(`active_session_es-public-administration`, result.session_token);
+            // Where this one ends is remembered: the next lead starts from it
+            InfoniteSessionEnding.remember();
             
             // Poll session status once IMMEDIATELY to update the underlying session state from Infonite
             if(window.InfoniteFlowsManager && window.InfoniteFlowsManager.pollSessionState) {

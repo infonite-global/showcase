@@ -10,7 +10,9 @@
  * with the ink the app sent for it, on the active link.
  *
  * A container that carries `data-nav-position="static"` keeps the bar in the flow of its
- * parent (a sticky head that already floats on its own).
+ * parent (a sticky head that already floats on its own); one that carries `data-nav-width="wide"`
+ * gets the bar as wide as a results page's content, its edges on the content's (up to 1376px
+ * instead of 1280px).
  */
 
 (function () {
@@ -151,9 +153,10 @@
             const clip = first ? ' overflow-hidden' : '';
             
             // Render regular top banner
+            const wide = this.container.dataset.navWidth === 'wide';
             const bannerHtml = `
-                <div id="nav-banner-wrapper" class="${positionClass} top-0 z-[100] transition-all duration-500${clip} pt-2 px-2 pb-2 md:pt-4 md:px-4 md:pb-2 w-full pointer-events-none" style="${entrance}" data-scheme="${nav.scheme}">
-                    <div class="rounded-[2rem] p-3 md:p-4 flex flex-row items-center mx-auto max-w-7xl pointer-events-auto" 
+                <div id="nav-banner-wrapper" class="${positionClass} top-0 z-[100] transition-all duration-500${clip} pt-2 px-2 pb-2 md:pt-4 ${wide ? 'md:px-0' : 'md:px-4'} md:pb-2 w-full pointer-events-none" style="${entrance}" data-scheme="${nav.scheme}">
+                    <div class="rounded-[2rem] p-3 md:p-4 flex flex-row items-center mx-auto ${wide ? 'max-w-[1376px]' : 'max-w-7xl'} pointer-events-auto" 
                          style="background: ${glassBg}; border: 1px solid ${borderColor}; box-shadow: ${shadow}; -webkit-backdrop-filter: blur(20px) saturate(1.2); backdrop-filter: blur(20px) saturate(1.2); color: ${textColor}; flex-wrap: wrap;">
                          
                         <div class="flex items-center px-4 py-1 overflow-hidden shrink-0">

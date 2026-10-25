@@ -15,6 +15,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="css/glass.css" rel="stylesheet">
+<link href="css/rider.css?v=1" rel="stylesheet">
 <link href="css/offline.css?v=1" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
@@ -239,97 +240,8 @@
         box-shadow: var(--elevation-1);
       }
 
-      /* Financial Rider card: the word that rides (see the card's own note) */
-      .rider-card { border-style: dashed; }
+      /* Financial Rider card: the word that rides (css/rider.css, js/rider.js) */
       .rider-card h3 { align-items: baseline; }
-      .rider-word { display: inline-flex; align-items: baseline; position: relative; z-index: 1; }
-      /* Both glyphs share one grid cell: the slot keeps the word's baseline and clips the one
-         that is sliding out */
-      .rider-slot {
-        display: inline-grid;
-        justify-items: start;
-        vertical-align: baseline;
-        overflow: hidden;
-        transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-      .rider-glyph {
-        grid-area: 1 / 1;
-        white-space: nowrap;
-        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-      }
-      .rider-glyph-reader { color: var(--primary); transform: translateY(110%); opacity: 0; }
-      .is-reader .rider-glyph-rider { transform: translateY(-110%); opacity: 0; }
-      .is-reader .rider-glyph-reader { transform: translateY(0); opacity: 1; }
-
-      /* The jockey: lives right after the last "r", and everything it does starts BEHIND it —
-         the wrapper clips its left edge, so it rides out from behind the word and retreats
-         back behind it. At rest it keeps a gallop going. */
-      .rider-horse {
-        display: inline-block;
-        position: relative;
-        width: 2em;
-        height: 1.6em;
-        margin-left: -0.5rem;  /* cancels the heading's gap: the clip edge IS the last "r" */
-        overflow: hidden;
-        transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1), margin 0.45s ease;
-      }
-      .rider-rig {
-        position: absolute;
-        left: 0.15em;
-        bottom: -0.12em;
-        width: 1.7em;
-        height: 1.7em;
-        animation: rider-emerge 0.75s cubic-bezier(0.16, 1, 0.3, 1) both, rider-gallop 0.6s ease-in-out 0.75s infinite;
-      }
-      /* The drawing faces left; flipped, the rider runs AWAY from the "r" */
-      .rider-rig img { display: block; width: 100%; height: 100%; transform: scaleX(-1); }
-      .is-reader .rider-horse { width: 0; margin-left: 0; }
-      .is-reader .rider-rig { animation: rider-retreat 0.4s ease-in both; }
-      /* The dust the hooves raise, only while riding out */
-      .rider-horse::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: 0.08em;
-        width: 1.4em;
-        height: 0.5em;
-        pointer-events: none;
-        opacity: 0;
-        background:
-          radial-gradient(circle at 15% 60%, rgba(148, 163, 184, 0.55) 0 18%, transparent 20%),
-          radial-gradient(circle at 45% 30%, rgba(148, 163, 184, 0.45) 0 14%, transparent 16%),
-          radial-gradient(circle at 70% 70%, rgba(148, 163, 184, 0.5) 0 12%, transparent 14%);
-      }
-      .is-riding .rider-horse::after { animation: rider-dust 0.9s ease-out 0.1s both; }
-      .is-riding .rider-word { animation: rider-flash 1.1s ease-out both; }
-      @keyframes rider-emerge {
-        0% { transform: translateX(-130%) scaleX(0.9); opacity: 0.4; }
-        55% { transform: translateX(14%) translateY(-0.12em); opacity: 1; }
-        75% { transform: translateX(-4%) translateY(0); }
-        100% { transform: translateX(0) translateY(0); opacity: 1; }
-      }
-      @keyframes rider-retreat {
-        0% { transform: translateX(0); opacity: 1; }
-        100% { transform: translateX(-130%); opacity: 0; }
-      }
-      @keyframes rider-gallop {
-        0%, 100% { transform: translateY(0) rotate(0deg); }
-        30% { transform: translateY(-0.1em) rotate(-5deg); }
-        60% { transform: translateY(0.02em) rotate(3deg); }
-      }
-      @keyframes rider-dust {
-        0% { opacity: 0; transform: translateX(-0.6em) scale(0.6); }
-        30% { opacity: 1; }
-        100% { opacity: 0; transform: translateX(-1.4em) translateY(-0.2em) scale(1.5); }
-      }
-      @keyframes rider-flash {
-        0% { color: inherit; text-shadow: none; }
-        35% { color: var(--primary); text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.45); }
-        100% { color: inherit; text-shadow: none; }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .rider-rig, .rider-horse::after, .rider-word { animation: none !important; }
-      }
 
       /* Experimental Bank Reader card: a curved arrow drawn from it up to Financial Rider, which
          sits directly above it in every layout (both in the right column on two, one after the
@@ -688,11 +600,12 @@
                     Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
 </div>
 </a>
-<!-- Financial Rider: not open yet. The horse is on purpose — the name is Rider, not Reader,
-     and the title says so: it reads "Reader" for a beat on arrival, then rides into "Rider";
-     hovering shows the word it is NOT, and leaving brings the rider back. -->
-<div class="glass-panel p-8 rounded-3xl block relative cursor-default select-none rider-card md:col-start-2 md:row-start-1" id="financialRiderCard" aria-disabled="true">
-<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 border border-slate-200/70 px-2 py-1 rounded-md">Launches Mon 26 Oct</span>
+<!-- Financial Rider. The horse is on purpose — the name is Rider, not Reader, and the title says
+     so: it reads "Reader" for a beat on arrival, then rides into "Rider"; hovering shows the word
+     it is NOT, and leaving brings the rider back. The whole card opens the flow; the docs link
+     inside it keeps its own way out. -->
+<div class="glass-panel p-8 rounded-3xl block relative cursor-pointer rider-card hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md md:col-start-2 md:row-start-1" id="financialRiderCard" role="link" tabindex="0" data-href="flows/financial-rider/financial-rider.html" data-rider>
+<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-[var(--primary)] bg-[var(--primary-container)] px-2 py-1 rounded-md">New</span>
 <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
 <i class="fa-solid fa-building-columns text-2xl text-[var(--primary)]"></i>
 </div>
@@ -704,46 +617,21 @@
 </h3>
 <p class="text-sm text-slate-500 mb-6">Open Banking in a widget we host: your customer connects their banks and you read one financial position. The definitive multi-market solution.</p>
 <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-<div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <i class="fa-solid fa-rocket"></i> Launch on Monday, 26 Oct
-</div>
-<!-- The docs are already public: the one thing on this card a visitor can act on today -->
-<a class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2 cursor-pointer hover:underline underline-offset-4" href="https://infonite.dev/flows/financial-rider/overview" target="_blank" rel="noopener">
-                    <i class="fa-solid fa-book-open"></i> Docs already available <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+<a class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2" href="flows/financial-rider/financial-rider.html">
+                    Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+</a>
+<a class="text-[10px] font-bold text-slate-400 hover:text-[var(--primary)] uppercase tracking-widest flex items-center gap-2 cursor-pointer hover:underline underline-offset-4" href="https://infonite.dev/flows/financial-rider/overview" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-book-open"></i> Docs <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
 </a>
 </div>
 </div>
 <script>
   (function () {
+    // The card opens the flow, as the other cards do; its links keep their own targets
     const card = document.getElementById('financialRiderCard');
-    const slot = card.querySelector('.rider-slot');
-    const glyphs = {
-      rider: card.querySelector('.rider-glyph-rider'),
-      reader: card.querySelector('.rider-glyph-reader'),
-    };
-    // The slot is the one letter that differs: "i" against "ea". Its width is measured once so
-    // the word can slide between the two instead of jumping.
-    const fit = (which) => { slot.style.width = glyphs[which].getBoundingClientRect().width + 'px'; };
-    const show = (which) => { card.classList.toggle('is-reader', which === 'reader'); fit(which); };
-
-    // Riding out: the jockey comes from behind the "r", raising dust, and the word flashes
-    let riding = null;
-    const ride = () => {
-      card.classList.remove('is-riding');
-      void card.offsetWidth;  // restart the animations
-      card.classList.add('is-riding');
-      show('rider');
-      clearTimeout(riding);
-      riding = setTimeout(() => card.classList.remove('is-riding'), 1300);
-    };
-
-    // Arrival: it reads "Reader" for a beat, then rides into "Rider"
-    show('reader');
-    setTimeout(ride, 1100);
-
-    card.addEventListener('mouseenter', () => { clearTimeout(riding); card.classList.remove('is-riding'); show('reader'); });
-    card.addEventListener('mouseleave', ride);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fit(card.classList.contains('is-reader') ? 'reader' : 'rider'));
+    const open = () => { window.location.href = card.dataset.href; };
+    card.addEventListener('click', (event) => { if (!event.target.closest('a')) open(); });
+    card.addEventListener('keydown', (event) => { if (event.key === 'Enter') open(); });
   })();
 </script>
 <!-- Bank Reader: the experimental bank flow, kept open until Financial Rider launches on
@@ -923,7 +811,8 @@
 </div>
 </div>
 <script src="js/theme.js?v=6"></script>
-<script src="js/config.js?v=14"></script>
+<script src="js/config.js?v=16"></script>
+<script src="js/rider.js?v=1"></script>
 <script src="js/nav-banner.js?v=8"></script>
 <script>
       // --- CONFIGURATION & CONSTANTS ---

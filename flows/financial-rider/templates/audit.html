@@ -1,0 +1,38 @@
+<!-- CONSENT & AUDIT: the connections the session ran, what it says about itself, and the consent's
+     evidence. Labels on the ground, one card per block (css/financial-rider-position.css). -->
+<div class="frp-page">
+    <header class="frp-head">
+        <span class="frp-head-icon"><i class="fa-solid fa-shield-halved"></i></span>
+        <div class="min-w-0">
+            <h2 class="frp-title">Consent &amp; Audit</h2>
+            <p class="frp-sub">The connections the session ran, what it has to say, and the evidence of the consent.</p>
+        </div>
+    </header>
+
+    <div class="frp-section-head"><span class="frp-section-label"><i class="fa-solid fa-network-wired"></i> Engine connections</span></div>
+    <div id="listConnections" class="flex flex-col gap-2">
+        <p class="frp-muted">No engine connections recorded.</p>
+    </div>
+
+    <div class="frp-section-head"><span class="frp-section-label"><i class="fa-solid fa-message"></i> Session messages</span></div>
+    <div id="listMessages" class="flex flex-col gap-2">
+        <p class="frp-muted">The session has nothing to say about itself.</p>
+    </div>
+
+    <div class="frp-section-head"><span class="frp-section-label"><i class="fa-solid fa-file-signature"></i> Consent</span></div>
+    <div class="frp-card grid-cols-1 md:grid-cols-3">
+        <div class="frp-field"><span>Accepted</span><b class="font-mono" id="lblConsentDate">--</b></div>
+        <div class="frp-field"><span>User IP</span><b class="font-mono" id="lblConsentIp">--</b></div>
+        <div class="frp-field"><span>Customer ID</span><b class="font-mono" id="lblCustomerId">--</b></div>
+        <div class="frp-field md:col-span-3"><span>Origin</span><b class="font-mono" id="lblConsentOrigin">--</b></div>
+        <div class="frp-field md:col-span-3">
+            <span class="flex items-center gap-2">User agent <em id="lblUaTypeBadge" class="hidden not-italic px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[9px] font-bold uppercase tracking-widest"></em></span>
+            <b class="font-mono text-xs text-slate-500 break-all" id="lblConsentUa">--</b>
+        </div>
+    </div>
+
+    <div class="frp-section-head"><span class="frp-section-label"><i class="fa-solid fa-circle-check"></i> Features granted</span></div>
+    <div class="flex flex-wrap gap-2" id="listConsentFeatures">
+        <span class="frp-muted">None registered</span>
+    </div>
+</div>

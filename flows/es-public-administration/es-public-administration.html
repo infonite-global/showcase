@@ -16,6 +16,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
+<link href="../../css/session-ending.css?v=1" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
       :root {
@@ -826,17 +827,20 @@
 
       <!-- ADVANCED Accordion -->
       <div class="lg:col-start-1 lg:row-start-3">
-        <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-advanced')">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500">
+        <button class="w-full flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-advanced')">
+          <div class="flex items-center gap-3 min-w-0 flex-1 basis-56">
+            <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
               <i class="fa-solid fa-sliders"></i>
             </div>
-            <div class="text-left">
+            <div class="text-left min-w-0">
                <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest">Advanced Configuration</h4>
-               <p class="text-[9px] text-slate-500 font-medium">Routing and behavioral overrides</p>
+               <p class="text-[9px] text-slate-500 font-medium">Encryption and where the session ends</p>
             </div>
           </div>
-          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300" id="acc-advanced-icon"></i>
+          <div class="flex items-center gap-3 shrink-0 ml-auto">
+            <span id="se-summary" class="se-summary"></span>
+            <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300" id="acc-advanced-icon"></i>
+          </div>
         </button>
         <div id="acc-advanced" class="mt-3 hidden transition-all duration-300 bg-white border border-black/5 rounded-2xl p-5 shadow-sm flex flex-col gap-5">
            
@@ -860,46 +864,8 @@
 
            <div class="h-px w-full bg-slate-100"></div>
 
-           <!-- COMPLETION MODE / URL -->
-           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div>
-                 <label for="generate-completion-mode" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
-                    <i class="fa-solid fa-flag-checkered text-blue-500"></i> Completion Mode
-                 </label>
-                 <select id="generate-completion-mode" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-bold" onchange="
-                    const urlSelect = document.getElementById('generate-completion-url');
-                    const pathGroup = document.getElementById('completion-path-group');
-                    urlSelect.disabled = this.value !== 'redirect';
-                    if(this.value !== 'redirect') {
-                        urlSelect.classList.add('opacity-50');
-                        pathGroup.classList.add('hidden');
-                    } else {
-                        urlSelect.classList.remove('opacity-50');
-                        pathGroup.classList.remove('hidden');
-                    }
-                 ">
-                    <option value="do_nothing">Wait on widgets end</option>
-                    <option value="redirect">Redirect user</option>
-                 </select>
-              </div>
-              <div>
-                 <label for="generate-completion-url" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
-                    <i class="fa-solid fa-link text-indigo-500"></i> Completion URL
-                 </label>
-                 <select id="generate-completion-url" disabled class="opacity-50 w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono truncate">
-                    <!-- Populated by JS from app_settings -->
-                 </select>
-              </div>
-            </div>
-            
-            <!-- SUB PATH FOR REDIRECT -->
-            <div id="completion-path-group" class="hidden">
-                 <label for="generate-completion-path" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2 mb-2">
-                    <i class="fa-solid fa-route text-teal-500"></i> Custom Sub URL Path
-                 </label>
-                 <p class="text-[9px] text-slate-500 font-medium leading-tight mb-2">Optional parameter appended to the Base Completion URL before redirection. (e.g., <code>/onboarding/success</code>)</p>
-                 <input type="text" id="generate-completion-path" placeholder="/my-custom-path" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono">
-            </div>
+           <!-- WHERE THE SESSION ENDS: the presets every flow shares (js/session-ending.js) -->
+           <div id="session-ending"></div>
          </div>
       </div>
      </div>
@@ -1072,13 +1038,14 @@
 </div>
 
 <script src="../../js/theme.js?v=6"></script>
-<script src="../../js/config.js?v=14"></script>
+<script src="../../js/config.js?v=16"></script>
 <script src="../../js/features.js?v=6"></script>
 <script src="../../js/nav-banner.js?v=8"></script>
-<script src="../../js/flows-manager.js?v=6"></script>
+<script src="../../js/flows-manager.js?v=7"></script>
 <script src="../../js/enums.js?v=8"></script>
 <script src="../../js/status.js"></script>
 <script src="../../js/es-public-administration-presets.js?v=3"></script>
-<script src="../../js/es-public-administration.js?v=7"></script>
+<script src="../../js/session-ending.js?v=1"></script>
+<script src="../../js/es-public-administration.js?v=8"></script>
 </body>
 </html>
