@@ -113,6 +113,10 @@
 
 .frp-card { --pad-x: 20px; --pad-y: 18px; position: relative; display: flex; flex-direction: column; gap: 14px; padding: var(--pad-y) var(--pad-x); border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); transition: border-color 150ms, box-shadow 150ms; }
 .frp-card.is-link { cursor: pointer; }
+.frp-card.is-broken { gap: 6px; border-style: dashed; box-shadow: none; }
+/* a card of labelled fields (the consent's evidence): three to a row, one on a phone */
+.frp-card.is-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px; }
+.frp-card.is-grid > .is-full { grid-column: 1 / -1; }
 .frp-card.is-link:hover { border-color: rgba(var(--primary-rgb), 0.45); box-shadow: 0 10px 26px rgba(var(--primary-rgb), 0.12); }
 .frp-card-head { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
 .frp-card-id { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
@@ -215,6 +219,13 @@
 .frp-holdings col.frp-col-price { width: 124px; }
 .frp-holdings col.frp-col-value { width: 132px; }
 .frp-holdings col.frp-col-gain { width: 132px; }
+/* a narrower page leaves the name more room: the figures tighten first */
+@media (max-width: 1180px) {
+    .frp-holdings col.frp-col-qty { width: 76px; }
+    .frp-holdings col.frp-col-price { width: 104px; }
+    .frp-holdings col.frp-col-value { width: 116px; }
+    .frp-holdings col.frp-col-gain { width: 112px; }
+}
 .frp-holdings th { padding: 10px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; text-align: left; white-space: nowrap; background: #f8fafc; }
 .frp-holdings td { padding: 12px 14px; border-top: 1px solid #f1f5f9; vertical-align: top; }
 .frp-holdings th:first-child, .frp-holdings td:first-child { padding-left: var(--pad-x); }
@@ -380,6 +391,7 @@
     .frp-banks { grid-template-columns: minmax(0, 1fr); }
     .frp-title { font-size: 23px; }
     .frp-card { --pad-x: 16px; --pad-y: 16px; }
+    .frp-card.is-grid { grid-template-columns: minmax(0, 1fr); }
     .frp-card-head { gap: 12px; }
     .frp-card-title h3 { font-size: 16px; }
     .frp-hero-title { font-size: 22px; }

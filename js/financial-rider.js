@@ -199,12 +199,6 @@ function syncEntities() {
 
 window.syncEntities = syncEntities;
 
-window.selectEntitiesMode = function(mode) {
-    const radio = document.querySelector(`input[name="fr-entities-mode"][value="${mode}"]`);
-    if (radio) radio.checked = true;
-    syncEntities();
-};
-
 // --------------------------------------------------------------------------------
 // The engine catalogue: the Direct Executions API's own list, read with the app's secret
 // --------------------------------------------------------------------------------
@@ -1380,7 +1374,6 @@ window.generateLeadSession = async function() {
         const result = await InfoniteFlowsManager.initSession(config.widgetUrl, config.secret, config.appId, window.FR_HISTORY_CONTEXT, payload);
         if (!result || !result.widget_url) throw new Error("Invalid response received from the server.");
 
-        localStorage.setItem('active_session_financial-rider', result.session_token);
         try {
             await InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, window.FR_HISTORY_CONTEXT, result.session_id, config.appId);
         } catch (e) {

@@ -16,7 +16,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/rider.css?v=1" rel="stylesheet">
-<link href="../../css/session-ending.css?v=1" rel="stylesheet">
+<link href="../../css/session-ending.css?v=2" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
@@ -96,14 +96,6 @@
         transition: background-color var(--motion-duration-medium), color var(--motion-duration-medium);
       }
 
-      .animated-gradient-bg {
-        animation: pulseBg 6s infinite alternate ease-in-out;
-      }
-      @keyframes pulseBg {
-        0% { transform: scale(1); opacity: 0.05; }
-        100% { transform: scale(1.5); opacity: 0.15; }
-      }
-
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Outfit', sans-serif;
         font-weight: 600;
@@ -114,18 +106,6 @@
         animation: fadeIn 0.8s var(--motion-easing-standard);
       }
 
-      /* Navigation Banner Transitions */
-      .slide-fade-enter-active {
-        transition: all 0.3s ease-out;
-      }
-      .slide-fade-leave-active {
-        transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
-      }
-      .slide-fade-enter-from,
-      .slide-fade-leave-to {
-        transform: translateY(-20px);
-        opacity: 0;
-      }
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -144,40 +124,6 @@
         box-shadow: var(--elevation-1);
       }
 
-      .pulse-ring {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: var(--shape-corner-full);
-        background: var(--primary);
-        box-shadow: 0 0 0 0 var(--primary-container);
-        animation: pulse-brand 2s infinite;
-      }
-
-      @keyframes pulse-brand {
-        0% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(var(--brand-dark-rgb), 0.3);
-        }
-        70% {
-          transform: scale(1);
-          box-shadow: 0 0 0 10px rgba(var(--brand-dark-rgb), 0);
-        }
-        100% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(var(--brand-dark-rgb), 0);
-        }
-      }
-
-      /* The user email field when a selected module requires it */
-      @keyframes email-required-glow {
-        0%, 100% { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25), 0 0 12px rgba(245, 158, 11, 0.35); }
-        50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.35), 0 0 22px rgba(245, 158, 11, 0.55); }
-      }
-      .email-required-glow {
-        border-color: rgb(245, 158, 11) !important;
-        animation: email-required-glow 1.8s ease-in-out infinite;
-      }
       .feature-checkbox:checked + div {
         border-color: var(--primary);
         background-color: var(--primary-container);
@@ -208,196 +154,6 @@
         transform: translateY(0);
       }
 
-      /* Result Cards Styling */
-      .result-card {
-        background: var(--surface);
-        border: 1px solid var(--outline-variant);
-      }
-
-      .status-badge {
-        background: var(--primary-container);
-        color: var(--primary);
-        border: 1px solid var(--primary-container);
-      }
-
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-
-      @media print {
-          @page {
-              margin: 0;
-              size: auto;
-          }
-          body {
-              background: white !important;
-              padding: 0 !important;
-              margin: 0 !important;
-          }
-          /* Hide non-print elements */
-          .no-print,
-          nav,
-          #mobileMenu,
-          .lg\:col-span-4,
-          #homeView,
-          #placeholderState,
-          #activeSessionState > div:not(#resultsDashboard),
-          #monitoringSection,
-          #settingsModal, 
-          #pdfModal, 
-          .fixed:not(#printHeader) {
-              display: none !important;
-          }
-          
-          /* Ensure the report container and its path are visible */
-          /* Ensure the report container and its path are visible */
-          .max-w-6xl, 
-          .grid, 
-          #sessionMainView, 
-          #sessionMainView > div:not(.no-print),
-          #activeSessionState, 
-          #resultsDashboard {
-              display: block !important;
-              visibility: visible !important;
-              position: static !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-          }
-          
-          #resultsDashboard {
-              display: flex !important;
-              flex-direction: column !important;
-              gap: 32px !important;
-              /* Padding top ensures first page clears the header */
-              padding-top: 35mm !important;
-              padding-left: 15mm !important;
-              padding-right: 15mm !important;
-              padding-bottom: 15mm !important;
-          }
-
-          #printHeader {
-              display: flex !important;
-              position: fixed !important;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 30mm;
-              z-index: 9999;
-          }
-
-          /* Force full width stacked layout for print - like desktop full cards */
-          #resultsDashboard > .grid {
-              display: flex !important;
-              flex-direction: column !important;
-              gap: 32px !important;
-          }
-          
-          /* Page Break Before Sections */
-          .md\:col-span-2 {
-              break-inside: avoid;
-              page-break-inside: avoid;
-              width: 100% !important;
-          }
-          /* Add page break before all major cards except the first one */
-          .md\:col-span-2:not(:first-child) {
-              break-before: page;
-              page-break-before: always;
-              /* Add margin to clear header on subsequent pages */
-              margin-top: 35mm !important;
-          }
-
-          /* Card Styling Overrides for Print - CLEAN LOOK */
-          .glass-panel {
-              background: transparent !important;
-              box-shadow: none !important;
-              border: none !important;
-              border-radius: 0 !important;
-              overflow: visible !important;
-              backdrop-filter: none !important;
-          }
-          
-          /* Headers of cards */
-          .glass-panel > div:first-child {
-              background: transparent !important;
-              border-bottom: 2px solid #000 !important;
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-              margin-bottom: 12px !important;
-          }
-          
-          .glass-panel > div:first-child h4 {
-              font-size: 14px !important;
-              color: #000 !important;
-          }
-          
-          .glass-panel > div:first-child i {
-               color: #000 !important;
-          }
-          
-          /* Remove badges in headers to clean up */
-          .glass-panel > div:first-child span {
-              border: 1px solid #000 !important;
-              background: transparent !important;
-              color: #000 !important;
-          }
-
-          /* Identity Box Styling for Print */
-          .bg-black\/\[0\.02\] {
-              background: transparent !important;
-              border: 1px solid #ddd !important;
-          }
-
-          * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-          }
-          
-          /* Hide Status Banner in Print - Replace with Title */
-          #statusBanner {
-              border: none !important;
-              background: transparent !important;
-              padding: 0 !important;
-              margin-bottom: 20px !important;
-          }
-          #statusIconBox {
-              display: none !important;
-          }
-          #statusTitle {
-              font-size: 18px !important;
-              text-transform: uppercase !important;
-              letter-spacing: 0.1em !important;
-          }
-          #statusDesc {
-              font-size: 12px !important;
-              color: #666 !important;
-          }
-          
-          /* Features */
-          #featuresSection {
-              display: flex !important;
-              gap: 12px !important;
-              margin-bottom: 24px !important;
-          }
-          #featuresSection > div {
-              border: 1px solid #ddd !important;
-              background: transparent !important;
-              box-shadow: none !important;
-          }
-
-          /* Force internal grids to use 2 columns in print (e.g. Identity Profile) */
-          /* Any grid with md:grid-cols-2 should be 2 cols in print */
-          .grid.md\:grid-cols-2 {
-              display: grid !important;
-              grid-template-columns: repeat(2, 1fr) !important;
-              gap: 20px !important;
-          }
-      }
     
       /* Financial Rider's form: a multiple choice is drawn as chips, a single one as segments
          or mode cards, a yes/no as a switch. Pure CSS over hidden inputs. */
@@ -545,31 +301,17 @@
 </head>
 <body class="bg-slate-50 min-h-screen">
 <div class="flex flex-col min-h-screen w-full">
-<!-- Print-only Header -->
-<div class="hidden print:flex fixed top-0 left-0 right-0 p-6 items-center justify-between z-[9999] border-b-4" id="printHeader">
-<div class="flex flex-col">
-<h1 class="font-black text-xl uppercase tracking-[0.2em] leading-none">Financial Rider</h1>
-<span class="text-[9px] uppercase font-bold tracking-widest mt-1" style="color: var(--c40)">Financial Position Report</span>
-</div>
-<div class="flex items-center gap-4">
-<div class="text-right">
-<p class="text-[8px] font-bold uppercase tracking-widest" style="color: var(--c60)">Digital Identity Platform</p>
-<p class="text-[7px] font-mono" id="printTimestamp" style="color: var(--c40)"></p>
-</div>
-<img alt="Infonite Logo" class="max-h-8 max-w-[140px] w-auto h-auto object-contain block" id="print-logo" />
-</div>
-</div>
 <!-- The flow head: one white band from the page's very top edge, the navigation floating
      in it and the title row under it. The band sticks as a whole; nothing of the page shows
      above it. -->
 <div class="w-full sticky top-0 z-[40] border-b border-black/5 bg-white/80 backdrop-blur-md" id="flow-head">
 <div class="mx-auto px-0 md:px-8 w-full">
-  <div id="app-nav-container" data-nav-position="static"></div>
+  <div id="app-nav-container" data-nav-position="static" data-nav-width="wide"></div>
 </div>
 
 <!-- The title row, hidden by the New Lead dialog while it shows its outcome -->
 <div class="w-full transition-colors" style="padding-top: 6px; padding-bottom: 20px;" id="nl-header">
-  <div class="max-w-6xl mx-auto px-4 md:px-8 relative">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8 relative">
     
     <!-- Default Subheader (Visible on Dashboard) -->
     <div id="nl-header-default" class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in">
@@ -603,13 +345,13 @@
 
   </div>
 </div>
-<div id="offline-slot" class="max-w-6xl mx-auto px-4 md:px-8 pb-4 w-full empty:hidden"></div>
+<div id="offline-slot" class="max-w-[1440px] mx-auto px-4 md:px-8 pb-4 w-full empty:hidden"></div>
 </div>
 
-<div class="max-w-6xl mx-auto p-4 md:p-8 w-full">
+<div class="max-w-[1440px] mx-auto p-4 md:p-8 w-full">
 <!-- Removed legacy config card -->
 <!-- Dashboard View (Table / Empty State) -->
-<div class="fade-in space-y-6 lg:col-span-12 no-print" id="dashboardView">
+<div class="fade-in space-y-6 lg:col-span-12" id="dashboardView">
   <!-- Empty State (Background How-To) -->
   <div id="dashboardEmptyState" class="p-4 md:p-8 pt-0 fade-in">
     <div class="flex flex-col items-start justify-between mb-8 gap-4">
@@ -768,7 +510,7 @@
 <div class="fixed inset-0 glass-layout z-[200] hidden flex-col" id="newLeadModal">
   <div class="glass-column flex-1 min-h-0 w-full flex flex-col">
     <!-- Header, fixed on the glass: title on the left, the actions on the right -->
-    <div class="shrink-0 w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-4 flex flex-wrap items-center justify-between gap-4">
+    <div class="shrink-0 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4 text-left min-w-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
           <i class="fa-solid fa-wand-magic-sparkles text-[var(--primary)] text-lg"></i>
@@ -790,7 +532,7 @@
 
     <!-- Body, the only part that scrolls -->
     <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-    <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10">
+    <div class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10">
 
     <!-- FORM VIEW -->
     <div id="nl-form-view" class="flex flex-col">
@@ -1204,7 +946,7 @@
      environment's setup link carries it -->
 <div class="fixed inset-0 glass-layout z-[300] hidden flex-col" id="selectionModal">
   <div class="glass-column flex-1 min-h-0 w-full flex flex-col">
-    <div class="shrink-0 w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-3 flex flex-wrap items-center justify-between gap-4">
+    <div class="shrink-0 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-3 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4 text-left min-w-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
           <i class="fa-solid fa-arrow-down-wide-short text-[var(--primary)] text-lg"></i>
@@ -1220,7 +962,7 @@
         <button class="glass-pill glass-pill-brand" onclick="closeSelectionModal(true)"><i class="fa-solid fa-check"></i> Save</button>
       </div>
     </div>
-    <div class="shrink-0 w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pb-3">
+    <div class="shrink-0 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 pb-3">
       <div class="fr-scope">
         <span class="fr-scope-flow"><i class="fa-solid fa-building-columns"></i> Financial Rider</span>
         <span class="fr-scope-text">Saved in this browser with <strong id="sel-scope-app">this environment</strong>: every Financial Rider session the demo creates sends it, and the environment's setup link carries it. No other flow reads it.</span>
@@ -1229,7 +971,7 @@
       <p id="sel-error" class="hidden fr-lock-note"></p>
     </div>
     <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-      <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      <div class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
         <div class="flex flex-col gap-4">
           <!-- LAYOUT -->
           <section class="fr-sel-card">
@@ -1363,15 +1105,15 @@
 </div>
 
 <script src="../../js/theme.js?v=6"></script>
-<script src="../../js/config.js?v=16"></script>
+<script src="../../js/config.js?v=17"></script>
 <script src="../../js/engine-lists.js?v=1"></script>
 <script src="../../js/features.js?v=6"></script>
-<script src="../../js/nav-banner.js?v=8"></script>
+<script src="../../js/nav-banner.js?v=10"></script>
 <script src="../../js/flows-manager.js?v=7"></script>
 <script src="../../js/status.js"></script>
 <script src="../../js/rider.js?v=1"></script>
 <script src="../../js/financial-rider-entities.js?v=3"></script>
-<script src="../../js/session-ending.js?v=1"></script>
-<script src="../../js/financial-rider.js?v=12"></script>
+<script src="../../js/session-ending.js?v=2"></script>
+<script src="../../js/financial-rider.js?v=14"></script>
 </body>
 </html>

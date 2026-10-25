@@ -329,6 +329,7 @@
               ${preset('whatsapp', 'fa-brands fa-whatsapp', 'WhatsApp', 'Opens a chat', 'Needs set-up')}
               ${preset('infonite', 'fa-solid fa-book-open', 'infonite.dev', "This flow's docs")}
             </div>
+            <p class="se-scope"><i class="fa-solid fa-clock-rotate-left"></i> The last session's ending is remembered in this browser with the environment, and the environment's setup link carries it.</p>
 
             <div class="se-panel" data-ending-panel="nothing">
               <p class="se-panel-text">The person stays on the widget's final screen. Embedded in an iframe, your page still hears the session end: the widget posts a <code>${flow.event}</code> message to its parent, with the status, so you can close the frame or move on.</p>

@@ -333,8 +333,37 @@ const ICONIFY_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$/;
  * Financial Rider's entity selection, and inside it only what a session request takes — the
  * layout, up to 20 engine codes first, up to 3 highlighted with a text of 2 to 24 characters.
  */
+/** The flows whose last session's ending (js/session-ending.js) the setup link carries. */
+const ENDING_FLOWS = ['financial-rider', 'es-public-administration'];
+
+/**
+ * A remembered ending, read as strictly as the form reads it: a known preset, a known tab, an http(s)
+ * URL, short plain texts. The form checks the rest when it applies it (the URL against the
+ * application's redirect URLs, the dial code against its list). Null when there is none to keep.
+ */
+function sanitizeEnding(ending) {
+    if (!ending || typeof ending !== 'object' || !['nothing', 'redirect', 'whatsapp', 'infonite'].includes(ending.preset)) return null;
+    const text = (value, max) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
+    const clean = { preset: ending.preset };
+    if (['redirect', 'redirect_blank'].includes(ending.tab)) clean.tab = ending.tab;
+    const url = text(ending.url, 2048);
+    if (/^https?:\/\/[^\s]+$/i.test(url)) clean.url = url;
+    const path = text(ending.path, 256);
+    if (path && !/[\u0000-\u001f]/.test(path)) clean.path = path;
+    if (typeof ending.dial === 'string' && /^\d{1,4}$/.test(ending.dial)) clean.dial = ending.dial;
+    const number = text(ending.number, 20);
+    if (/^[\d\s]{4,20}$/.test(number)) clean.number = number;
+    const message = text(ending.text, 500);
+    if (message) clean.text = message;
+    return clean;
+}
+
 function sanitizeFlowSettings(raw) {
     const out = {};
+    ENDING_FLOWS.forEach(flow => {
+        const ending = sanitizeEnding(raw && raw[flow] && raw[flow].ending);
+        if (ending) out[flow] = { ending };
+    });
     const selection = raw && raw['financial-rider'] && raw['financial-rider'].selection;
     if (!selection || typeof selection !== 'object') return out;
     const clean = {};
@@ -353,7 +382,7 @@ function sanitizeFlowSettings(raw) {
                 horizontal_position: ['left', 'right'].includes(mark.horizontal_position) ? mark.horizontal_position : 'center',
             }]));
     }
-    out['financial-rider'] = { selection: clean };
+    out['financial-rider'] = { ...out['financial-rider'], selection: clean };
     return out;
 }
 
@@ -1239,9 +1268,15 @@ window.exportActiveConfigUrl = function() {
     // the URL travels only for a custom host; the named hosts resolve to their fixed service
     const payload = { s: config.secret, ht: config.hostType || "production" };
     if (payload.ht === "custom") payload.u = config.widgetUrl;
-    // and what the flows keep for it: Financial Rider's entity selection, when one is saved
-    const selection = getFlowSettings('financial-rider', config).selection;
-    if (selection) payload.fs = { 'financial-rider': { selection } };
+    // and what the flows keep for it: Financial Rider's entity selection, and each flow's last
+    // session's ending, when they are saved
+    const fs = {};
+    ENDING_FLOWS.forEach(flow => {
+        const { selection, ending } = getFlowSettings(flow, config);
+        const kept = { ...(flow === 'financial-rider' && selection ? { selection } : {}), ...(ending ? { ending } : {}) };
+        if (Object.keys(kept).length) fs[flow] = kept;
+    });
+    if (Object.keys(fs).length) payload.fs = fs;
     
     const encoded = btoa(JSON.stringify(payload));
     

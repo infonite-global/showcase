@@ -62,3 +62,7 @@
 .se-summary { display: inline-flex; align-items: center; gap: 6px; max-width: 180px; padding: 4px 10px; border-radius: 9999px; background: var(--primary-container); color: var(--primary); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .se-summary.is-warning { background: #fef3c7; color: #b45309; }
 .se-summary:empty { display: none; }
+
+/* what the section keeps, and where it travels */
+.se-scope { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 10px; font-weight: 600; line-height: 1.5; color: #94a3b8; }
+.se-scope i { margin-top: 2px; }

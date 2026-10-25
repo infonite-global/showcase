@@ -108,6 +108,12 @@
         return month ? tail : `${String(date.getUTCDate()).padStart(2, '0')} ${tail}`;
     }
 
+    /** A moment, to the second and in UTC, so a piece of evidence reads the same everywhere: «12 Sep 2026 · 12:16:20 UTC». */
+    function stamp(value) {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value ?? '') : `${day(value)} · ${date.toISOString().slice(11, 19)} UTC`;
+    }
+
     /** A product's life in one line: «Dec 2024 – Dec 2028». */
     const term = (from, to) => (from || to ? `${day(from, { month: true })} – ${day(to, { month: true })}` : '');
 
@@ -135,10 +141,36 @@
 
     // ---------------------------------------------------------------- the products, bank by bank
 
-    /** The family's products that the bank filter lets through. */
+    /** The family's products that the bank filter lets through (anything that is not a product is left out). */
     function productsOf(familyKey, scoped = true) {
-        const items = (Array.isArray(data()[familyKey]) ? data()[familyKey] : []).map(product => ({ product }));
+        const items = (Array.isArray(data()[familyKey]) ? data()[familyKey] : []).filter(isProduct).map(product => ({ product }));
         return scoped ? items.filter(item => inScope(item.product)) : items;
+    }
+
+    const isProduct = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
+    /** A list the bank may have sent as something else: anything but an array reads as an empty one. */
+    const listOf = (value) => (Array.isArray(value) ? value : []);
+
+    /**
+     * A product drawn whatever its shape: one the bank sent in a form this page does not expect
+     * takes its place as a note pointing at the raw JSON, and the rest of the view still draws.
+     */
+    function safely(draw, args, shape = 'card') {
+        try {
+            return draw(...args);
+        } catch (error) {
+            console.warn('Financial Rider position: a product could not be drawn', error);
+            const product = args.find(isProduct);
+            const name = esc((isProduct(product) && (product.product_alias || product.product_name || product.beneficiary?.name || product.id)) || 'A product');
+            const note = 'It came in a shape this demo does not draw. RAW JSON shows it as the bank returned it.';
+            if (shape === 'tr') return `<tr><td colspan="5"><b>${name}</b><small>${note}</small></td></tr>`;
+            if (shape === 'row') return `<div class="frp-row"><span class="frp-row-main"><b>${name}</b><small>${note}</small></span></div>`;
+            return `
+                <article class="frp-card is-broken">
+                    <div class="frp-card-title"><h3>${name}</h3><span class="frp-tag is-warn">not drawn</span></div>
+                    <p class="frp-muted">${note}</p>
+                </article>`;
+        }
     }
 
     /** Whether the session was created to read the family at all. */
@@ -177,7 +209,7 @@
     const idOf = (identifier) => (identifier && typeof identifier === 'object' ? String(identifier.value || '').replace(/\s+/g, '').toUpperCase() : '');
     function accountNamed(identifier) {
         const key = idOf(identifier);
-        return key ? (data().accounts || []).find(account => idOf(account.identifier) === key) || null : null;
+        return key ? listOf(data().accounts).filter(isProduct).find(account => idOf(account.identifier) === key) || null : null;
     }
 
     /** A fact naming an account: a way to it when the session read it, with its number's end under; its number's end otherwise. */
@@ -208,10 +240,11 @@
     function portfolios(scoped = true) {
         const own = data().investments || {};
         const list = (Array.isArray(own.accounts) ? own.accounts : [])
+            .filter(isProduct)
             .filter(account => !scoped || inScope(account))
             .map(account => ({ account, bank: bankOfProduct(FR_RESULTS.banks, account), named: null, holdings: [] }));
         const loose = new Map();
-        HOLDING_KINDS.forEach(kind => (Array.isArray(own[kind.key]) ? own[kind.key] : []).forEach(product => {
+        HOLDING_KINDS.forEach(kind => (Array.isArray(own[kind.key]) ? own[kind.key] : []).filter(isProduct).forEach(product => {
             if (scoped && !inScope(product)) return;
             const home = list.find(folio => holds(folio.account, product));
             if (home) return home.holdings.push({ product, kind: kind.key });
@@ -265,8 +298,8 @@
     const profile = () => data().customer?.profile || null;
 
     /** The flag a session raises when its banks returned different people, if it did. */
-    const crossedIdentity = () => (results().messages || []).find(message => message.message_id === 'crossed_identity') || null;
-    const identityMismatch = () => (results().messages || []).find(message => message.message_id === 'profile_identity_mismatch') || null;
+    const crossedIdentity = () => listOf(results().messages).find(message => message.message_id === 'crossed_identity') || null;
+    const identityMismatch = () => listOf(results().messages).find(message => message.message_id === 'profile_identity_mismatch') || null;
 
     function initials(person) {
         const first = String(person?.name || '').trim();
@@ -355,9 +388,9 @@
             document.body.appendChild(modal);
             document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeProfile(); });
         }
-        const documents = (person.identification_numbers || []).map(doc => `
+        const documents = listOf(person.identification_numbers).map(doc => `
             <div class="frp-doc"><span>${esc(String(doc.type || '').split(':').pop().toUpperCase())}</span><b>${esc(doc.value)}</b>${doc.validated ? '<i class="fa-solid fa-circle-check" title="Validated"></i>' : ''}</div>`).join('');
-        const addresses = (person.addresses || []).map(address => `
+        const addresses = listOf(person.addresses).map(address => `
             <div class="frp-address"><i class="fa-solid fa-location-dot"></i><span>${esc(addressLine(address) || '—')}${address.title ? ` <em class="frp-tag is-quiet">${esc(address.title)}</em>` : ''}</span>${address.country ? `<img src="${flagUrl(address.country)}" alt="">` : ''}</div>`).join('');
         const flag = crossedIdentity();
         modal.innerHTML = `
@@ -389,8 +422,8 @@
                 <div class="frp-profile-section">
                     <span class="frp-section-label">Contact</span>
                     <div class="frp-fields is-wide">
-                        ${(person.emails || []).map(mail => field('Email', esc(mail))).join('') || field('Email', '')}
-                        ${(person.phones || []).map(phone => field('Phone', esc(phone))).join('') || field('Phone', '')}
+                        ${listOf(person.emails).map(mail => field('Email', esc(mail))).join('') || field('Email', '')}
+                        ${listOf(person.phones).map(phone => field('Phone', esc(phone))).join('') || field('Phone', '')}
                     </div>
                 </div>
                 <div class="frp-profile-section">
@@ -577,8 +610,8 @@
             </article>` : '';
         const sections = FAMILIES.filter(requested).map(family => {
             const lines = family.key === 'investments'
-                ? portfolios().map(folioRow)
-                : productsOf(family.key).map(item => row(family.key, item.product));
+                ? portfolios().map(folio => safely(folioRow, [folio], 'row'))
+                : productsOf(family.key).map(item => safely(row, [family.key, item.product], 'row'));
             if (!lines.length) return '';
             return `
                 <section class="frp-section">
@@ -611,7 +644,7 @@
     const cardOf = {
         accounts: (p) => {
             const head = headline('accounts', p);
-            const holders = (p.holders || []).map(holder => titleCase(holder.name)).filter(Boolean);
+            const holders = listOf(p.holders).map(holder => titleCase(holder.name)).filter(Boolean);
             return productCard({
                 open: `FRP.showAccount('${esc(p.id)}')`,
                 title: nameOf(p, 'Account'),
@@ -622,7 +655,7 @@
                     head?.label !== 'Booked' ? fact('Booked', money(p.booked)) : null,
                     fact('Opened', p.opening_date ? day(p.opening_date) : ''),
                     fact(holders.length > 1 ? 'Holders' : 'Holder', `<span title="${esc(holders.join(', '))}">${esc(holders.join(', '))}</span>`),
-                    fact('Movements', String((p.transactions || []).length)),
+                    fact('Movements', String(listOf(p.transactions).length)),
                 ],
                 foot: go('See movements'),
             });
@@ -686,7 +719,7 @@
         direct_debits: (p) => {
             const charges = chargesOf(p);
             const last = charges[0];
-            const receipt = (p.attachments || []).find(file => file && file.id);
+            const receipt = listOf(p.attachments).find(file => file && file.id);
             const beneficiary = p.beneficiary || {};
             return productCard({
                 title: tidy(beneficiary.name || 'Direct debit'),
@@ -709,7 +742,7 @@
     };
 
     /** A direct debit's charges, newest first. */
-    const chargesOf = (p) => [...(p.transactions || [])].sort((a, b) => String(b.payment_date || b.issue_date || '').localeCompare(String(a.payment_date || a.issue_date || '')));
+    const chargesOf = (p) => [...listOf(p.transactions)].sort((a, b) => String(b.payment_date || b.issue_date || '').localeCompare(String(a.payment_date || a.issue_date || '')));
     const lastCharge = (p) => chargesOf(p)[0] || null;
 
     /** The charges a direct debit produced; the newest carries the receipt the bank gave for it. */
@@ -759,7 +792,7 @@
         const groups = byBank(items).map(group => `
             <section class="frp-bank-group">
                 ${groupHead(group.bank, plural(group.items.length, family.one, family.many))}
-                <div class="frp-cards">${group.items.map(item => cardOf[familyKey](item.product)).join('')}</div>
+                <div class="frp-cards">${group.items.map(item => safely(cardOf[familyKey], [item.product])).join('')}</div>
             </section>`).join('');
         return `<div class="frp-page">${head}${groups}</div>`;
     }
@@ -778,7 +811,7 @@
             return `
                 <section class="frp-bank-group">
                     ${groupHead(group.bank, count)}
-                    <div class="frp-cards">${group.items.map(folioCard).join('')}</div>
+                    <div class="frp-cards">${group.items.map(folio => safely(folioCard, [folio])).join('')}</div>
                 </section>`;
         }).join('');
         return `<div class="frp-page">${head}${groups}</div>`;
@@ -825,7 +858,7 @@
                     <td class="is-num">${total.text ? `<b title="${esc(total.note)}">${total.text}</b>` : ''}</td>
                     <td></td>
                 </tr>
-                ${own.map(product => holdingRow(product, valuedOn)).join('')}`;
+                ${own.map(product => safely(holdingRow, [product, valuedOn], 'tr')).join('')}`;
         }).join('');
         return `
             <div class="frp-holdings">
@@ -872,7 +905,7 @@
 
     /** Who a movement went to or came from, when the bank named them and the descriptions do not. */
     function counterpart(tx) {
-        const said = (tx.descriptions || []).join(' ').toLowerCase();
+        const said = (listOf(tx.descriptions)).join(' ').toLowerCase();
         const fresh = (name) => name && !said.includes(String(name).toLowerCase());
         const income = Number(tx.amount?.amount) > 0;
         if (tx.merchant?.name && fresh(tx.merchant.name)) return `${titleCase(tx.merchant.name)}${tx.merchant.country_code ? ` · ${tx.merchant.country_code}` : ''}`;
@@ -989,7 +1022,7 @@
             const amountValue = Number(tx.amount?.amount);
             const kind = tx.category ? tx.category.split('::').pop().replace(/_/g, ' ') : '';
             const direction = tx.category?.startsWith('income::') ? 'is-in' : tx.category?.startsWith('expenses::') ? 'is-out' : '';
-            const [first, second] = tx.descriptions || [];
+            const [first, second] = listOf(tx.descriptions);
             const who = counterpart(tx);
             return `
                 <tr data-i="${index}">
@@ -1004,13 +1037,13 @@
     }
 
     function find(familyKey, id) {
-        return (data()[familyKey] || []).find(product => String(product.id) === String(id));
+        return listOf(data()[familyKey]).filter(isProduct).find(product => String(product.id) === String(id));
     }
 
     function renderAccount(id) {
         const p = find('accounts', id);
         if (!p) return renderFamily('accounts');
-        const holders = (p.holders || []).map(holder => `
+        const holders = listOf(p.holders).map(holder => `
             <div class="frp-holder"><span class="frp-avatar sm">${esc(initials({ name: holder.name, name_extra: String(holder.name || '').split(' ')[1] }))}</span><div><b>${esc(titleCase(holder.name))}</b><small>${esc(titleCase(holder.role || 'holder'))}${holder.identifier?.value ? ` · ${esc(holder.identifier.value)}` : ''}</small></div></div>`).join('');
         const head = headline('accounts', p);
         return `
@@ -1032,8 +1065,8 @@
                     ])}
                 </section>
                 ${holders ? `<div class="frp-section-head"><span class="frp-section-label"><i class="fa-solid fa-user-group"></i> Holders<em>${p.holders.length}</em></span></div><div class="frp-holders">${holders}</div>` : ''}
-                ${movementsHead(p.transactions || [])}
-                ${movements(p.transactions || [])}
+                ${movementsHead(listOf(p.transactions))}
+                ${movements(listOf(p.transactions))}
             </div>`;
     }
 
@@ -1145,8 +1178,8 @@
                         ])}
                     </div>
                 </section>
-                ${movementsHead(p.transactions || [])}
-                ${movements(p.transactions || [])}
+                ${movementsHead(listOf(p.transactions))}
+                ${movements(listOf(p.transactions))}
             </div>`;
     }
 
@@ -1159,7 +1192,7 @@
         button.setAttribute('aria-expanded', String(open));
     }
 
-    const attachmentOf = (id) => (data().direct_debits || []).flatMap(p => p.attachments || []).find(file => String(file?.id) === String(id)) || null;
+    const attachmentOf = (id) => listOf(data().direct_debits).filter(isProduct).flatMap(p => listOf(p.attachments)).find(file => String(file?.id) === String(id)) || null;
 
     /** The receipts already fetched: the API serves a document once every 5 seconds, so a second look is free. */
     const receipts = new Map();
@@ -1244,11 +1277,18 @@
 
     // ---------------------------------------------------------------- what the page calls
 
+    /** What a view becomes when it cannot be drawn at all: a word about it, never a blank page. */
+    const undrawn = () => `<div class="frp-page">${emptyState('fa-solid fa-triangle-exclamation', 'This view could not be drawn', 'The results came in a shape this demo does not expect. RAW JSON shows them as they are.')}</div>`;
+
     /** Draws a view into the page's root; true when this module drew it. */
     function render(view, root) {
-        if (view === 'overview') root.innerHTML = renderOverview();
-        else if (FAMILIES.some(f => f.key === view)) root.innerHTML = renderFamily(view);
-        else return false;
+        if (view !== 'overview' && !FAMILIES.some(f => f.key === view)) return false;
+        try {
+            root.innerHTML = view === 'overview' ? renderOverview() : renderFamily(view);
+        } catch (error) {
+            console.warn(`Financial Rider position: the ${view} view could not be drawn`, error);
+            root.innerHTML = undrawn();
+        }
         renderIdentityBanner();
         return true;
     }
@@ -1257,7 +1297,12 @@
         FR_RESULTS.view = familyKey;
         markNav(familyKey);
         const root = document.getElementById('dashboard-view-root');
-        root.innerHTML = draw(id);
+        try {
+            root.innerHTML = draw(id);
+        } catch (error) {
+            console.warn(`Financial Rider position: a ${familyKey} page could not be drawn`, error);
+            root.innerHTML = undrawn();
+        }
         renderIdentityBanner();
         root.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }
@@ -1281,6 +1326,7 @@
         markNav,
         showAccount: (id) => showDetail('accounts', id, renderAccount),
         showCard: (id) => showDetail('cards', id, renderCard),
+        stamp,
         searchMovements,
         clearSearch,
         toggleCharges,
