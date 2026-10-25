@@ -1,0 +1,64 @@
+/*
+ * session-ending.css
+ * Where a demo session ends (js/session-ending.js): a tile per preset, the chosen one's panel under
+ * them and the summary on the Advanced header — the same in every flow's New Lead. Its colours are
+ * the page's theme (--primary, --primary-container).
+ */
+.se-preset { display: block; cursor: pointer; }
+.se-preset.hidden { display: none; }
+.se-preset-face { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; height: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.1); background: #fff; transition: all 150ms; }
+.se-preset-face > i { font-size: 15px; color: #94a3b8; margin-bottom: 3px; }
+.se-preset-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; color: #334155; }
+.se-preset-hint { font-size: 9px; font-weight: 600; color: #64748b; }
+.se-preset:hover .se-preset-face { border-color: rgba(0,0,0,0.25); }
+.se-preset input:checked + .se-preset-face { border-color: var(--primary); background: var(--primary-container); box-shadow: 0 0 12px var(--primary-container); }
+.se-preset input:checked + .se-preset-face > i { color: var(--primary); }
+.se-preset input:focus-visible + .se-preset-face { outline: 2px solid var(--primary); outline-offset: 2px; }
+.se-preset[data-preset="whatsapp"] .se-preset-face > i { color: #25d366; }
+.se-preset.is-unavailable .se-preset-face { border-style: dashed; background: #f8fafc; }
+.se-preset.is-unavailable .se-preset-face > i, .se-preset.is-unavailable .se-preset-title { color: #94a3b8; }
+.se-preset.is-unavailable .se-preset-hint { color: #b45309; }
+
+.se-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 16px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.05); }
+.se-panel.hidden, #se-redirect-form.hidden, #se-redirect-none.hidden, #se-wa-form.hidden, #se-wa-setup.hidden { display: none; }
+.se-panel-text { font-size: 11px; line-height: 1.55; color: #475569; font-weight: 500; }
+.se-panel-hint { font-size: 9px; line-height: 1.45; color: #64748b; font-weight: 500; }
+.se-panel-text code, .se-panel-hint code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; padding: 1px 5px; border-radius: 5px; background: #e9eef5; color: #0f172a; white-space: nowrap; }
+.se-field-label { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+.se-input { width: 100%; background: #fff; border: 1px solid #e2e8f0; color: #334155; font-size: 11px; border-radius: 12px; padding: 9px 12px; outline: none; transition: all 150ms; }
+.se-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-container); }
+.se-code { margin: 0; padding: 10px 12px; border-radius: 12px; background: #1e222a; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; line-height: 1.55; overflow-x: auto; white-space: pre; }
+
+/* A way into the docs, named in full */
+.se-doc-link { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 9999px; background: var(--primary-container); color: var(--primary); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; transition: filter 150ms; }
+.se-doc-link:hover { filter: brightness(0.94); }
+
+/* Same tab or a new one */
+.se-segment-face { display: flex; align-items: center; justify-content: center; min-width: 40px; padding: 7px 12px; font-size: 11px; font-weight: 900; color: #64748b; border-radius: 10px; transition: all 150ms; }
+.se-segment input:checked + .se-segment-face { background: #fff; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.se-segment input:focus-visible + .se-segment-face { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Where the person lands, as the platform builds it */
+.se-preview { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 12px; background: #fff; border: 1px dashed rgba(0,0,0,0.12); }
+.se-preview > span { font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+.se-preview > code { font-size: 10px; line-height: 1.5; color: #0f172a; word-break: break-all; }
+.se-preview > code .se-var-inline { color: var(--primary); font-weight: 800; }
+.se-preview-open { position: relative; padding-right: 44px; }
+.se-preview-go { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--primary-container); color: var(--primary); font-size: 10px; transition: filter 150ms; }
+.se-preview-go:hover { filter: brightness(0.94); }
+
+/* The WhatsApp number: the country's flag and code, then the number */
+.se-phone { display: flex; align-items: center; border-radius: 12px; border: 1px solid #e2e8f0; background: #fff; overflow: hidden; transition: all 150ms; }
+.se-phone:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-container); }
+.se-phone.is-invalid { border-color: #f59e0b; }
+.se-phone-flag { width: 20px; height: 20px; margin-left: 12px; flex-shrink: 0; }
+.se-phone select { border: none; background: transparent; font-size: 11px; font-weight: 800; color: #334155; padding: 9px 2px 9px 6px; outline: none; cursor: pointer; }
+.se-phone input { flex: 1; min-width: 0; border: none; border-left: 1px solid #e2e8f0; padding: 9px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 700; color: #0f172a; letter-spacing: 0.03em; outline: none; background: transparent; }
+.se-var { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: #e9eef5; color: #475569; border: 1px solid transparent; transition: all 150ms; }
+.se-var:hover { border-color: var(--primary); color: var(--primary); background: #fff; }
+.se-wa-badge { width: 40px; height: 40px; border-radius: 12px; background: #25d366; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 6px 16px rgba(37, 211, 102, 0.35); }
+
+/* The chosen ending, on the Advanced header: seen without opening the section */
+.se-summary { display: inline-flex; align-items: center; gap: 6px; max-width: 180px; padding: 4px 10px; border-radius: 9999px; background: var(--primary-container); color: var(--primary); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.se-summary.is-warning { background: #fef3c7; color: #b45309; }
+.se-summary:empty { display: none; }

@@ -1,0 +1,55 @@
+/*
+ * results-rail.css
+ * The rail a results page steers its views with: a list on the page's own ground beside the view
+ * on a wide screen, a strip of tabs over it on a narrow one. No card around it — it is the page's
+ * navigation, not one more piece of content. The active view is a white chip with the theme's
+ * accent; each family may carry a count (an empty <em> shows nothing).
+ */
+
+.frp-shell, .frp-rail-wrap { min-width: 0; }
+/* one column under 1024px: the strip of tabs scrolls, it never widens the page */
+#dashboardContainer.frp-shell { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1024px) {
+    #dashboardContainer.frp-shell:not(.hidden) { display: grid; grid-template-columns: 216px minmax(0, 1fr); column-gap: 40px; align-items: start; }
+    .frp-rail { position: sticky; top: 116px; }
+}
+
+.frp-rail { display: flex; flex-direction: column; gap: 2px; }
+.frp-rail-label { margin: 4px 0 6px; padding: 0 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #94a3b8; }
+.frp-rail-rule { height: 1px; margin: 14px 12px 10px; background: rgba(15, 23, 42, 0.08); }
+.frp-rail-item { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border-radius: 12px; text-align: left; font-size: 13px; font-weight: 600; color: #475569; transition: background 150ms, color 150ms, box-shadow 150ms; }
+.frp-rail-item > i { width: 18px; flex-shrink: 0; text-align: center; font-size: 14px; color: #94a3b8; transition: color 150ms; }
+.frp-rail-item > span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-rail-item > em { flex-shrink: 0; min-width: 22px; padding: 1px 7px; border-radius: 9999px; background: rgba(15, 23, 42, 0.06); color: #64748b; font-size: 11px; font-weight: 700; font-style: normal; text-align: center; font-variant-numeric: tabular-nums; }
+.frp-rail-item > em:empty { display: none; }
+.frp-rail-item:hover { background: rgba(15, 23, 42, 0.04); color: #0f172a; }
+.frp-rail-item:hover > i { color: #475569; }
+.frp-rail-item.is-active { background: #fff; color: #0f172a; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.05), 0 8px 20px rgba(15, 23, 42, 0.05); }
+.frp-rail-item.is-active > i { color: var(--primary); }
+.frp-rail-item.is-active::before { content: ''; position: absolute; left: -10px; top: 10px; bottom: 10px; width: 3px; border-radius: 9999px; background: var(--primary); }
+.frp-rail-item.is-active > em { background: var(--primary-container); color: var(--primary); }
+/* a family the session holds nothing of: still there, quieter */
+.frp-rail-item.is-empty:not(.is-active) { color: #94a3b8; }
+.frp-rail-item.is-empty:not(.is-active) > i { color: #cbd5e1; }
+
+/* a narrow screen: the same views as a strip of tabs that scrolls sideways, its edges fading out */
+@media (max-width: 1023px) {
+    .frp-rail { flex-direction: row; gap: 6px; overflow-x: auto; margin: 0 -12px; padding: 2px 12px 8px; scrollbar-width: none;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent); }
+    .frp-rail::-webkit-scrollbar { display: none; }
+    .frp-rail-label, .frp-rail-rule { display: none; }
+    .frp-rail-item { flex-shrink: 0; width: auto; gap: 8px; padding: 7px 12px; border-radius: 9999px; background: #fff; border: 1px solid rgba(0, 0, 0, 0.07); font-size: 12px; }
+    .frp-rail-item > i { width: auto; font-size: 12px; }
+    .frp-rail-item > span { overflow: visible; }
+    .frp-rail-item.is-active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.28); }
+    .frp-rail-item.is-active > i { color: #fff; }
+    .frp-rail-item.is-active::before { display: none; }
+    .frp-rail-item.is-active > em { background: rgba(255, 255, 255, 0.22); color: #fff; }
+}
+@media (max-width: 767px) {
+    /* the strip runs to the screen's edges, past the page's gutter */
+    .frp-rail { margin: 0 -16px; padding-left: 16px; padding-right: 16px;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent); }
+}

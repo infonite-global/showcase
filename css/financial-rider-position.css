@@ -1,0 +1,430 @@
+/*
+ * financial-rider-position.css
+ * A Financial Rider session's results drawn as a bank's global position (js/financial-rider-position.js).
+ * Titles and labels sit on the page's own ground; a card holds one product, one list or one table,
+ * never another card. Amounts are set like a statement: tabular figures, flush right, one size per
+ * role. Colours are the page's theme (--primary, --primary-container, --primary-rgb); a card's
+ * plastic takes its bank's when the catalogue declares them.
+ */
+
+/* ---- the bar over every view: the bank filter, and the person ---- */
+#bankFilter.frp-ready, #bankFilter { gap: 12px; }
+.frp-bar-banks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
+.frp-bar-label { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-right: 2px; }
+.frp-me { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; margin-left: auto; padding: 4px 12px 4px 4px; border-radius: 9999px; background: #fff; border: 1px solid rgba(0,0,0,0.08); color: #334155; font-size: 12px; font-weight: 800; box-shadow: 0 1px 2px rgba(15,23,42,0.05); transition: all 150ms; }
+.frp-me:hover { border-color: var(--primary); box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.18); }
+.frp-me > i { font-size: 9px; color: #94a3b8; }
+.frp-me-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frp-avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 9999px; background: var(--primary); color: #fff; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; flex-shrink: 0; }
+.frp-avatar.sm { width: 28px; height: 28px; font-size: 10px; background: var(--primary-container); color: var(--primary); }
+.frp-avatar.lg { width: 64px; height: 64px; font-size: 22px; box-shadow: 0 10px 24px rgba(var(--primary-rgb), 0.3); }
+.frp-avatar-alert { position: absolute; right: -3px; top: -3px; width: 15px; height: 15px; border-radius: 9999px; background: #f59e0b; color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+
+/* ---- the banner a crossed identity raises on every screen ---- */
+.frp-identity { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 18px; background: #fffbeb; border: 1px solid #fcd34d; box-shadow: 0 6px 18px rgba(245, 158, 11, 0.12); }
+.frp-identity.hidden { display: none; }
+.frp-identity-icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: #f59e0b; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.frp-identity-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.frp-identity-text strong { font-size: 12px; font-weight: 900; color: #92400e; text-transform: uppercase; letter-spacing: 0.06em; }
+.frp-identity-text span { font-size: 12px; font-weight: 600; color: #78350f; line-height: 1.45; }
+.frp-identity-text small { font-size: 11px; color: #a16207; line-height: 1.4; }
+.frp-identity-link { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9999px; background: #fff; border: 1px solid #fcd34d; color: #92400e; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; transition: all 150ms; }
+.frp-identity-link:hover { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+.frp-identity.is-inline { box-shadow: none; }
+
+/* ---- a page: its head on the ground, then its sections ---- */
+.frp-page { display: flex; flex-direction: column; gap: 18px; animation: frp-in 220ms ease-out; }
+@keyframes frp-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.frp-head { display: flex; align-items: center; gap: 14px; padding: 4px 2px 2px; }
+.frp-head-icon { width: 46px; height: 46px; border-radius: 15px; background: var(--primary-container); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.frp-eyebrow { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; color: var(--primary); }
+.frp-title { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; line-height: 1.15; }
+.frp-sub { font-size: 13px; font-weight: 500; color: #64748b; margin-top: 3px; }
+.frp-section { display: flex; flex-direction: column; gap: 10px; }
+.frp-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 2px; margin-top: 4px; }
+.frp-section-label { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #334155; }
+.frp-section-label i { color: var(--primary); }
+.frp-section-label em { font-style: normal; padding: 1px 8px; border-radius: 9999px; background: #e2e8f0; color: #475569; font-size: 10px; letter-spacing: 0; text-transform: none; }
+.frp-link { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: var(--primary); }
+.frp-link i { font-size: 9px; transition: transform 150ms; }
+.frp-link:hover i { transform: translateX(2px); }
+.frp-muted { font-size: 12px; color: #94a3b8; font-weight: 500; }
+
+/* ---- how numbers are set: identifiers in mono, amounts in tabular figures ---- */
+.frp-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; letter-spacing: 0.02em; }
+.frp-dot { display: inline-block; width: 3px; height: 3px; border-radius: 9999px; background: #cbd5e1; flex-shrink: 0; }
+.is-positive { color: #059669 !important; }
+.is-negative { color: #e11d48 !important; }
+
+/* ---- logos ---- */
+.frp-logo { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 11px; background: #fff; border: 1px solid rgba(0,0,0,0.06); overflow: hidden; color: #cbd5e1; }
+.frp-logo img { width: 100%; height: 100%; object-fit: contain; }
+.frp-logo.lg { width: 52px; height: 52px; border-radius: 16px; font-size: 20px; }
+.frp-logo.sm { width: 28px; height: 28px; border-radius: 9px; font-size: 12px; }
+.frp-logo.xs { width: 18px; height: 18px; border-radius: 6px; font-size: 9px; }
+.frp-logo.is-unknown { background: #fffbeb; border-color: #fde68a; color: #d97706; }
+
+/* ---- the global position: the banks, then every family as a list ---- */
+/* two columns at most: a bank with many products grows in width, not into a tower */
+.frp-banks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.frp-bank { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 22px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 8px 22px rgba(15,23,42,0.05); transition: all 150ms; }
+.frp-bank.is-on { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-container), 0 8px 22px rgba(15,23,42,0.05); }
+.frp-bank.is-unknown { background: #fffbeb; border-color: #fde68a; box-shadow: none; }
+.frp-bank-head { display: flex; align-items: center; gap: 12px; }
+.frp-bank-head b { display: block; font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-bank-head small { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; color: #64748b; }
+.frp-bank-head small img { width: 14px; height: 14px; }
+.frp-bank-counts { display: flex; flex-wrap: wrap; gap: 6px; }
+.frp-count { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; background: var(--primary-container); color: var(--primary); font-size: 11px; font-weight: 800; }
+.frp-count i { font-size: 10px; }
+.frp-bank-action { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; transition: all 150ms; }
+.frp-bank-action:hover { background: var(--primary); color: #fff; }
+
+.frp-list { display: flex; flex-direction: column; border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); overflow: hidden; }
+.frp-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 18px; text-align: left; transition: background 150ms; }
+.frp-row + .frp-row { border-top: 1px solid #f1f5f9; }
+.frp-row:hover { background: #f8fafc; }
+.frp-row-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.frp-row-main > b { font-size: 14px; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-row-main > small { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: #64748b; min-width: 0; white-space: nowrap; overflow: hidden; }
+.frp-row-main > small > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.frp-row-main > small > span:not(.frp-mono) { flex-shrink: 0; }
+.frp-row-figure { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0; }
+.frp-row-figure b { font-size: 15px; font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; white-space: nowrap; }
+.frp-row-figure small { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+.frp-row-go { font-size: 11px; color: #cbd5e1; transition: all 150ms; }
+.frp-row:hover .frp-row-go { color: var(--primary); transform: translateX(2px); }
+
+/* a portfolio's line: what it holds, kind by kind */
+.frp-comps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.frp-comp { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 9999px; background: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.frp-comp i { font-size: 10px; color: var(--primary); }
+.frp-comp b { margin-left: 2px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; }
+.frp-comp.is-empty { background: transparent; padding-left: 0; color: #94a3b8; }
+.frp-comp.is-empty i { color: #cbd5e1; }
+
+/* ---- a family: bank by bank, one card per product ---- */
+.frp-bank-group { display: flex; flex-direction: column; gap: 10px; }
+.frp-group { display: flex; align-items: center; gap: 10px; padding: 6px 2px 0; }
+.frp-group b { flex-shrink: 0; font-size: 13px; font-weight: 900; color: #0f172a; white-space: nowrap; }
+.frp-group small { min-width: 0; font-size: 11px; font-weight: 700; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-group-rule { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(15,23,42,0.12), transparent); }
+.frp-cards { display: flex; flex-direction: column; gap: 10px; }
+
+.frp-card { --pad-x: 20px; --pad-y: 18px; position: relative; display: flex; flex-direction: column; gap: 14px; padding: var(--pad-y) var(--pad-x); border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); transition: border-color 150ms, box-shadow 150ms; }
+.frp-card.is-link { cursor: pointer; }
+.frp-card.is-link:hover { border-color: rgba(var(--primary-rgb), 0.45); box-shadow: 0 10px 26px rgba(var(--primary-rgb), 0.12); }
+.frp-card-head { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
+.frp-card-id { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
+/* the name gives way, never its tags: a long name ends in an ellipsis and says itself on hover */
+.frp-card-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.frp-card-title h3 { flex: 0 1 auto; min-width: 0; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-card-title .frp-tag { flex-shrink: 0; }
+.frp-card-sub { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; overflow: hidden; }
+.frp-card-sub > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.frp-card-sub > span:first-child { flex-shrink: 0; max-width: 100%; }
+
+.frp-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 7px; background: #eef2ff; color: #4338ca; font-size: 9px; font-weight: 900; font-style: normal; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+.frp-tag.is-quiet, .frp-tag.is-off { background: #f1f5f9; color: #64748b; }
+.frp-tag.is-ok { background: #ecfdf5; color: #047857; }
+.frp-tag.is-warn { background: #fffbeb; color: #b45309; }
+.frp-tag.is-bad { background: #fff1f2; color: #be123c; }
+
+/* the figure a family is read by: label over amount, flush right */
+.frp-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; text-align: right; }
+.frp-amount small { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+.frp-amount b { font-size: 22px; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.frp-amount span { font-size: 11px; font-weight: 600; color: #94a3b8; }
+
+/* the rest of what the bank said: one row of facts, one size for every value */
+/* auto-fit: three facts share the row in thirds, five in fifths — never a gap at the end */
+.frp-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px 24px; margin: 0; padding-top: 14px; border-top: 1px solid #f1f5f9; }
+.frp-facts > div { min-width: 0; }
+.frp-facts dt { margin-bottom: 3px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+.frp-facts dd { margin: 0; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.frp-facts dd > span { display: block; font-size: 13px; font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-facts dd > small { font-size: 11px; font-weight: 500; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* a statement: label left, value flush right */
+.frp-ledger { display: flex; flex-direction: column; margin: 0; min-width: 0; }
+.frp-ledger > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 8px 0; border-top: 1px solid #f1f5f9; min-width: 0; }
+.frp-ledger > div:first-child { border-top: none; }
+.frp-ledger dt { flex-shrink: 0; font-size: 12px; font-weight: 600; color: #64748b; }
+.frp-ledger dd { margin: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 0; text-align: right; }
+.frp-ledger dd > span { max-width: 100%; font-size: 14px; font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-ledger dd > small { font-size: 11px; font-weight: 500; color: #94a3b8; }
+.frp-ledger > div.is-main { padding-bottom: 10px; }
+.frp-ledger > div.frp-ledger-meter { display: block; padding: 0 0 12px; border-top: none; }
+.frp-ledger > div.is-main dt { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #334155; }
+.frp-ledger > div.is-main dd > span { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+
+/* how far along a product is: a loan's repayment, a credit card's use of its limit */
+.frp-meter { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.frp-meter-bar { position: relative; height: 8px; border-radius: 9999px; background: #eef2f6; overflow: hidden; }
+.frp-meter-bar span { position: absolute; inset: 0 auto 0 0; min-width: 4px; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 65%, #fff), var(--primary)); transition: width 400ms ease-out; }
+.frp-meter.is-zero .frp-meter-bar span { min-width: 0; }
+.frp-meter.is-mid .frp-meter-bar span { background: linear-gradient(90deg, #fcd34d, #f59e0b); }
+.frp-meter.is-high .frp-meter-bar span { background: linear-gradient(90deg, #fb7185, #e11d48); }
+.frp-meter-legend { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; font-weight: 600; color: #64748b; font-variant-numeric: tabular-nums; }
+.frp-meter-legend b { font-weight: 800; color: #0f172a; }
+.frp-meter-legend span:last-child:not(:first-child) { text-align: right; }
+
+.frp-inline-link { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; color: var(--primary); font-weight: 700; text-align: left; }
+.frp-inline-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frp-inline-link i { font-size: 8px; transition: transform 150ms; }
+.frp-inline-link:hover span { text-decoration: underline; }
+.frp-inline-link:hover i { transform: translateX(2px); }
+
+.frp-card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+.frp-facts + .frp-card-foot { padding-top: 0; border-top: none; }
+.frp-card-go { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--primary); }
+.frp-card-go i { font-size: 9px; transition: transform 150ms; }
+.frp-card.is-link:hover .frp-card-go i { transform: translateX(3px); }
+
+/* ---- a direct debit: its last concept, its charges, its receipt ---- */
+.frp-concept { margin: 0; padding: 1px 0 1px 12px; border-left: 2px solid rgba(var(--primary-rgb), 0.35); font-size: 12px; font-weight: 500; color: #334155; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-concept span { margin-right: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+.frp-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; font-weight: 700; color: #475569; transition: color 150ms; }
+.frp-toggle i { font-size: 9px; color: #94a3b8; transition: transform 150ms; }
+.frp-toggle:hover { color: var(--primary); }
+.frp-toggle:disabled { cursor: default; color: #94a3b8; }
+.frp-card.is-open .frp-toggle i { transform: rotate(90deg); color: var(--primary); }
+.frp-receipt { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 9999px; border: 1px solid rgba(var(--primary-rgb), 0.35); background: #fff; color: var(--primary); font-size: 11px; font-weight: 800; white-space: nowrap; transition: all 150ms; }
+.frp-receipt:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+.frp-receipt .fa-download { font-size: 10px; opacity: 0.8; }
+.frp-receipt.is-busy, .frp-clip.is-busy { opacity: 0.7; pointer-events: none; }
+.frp-receipt.is-error { background: #fff1f2; border-color: #fda4af; color: #be123c; }
+.frp-charges { display: none; margin: 0 calc(-1 * var(--pad-x)) calc(-1 * var(--pad-y)); border-top: 1px solid #f1f5f9; border-radius: 0 0 20px 20px; overflow-x: auto; }
+.frp-card.is-open .frp-charges { display: block; }
+.frp-charges .frp-table th:first-child, .frp-charges .frp-table td:first-child { padding-left: var(--pad-x); }
+.frp-charges .frp-table th:last-child, .frp-charges .frp-table td:last-child { padding-right: var(--pad-x); }
+.frp-charge-concept { min-width: 220px; font-size: 12px; font-weight: 500; color: #334155; line-height: 1.5; overflow-wrap: anywhere; }
+.frp-charges .frp-tx-amount b { display: inline-block; vertical-align: middle; }
+.frp-clip { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; margin-left: 8px; border-radius: 8px; background: var(--primary-container); color: var(--primary); font-size: 11px; vertical-align: middle; transition: all 150ms; }
+.frp-clip:hover { background: var(--primary); color: #fff; }
+.frp-clip.is-error { background: #fff1f2; color: #be123c; }
+
+/* ---- investments: a securities account and what it holds ---- */
+.frp-folio-icon { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: var(--primary-container); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.frp-folio.is-loose .frp-folio-icon { background: #f1f5f9; color: #64748b; }
+.frp-folio-empty { display: flex; align-items: center; gap: 8px; margin: 0; padding-top: 12px; border-top: 1px solid #f1f5f9; font-size: 12px; font-weight: 500; color: #94a3b8; }
+.frp-holdings { margin: 0 calc(-1 * var(--pad-x)) calc(-1 * var(--pad-y)); border-top: 1px solid #f1f5f9; border-radius: 0 0 20px 20px; overflow-x: auto; }
+/* fixed columns, so every table on the page puts its figures in the same place */
+.frp-holdings table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.frp-holdings col.frp-col-qty { width: 100px; }
+.frp-holdings col.frp-col-price { width: 124px; }
+.frp-holdings col.frp-col-value { width: 132px; }
+.frp-holdings col.frp-col-gain { width: 132px; }
+.frp-holdings th { padding: 10px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; text-align: left; white-space: nowrap; background: #f8fafc; }
+.frp-holdings td { padding: 12px 14px; border-top: 1px solid #f1f5f9; vertical-align: top; }
+.frp-holdings th:first-child, .frp-holdings td:first-child { padding-left: var(--pad-x); }
+.frp-holdings th:last-child, .frp-holdings td:last-child { padding-right: var(--pad-x); }
+.frp-holdings .is-num { text-align: right; }
+.frp-holdings td b { display: block; font-size: 13px; font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.frp-holdings td b.is-plain { font-weight: 500; color: #475569; }
+.frp-holdings td small { display: block; margin-top: 2px; font-size: 11px; font-weight: 500; color: #94a3b8; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* the holding's name takes what the figures leave, and gives way with an ellipsis */
+.frp-h-name b, .frp-h-name small { overflow: hidden; text-overflow: ellipsis; }
+.frp-holdings small.frp-h-units { display: none; }
+.frp-kind-row td { padding-top: 8px; padding-bottom: 8px; background: #fcfdfe; vertical-align: middle; }
+.frp-kind { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #475569; white-space: nowrap; }
+.frp-kind i { color: var(--primary); font-size: 11px; }
+.frp-kind em { font-style: normal; padding: 0 7px; border-radius: 9999px; background: #e2e8f0; color: #475569; font-size: 10px; letter-spacing: 0; }
+.frp-kind-row td b { font-size: 12px; font-weight: 700; color: #334155; }
+
+/* ---- an account's or a card's own page ---- */
+.frp-crumbs { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #94a3b8; min-width: 0; }
+.frp-crumbs button { display: inline-flex; align-items: center; gap: 7px; color: var(--primary); font-weight: 800; flex-shrink: 0; }
+.frp-crumbs button i { font-size: 10px; transition: transform 150ms; }
+.frp-crumbs button:hover i { transform: translateX(-2px); }
+.frp-crumbs b { color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); align-items: center; gap: 20px 40px; padding: 24px 26px; border-radius: 24px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 10px 28px rgba(15,23,42,0.06); }
+.frp-hero.is-card { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+.frp-hero-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.frp-hero-bank { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 800; color: #475569; }
+.frp-hero-tags { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto; }
+/* on its own page the name is never cut: it may take two lines, the tags sit beside the bank */
+.frp-hero-title { margin: 0; font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; color: #0f172a; overflow-wrap: anywhere; }
+.frp-hero-desc { margin: 0; font-size: 12px; font-weight: 600; color: #64748b; }
+.frp-hero-number { font-size: 14px; font-weight: 600; color: #475569; word-break: break-all; }
+.frp-hero.is-card .frp-ledger { margin-top: 8px; }
+.frp-hero-plastic { display: flex; flex-direction: column; gap: 14px; width: 320px; max-width: 100%; }
+.frp-hero-aside { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; min-width: 0; }
+.frp-hero-aside > span { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+.frp-hero-aside > div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; font-size: 13px; font-weight: 600; color: #0f172a; }
+.frp-hero-aside .frp-mono { flex-shrink: 0; font-size: 12px; color: #94a3b8; }
+
+/* the plastic: the app's colours, or its bank's when the catalogue declares them (set inline) */
+.frp-plastic { --plastic-from: var(--primary); --plastic-to: color-mix(in srgb, var(--primary) 45%, #0f172a); --plastic-ink: #fff; --plastic-glow: rgba(var(--primary-rgb), 0.35);
+    position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; width: 320px; max-width: 100%; aspect-ratio: 1.586; padding: 18px 20px; border-radius: 18px; color: var(--plastic-ink); background: linear-gradient(135deg, var(--plastic-from), var(--plastic-to)); box-shadow: 0 18px 36px var(--plastic-glow), inset 0 0 0 1px rgba(255,255,255,0.1); }
+.frp-plastic::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 90% at 0% 0%, rgba(255,255,255,0.22), transparent 55%), radial-gradient(90% 70% at 100% 100%, rgba(0,0,0,0.2), transparent 60%); }
+.frp-plastic.is-light::before { background: radial-gradient(120% 90% at 0% 0%, rgba(255,255,255,0.4), transparent 55%), radial-gradient(90% 70% at 100% 100%, rgba(0,0,0,0.08), transparent 60%); }
+.frp-plastic-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; }
+.frp-plastic-logo { height: 22px; width: auto; max-width: 160px; object-fit: contain; object-position: left center; }
+.frp-plastic.is-dark .frp-plastic-logo:not(.is-plate) { filter: brightness(0) invert(1); }
+.frp-plastic.is-light .frp-plastic-logo:not(.is-plate) { filter: brightness(0); opacity: 0.85; }
+.frp-plastic-logo.is-plate { height: 28px; padding: 4px 8px; border-radius: 7px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+.frp-plastic-name { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-plastic-kind { flex-shrink: 0; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.16em; opacity: 0.85; }
+.frp-plastic-chip { display: flex; align-items: center; gap: 10px; }
+.frp-plastic-chip span { position: relative; width: 38px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #f6e9b8, #d6b663 45%, #f1dd98 70%, #b9953f); box-shadow: inset 0 0 0 1px rgba(120, 90, 20, 0.35); }
+.frp-plastic-chip span::after { content: ''; position: absolute; inset: 6px 10px; border: 1px solid rgba(120, 90, 20, 0.45); border-radius: 3px; }
+.frp-plastic-chip i { font-size: 15px; transform: rotate(90deg); opacity: 0.8; }
+.frp-plastic-number { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; font-weight: 600; letter-spacing: 0.1em; white-space: nowrap; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
+.frp-plastic.is-light .frp-plastic-number { text-shadow: none; }
+.frp-plastic-bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.frp-plastic-exp { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; }
+.frp-plastic-exp small { max-width: 30px; font-family: 'Inter', sans-serif; font-size: 7px; font-weight: 800; line-height: 1.05; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; }
+.frp-plastic-holder { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-plastic-brand { flex-shrink: 0; font-family: 'Outfit', sans-serif; font-size: 20px; font-style: italic; font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
+.frp-plastic-mc { display: inline-flex; flex-shrink: 0; }
+.frp-plastic-mc i { width: 26px; height: 26px; border-radius: 9999px; background: #eb001b; }
+.frp-plastic-mc i + i { margin-left: -10px; background: #f79e1b; opacity: 0.9; }
+
+.frp-holders { display: flex; flex-wrap: wrap; gap: 10px; }
+.frp-holder { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border-radius: 9999px; background: #fff; border: 1px solid rgba(0,0,0,0.06); }
+.frp-holder b { display: block; font-size: 12px; font-weight: 800; color: #0f172a; }
+.frp-holder small { display: block; font-size: 10px; font-weight: 600; color: #94a3b8; }
+
+/* ---- movements and charges ---- */
+.frp-table-card { border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); overflow-x: auto; }
+.frp-table { width: 100%; border-collapse: collapse; }
+.frp-table th { padding: 12px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; text-align: left; background: #f8fafc; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+.frp-table td { padding: 12px 16px; vertical-align: top; border-bottom: 1px solid #f1f5f9; }
+.frp-table tr:last-child td { border-bottom: none; }
+.frp-table tbody tr:hover { background: #fafbfc; }
+.frp-table td b { display: block; font-size: 13px; font-weight: 700; color: #0f172a; }
+.frp-table td small { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.frp-tx-date { white-space: nowrap; width: 1%; }
+.frp-tx-date b { font-size: 12px !important; font-weight: 600 !important; font-variant-numeric: tabular-nums; }
+.frp-tx-what { max-width: 360px; }
+.frp-tx-what b, .frp-tx-what small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frp-tx-what small.frp-tx-who { color: #64748b; }
+.frp-tx-what small.frp-tx-when { display: none; color: #64748b; font-variant-numeric: tabular-nums; }
+.frp-tx-kind { white-space: nowrap; width: 1%; }
+.frp-cat { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 9999px; background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; }
+.frp-cat.is-in, .frp-cat.is-ok { background: #ecfdf5; color: #047857; }
+.frp-cat.is-out, .frp-cat.is-bad { background: #fff1f2; color: #be123c; }
+.frp-cat.is-warn { background: #fffbeb; color: #b45309; }
+.frp-tx-amount { text-align: right; white-space: nowrap; width: 1%; }
+.frp-tx-amount b { font-variant-numeric: tabular-nums; }
+.frp-tx-amount small { font-variant-numeric: tabular-nums; }
+
+/* the search over an account's or a card's movements */
+.frp-section-head.is-search { flex-wrap: wrap; row-gap: 10px; }
+.frp-search { position: relative; display: flex; align-items: center; flex: 0 1 300px; min-width: 0; }
+.frp-search > i { position: absolute; left: 13px; font-size: 12px; color: #94a3b8; pointer-events: none; }
+.frp-search input { width: 100%; height: 36px; padding: 0 34px; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.08); background: #fff; font-size: 12px; font-weight: 600; color: #0f172a; outline: none; box-shadow: 0 1px 2px rgba(15,23,42,0.04); transition: border-color 150ms, box-shadow 150ms; }
+.frp-search input::placeholder { font-weight: 500; color: #94a3b8; }
+.frp-search input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-container); }
+.frp-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.frp-search-clear { position: absolute; right: 6px; display: none; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 9999px; font-size: 11px; color: #64748b; transition: all 150ms; }
+.frp-search-clear:hover { background: #f1f5f9; color: #0f172a; }
+.frp-search.is-filled .frp-search-clear { display: flex; }
+.frp-search.is-filled > i { color: var(--primary); }
+.frp-tx-none td { padding: 28px 16px !important; text-align: center; font-size: 12px; font-weight: 600; color: #94a3b8; }
+.frp-tx-none i { margin-right: 8px; }
+
+/* ---- an empty or unrequested family ---- */
+.frp-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 56px 24px; text-align: center; border-radius: 24px; border: 1px dashed rgba(15,23,42,0.12); }
+.frp-empty > span { width: 54px; height: 54px; border-radius: 18px; background: #f1f5f9; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 4px; }
+.frp-empty b { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: #334155; }
+.frp-empty p { font-size: 13px; color: #64748b; max-width: 360px; }
+
+/* ---- the profile, over the position ---- */
+.frp-modal { position: fixed; inset: 0; z-index: 900; display: none; align-items: flex-start; justify-content: center; padding: 64px 16px 24px; overflow-y: auto; background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(6px); }
+.frp-modal.is-open { display: flex; animation: frp-fade 160ms ease-out; }
+@keyframes frp-fade { from { opacity: 0; } to { opacity: 1; } }
+.frp-modal-panel { position: relative; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 18px; padding: 26px; border-radius: 28px; background: #fff; box-shadow: 0 30px 80px rgba(15,23,42,0.25); animation: frp-in 220ms ease-out; }
+.frp-modal-close { position: absolute; right: 16px; top: 16px; width: 34px; height: 34px; border-radius: 9999px; background: #f1f5f9; color: #475569; display: flex; align-items: center; justify-content: center; transition: all 150ms; }
+.frp-modal-close:hover { background: #0f172a; color: #fff; }
+.frp-profile-head { display: flex; align-items: center; gap: 16px; padding-right: 40px; }
+.frp-profile-head h3 { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+.frp-profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.frp-profile-section { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+.frp-docs { display: flex; flex-wrap: wrap; gap: 8px; }
+.frp-doc { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; background: #f8fafc; border: 1px solid #f1f5f9; }
+.frp-doc span { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+.frp-doc b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #0f172a; }
+.frp-doc i { color: #10b981; font-size: 12px; }
+.frp-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 16px; }
+.frp-fields.is-wide { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.frp-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.frp-field span { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+.frp-field b { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
+.frp-field b img { width: 16px; height: 16px; }
+.frp-address { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; font-weight: 600; color: #334155; line-height: 1.45; }
+.frp-address i { color: var(--primary); margin-top: 3px; }
+.frp-address img { width: 16px; height: 16px; margin-left: auto; margin-top: 2px; }
+.frp-address .frp-tag { margin-left: 6px; vertical-align: 1px; }
+
+/* ---- a receipt, in the browser's PDF viewer (the look of the Spain Public Administration results) ---- */
+.frp-pdf { position: fixed; inset: 0; z-index: 950; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(6px); }
+.frp-pdf.is-open { display: flex; animation: frp-fade 160ms ease-out; }
+.frp-pdf-panel { position: relative; display: flex; flex-direction: column; width: 100%; max-width: 900px; height: 85vh; border-radius: 24px; overflow: hidden; background: #1e1e1e; border: 1px solid rgba(100, 116, 139, 0.35); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); animation: frp-in 220ms ease-out; }
+.frp-pdf-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #252526; border-bottom: 1px solid rgba(100, 116, 139, 0.35); }
+.frp-pdf-head > i { font-size: 17px; color: #ef4444; }
+.frp-pdf-head b { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 700; color: #e2e8f0; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frp-pdf-save { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 6px 12px; border-radius: 9px; border: 1px solid rgba(100, 116, 139, 0.5); color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; transition: background 150ms; }
+.frp-pdf-save:hover { background: rgba(255, 255, 255, 0.1); }
+.frp-pdf-close { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px; color: #94a3b8; font-size: 16px; transition: all 150ms; }
+.frp-pdf-close:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.frp-pdf-body { position: relative; flex: 1; background: #323639; }
+.frp-pdf-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+@media (max-width: 900px) {
+    .frp-hero, .frp-hero.is-card { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .frp-banks { grid-template-columns: minmax(0, 1fr); }
+    .frp-title { font-size: 23px; }
+    .frp-card { --pad-x: 16px; --pad-y: 16px; }
+    .frp-card-head { gap: 12px; }
+    .frp-card-title h3 { font-size: 16px; }
+    .frp-hero-title { font-size: 22px; }
+    /* the headline figure goes under the name, as a statement line: the name keeps the width */
+    .frp-card-head { flex-wrap: wrap; row-gap: 8px; }
+    .frp-card-head > .frp-amount { flex: 1 1 100%; flex-direction: row; align-items: baseline; gap: 8px; text-align: left; }
+    .frp-card-head > .frp-amount small { order: 1; }
+    .frp-card-head > .frp-amount span { order: 2; }
+    .frp-card-head > .frp-amount b { order: 3; margin-left: auto; font-size: 20px; }
+    .frp-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+    .frp-facts > div.is-wide { grid-column: span 2; }
+    .frp-facts dd > span, .frp-facts dd > small, .frp-inline-link span { white-space: normal; overflow-wrap: anywhere; }
+    .frp-folio-icon { display: none; }
+    .frp-hero { padding: 18px; }
+    .frp-plastic { width: 100%; max-width: 340px; }
+    .frp-hero-plastic { width: 100%; max-width: 340px; }
+    .frp-pdf { padding: 24px 0 0; align-items: flex-end; }
+    .frp-pdf-panel { height: calc(100vh - 24px); border-radius: 24px 24px 0 0; }
+    .frp-pdf-save span { display: none; }
+    .frp-ledger > div.is-main dd > span { font-size: 24px; }
+    .frp-holdings table { table-layout: auto; }
+    .frp-holdings col { width: auto !important; }
+    .frp-holdings .is-wide { display: none; }
+    .frp-h-name { width: 100%; max-width: 0; }
+    .frp-holdings small.frp-h-units { display: block; }
+    /* a charge in two lines: when and how much, then what for */
+    .frp-charges thead { display: none; }
+    .frp-charges tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px var(--pad-x); border-bottom: 1px solid #f1f5f9; }
+    .frp-charges tbody tr:last-child { border-bottom: none; }
+    .frp-charges tbody td { display: block; width: auto; padding: 0 !important; border: none; }
+    .frp-charges td.frp-tx-date { grid-column: 1; grid-row: 1; }
+    .frp-charges td.frp-tx-amount { grid-column: 2; grid-row: 1; }
+    .frp-charges td.frp-charge-concept { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+    .frp-row { padding: 12px 14px; gap: 10px; }
+    .frp-row-figure b { font-size: 13px; }
+    .frp-identity { flex-wrap: wrap; align-items: flex-start; }
+    .frp-identity-text { flex: 1 1 calc(100% - 52px); }
+    .frp-identity-text small { display: none; }
+    .frp-identity-link { margin-left: 52px; }
+    /* a movement in two columns: what (with its date under it) and how much */
+    .frp-table-card .frp-tx-date { display: none; }
+    .frp-tx-what { width: 100%; max-width: 0; }
+    .frp-tx-what small.frp-tx-when { display: block; }
+    .frp-table td, .frp-table th { padding-left: 14px; padding-right: 14px; }
+    .frp-tx-kind { display: none; }
+    .frp-me-name { display: none; }
+    .frp-search { flex: 1 1 100%; }
+}
