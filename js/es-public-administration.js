@@ -341,18 +341,19 @@ function renderModuleOptions() {
 /**
  * The administrations a session may sign in to, as the API names them (`settings.allowed_sources`),
  * with the modules each one returns — the Seguridad Social signed in with Cl@ve brings more than
- * with an SMS, which is why it serves the CIRBE report and the DGT's products too.
+ * with an SMS, which is why it serves the CIRBE report and the DGT's products too. `engine` is the
+ * code of its Cl@ve engine, which names its logo on the CDN.
  */
 const SOURCES = [
-    { code: 'tgss', name: 'Seguridad Social', icon: 'fa-solid fa-briefcase', returns: 'Profile, work life and pensions; signed in with Cl@ve, also the CIRBE report, the driving licence and the vehicles',
+    { code: 'tgss', engine: 'TGSSXCLAVEXXPUB254ESXXXX', name: 'Seguridad Social', icon: 'fa-solid fa-briefcase', returns: 'Profile, work life and pensions; signed in with Cl@ve, also the CIRBE report, the driving licence and the vehicles',
       serves: ['customer_information_read', 'labor_check', 'public_pensions', 'credit_registry_data', 'driver_data', 'vehicles_data'] },
-    { code: 'aeat', name: 'Agencia Tributaria', icon: 'fa-solid fa-file-invoice-dollar', returns: 'Profile and the yearly tax situation',
+    { code: 'aeat', engine: 'AEATXCLAVEXXPUB253ESXXXX', name: 'Agencia Tributaria', icon: 'fa-solid fa-file-invoice-dollar', returns: 'Profile and the yearly tax situation',
       serves: ['customer_information_read', 'yearly_individual_tax'] },
-    { code: 'citizen_folder', name: 'Carpeta Ciudadana', icon: 'fa-solid fa-folder-open', returns: 'Profile, driving licence, vehicles, degrees and properties',
+    { code: 'citizen_folder', engine: 'CCXCLAVEXXXXPUB253ESXXXX', name: 'Carpeta Ciudadana', icon: 'fa-solid fa-folder-open', returns: 'Profile, driving licence, vehicles, degrees and properties',
       serves: ['customer_information_read', 'driver_data', 'vehicles_data', 'academic_data', 'properties_data'] },
-    { code: 'dgt', name: 'DGT', icon: 'fa-solid fa-car', returns: 'Profile, the driving licence with its photograph, and the vehicles',
+    { code: 'dgt', engine: 'DGTXCLAVEXXXPUB256ESXXXX', name: 'DGT', icon: 'fa-solid fa-car', returns: 'Profile, the driving licence with its photograph, and the vehicles',
       serves: ['customer_information_read', 'driver_data', 'vehicles_data'] },
-    { code: 'bde', name: 'Banco de España', icon: 'fa-solid fa-building-columns', returns: 'The CIRBE report, and nothing else',
+    { code: 'bde', engine: 'BDEXCLAVEXXXPUB257ESXXXX', name: 'Banco de España', icon: 'fa-solid fa-building-columns', returns: 'The CIRBE report, and nothing else',
       serves: ['credit_registry_data'] },
 ];
 
@@ -437,7 +438,7 @@ function renderSources() {
         return `
             <li class="espa-source${on ? '' : ' is-off'}">
                 <span class="espa-source-pos" title="${on ? 'Its place in the order' : 'Not allowed'}">${on ? allowed.indexOf(code) + 1 : '–'}</span>
-                <span class="espa-source-icon"><i class="${source.icon}"></i></span>
+                <span class="espa-source-icon has-logo"><img src="https://assets.infonite.dev/engine-logos/${source.engine}/light-square.png" alt="" onerror="this.parentElement.classList.remove('has-logo'); this.replaceWith(Object.assign(document.createElement('i'), { className: '${source.icon}' }))"></span>
                 <span class="espa-source-text"><b>${escapeHtml(source.name)}</b><small>${escapeHtml(source.returns)}</small></span>
                 <span class="espa-source-move">
                     <button type="button" onclick="moveSource('${code}', -1)" ${i === 0 ? 'disabled' : ''} title="Earlier" aria-label="Move ${escapeHtml(source.name)} earlier"><i class="fa-solid fa-chevron-up"></i></button>
@@ -1091,6 +1092,9 @@ function buildLeadPayload() {
 }
 
 window.buildLeadPayload = buildLeadPayload;
+
+/** The request Generate Session would send now, over the dialog, as HTTP or cURL (js/session-request.js). */
+window.openRequestPreview = () => InfoniteRequestPreview.open({ flow: 'es-public-administration', build: buildLeadPayload });
 
 /** The session the New Lead dialog has just created, for its Launch button. */
 let lastCreated = null;

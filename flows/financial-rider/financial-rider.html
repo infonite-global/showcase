@@ -17,7 +17,7 @@
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/rider.css?v=1" rel="stylesheet">
 <link href="../../css/session-ending.css?v=2" rel="stylesheet">
-<link href="../../css/session-form.css?v=1" rel="stylesheet">
+<link href="../../css/session-form.css?v=2" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
@@ -488,6 +488,8 @@
       </div>
       <div class="flex items-center gap-3 shrink-0" id="nl-footer-actions">
         <button class="glass-pill" onclick="closeNewLeadModal()">Cancel</button>
+        <!-- THE REQUEST: what Generate Session sends, as HTTP or cURL (js/session-request.js) -->
+        <button class="glass-pill glass-pill-icon" onclick="openRequestPreview()" title="See the request Generate Session sends, as HTTP or cURL" aria-label="See the request"><i class="fa-solid fa-code"></i></button>
         <button class="glass-pill glass-pill-brand" id="generateLeadBtn" onclick="generateLeadSession();">
           <span class="hidden sm:inline">Generate Session</span>
           <span class="inline sm:hidden">Generate</span>
@@ -1075,6 +1077,7 @@
 <script src="../../js/session-ending.js?v=2"></script>
 <script src="../../js/session-capabilities.js?v=1"></script>
 <script src="../../js/session-launcher.js?v=2"></script>
-<script src="../../js/financial-rider.js?v=15"></script>
+<script src="../../js/session-request.js?v=1"></script>
+<script src="../../js/financial-rider.js?v=16"></script>
 </body>
 </html>

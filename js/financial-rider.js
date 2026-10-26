@@ -1249,6 +1249,9 @@ function buildLeadPayload() {
 
 window.buildLeadPayload = buildLeadPayload;
 
+/** The request Generate Session would send now, over the dialog, as HTTP or cURL (js/session-request.js). */
+window.openRequestPreview = () => InfoniteRequestPreview.open({ flow: 'financial-rider', build: buildLeadPayload });
+
 window.generateLeadSession = async function() {
     const btn = document.getElementById('generateLeadBtn');
     const originalContent = btn.innerHTML;

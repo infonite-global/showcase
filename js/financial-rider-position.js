@@ -305,6 +305,7 @@
             cards: () => pick(['Used', p.disposed], ['Available', p.available]),
             deposits: () => pick(['Balance', p.balance], ['Available', p.available]),
             loans: () => pick(['Outstanding', p.outstanding_balance]),
+            pensions: () => pick(['Valuation', p.valuation]),
             direct_debits: () => pick(['Last charge', lastCharge(p)?.amount]),
         }[familyKey]?.();
         return found ? { label: found[0], value: found[1] } : null;
@@ -334,7 +335,7 @@
         const head = headline(familyKey, p);
         const debit = familyKey === 'direct_debits';
         const title = debit ? tidy(p.beneficiary?.name || 'Direct debit') : nameOf(p, 'Product');
-        const number = debit ? tail(p.account) : ['loans', 'deposits'].includes(familyKey) ? (p.identifier?.value || p.contract?.value || '') : grouped(p.identifier);
+        const number = debit ? tail(p.account) : ['loans', 'deposits', 'pensions'].includes(familyKey) ? (p.identifier?.value || p.contract?.value || '') : grouped(p.identifier);
         const open = familyKey === 'accounts' ? `FRP.showAccount('${esc(p.id)}')` : familyKey === 'cards' ? `FRP.showCard('${esc(p.id)}')` : `switchDashboardView('${familyKey}')`;
         return `
             <button type="button" class="frp-row" onclick="${open}">
@@ -396,10 +397,14 @@
                 <div class="frp-bank-counts">${counts(unmatched)}</div>
                 <button type="button" class="frp-bank-action" onclick="setBankFilter('${FR_RESULTS.filter === 'unmatched' ? 'all' : 'unmatched'}')">${FR_RESULTS.filter === 'unmatched' ? '<i class="fa-solid fa-xmark"></i> Show every bank' : '<i class="fa-solid fa-filter"></i> Only these'}</button>
             </article>` : '';
-        const sections = FAMILIES.filter(requested).map(family => {
+        // the pension plans have their own list too, after the portfolios that hold them
+        const listed = FAMILIES.flatMap(family => (family.key === 'investments' ? [family, PENSIONS] : [family]));
+        const sections = listed.filter(requested).map(family => {
             const lines = family.key === 'investments'
                 ? portfolios().map(folio => safely(folioRow, [folio], 'row'))
-                : productsOf(family.key).map(item => safely(row, [family.key, item.product], 'row'));
+                : family.key === PENSIONS.key
+                    ? pensionPlans().map(item => safely(row, [PENSIONS.key, item.product], 'row'))
+                    : productsOf(family.key).map(item => safely(row, [family.key, item.product], 'row'));
             if (!lines.length) return '';
             return `
                 <section class="rk-section">

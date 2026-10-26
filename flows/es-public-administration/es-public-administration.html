@@ -17,7 +17,7 @@
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
 <link href="../../css/session-ending.css?v=2" rel="stylesheet">
-<link href="../../css/session-form.css?v=1" rel="stylesheet">
+<link href="../../css/session-form.css?v=2" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
       :root {
@@ -216,7 +216,11 @@
       .espa-source.is-off .espa-source-icon, .espa-source.is-off .espa-source-text { opacity: 0.45; }
       .espa-source-pos { width: 16px; flex-shrink: 0; text-align: center; font-size: 11px; font-weight: 900; color: var(--primary); font-variant-numeric: tabular-nums; }
       .espa-source.is-off .espa-source-pos { color: #cbd5e1; }
-      .espa-source-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px; background: var(--primary-container); color: var(--primary); font-size: 12px; }
+      .espa-source-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 34px; height: 34px; border-radius: 10px; background: var(--primary-container); color: var(--primary); font-size: 13px; }
+      /* the administration's own logo, from the CDN; its icon when the logo does not load */
+      .espa-source-icon.has-logo { padding: 4px; background: #fff; border: 1px solid rgba(0,0,0,0.08); }
+      .espa-source-icon img { width: 100%; height: 100%; object-fit: contain; }
+      .espa-source.is-off .espa-source-icon img { filter: grayscale(1); }
       .espa-source-text { flex: 1; min-width: 0; }
       .espa-source-text b { display: block; font-size: 11px; font-weight: 800; color: #0f172a; }
       .espa-source-text small { display: block; font-size: 9px; font-weight: 500; line-height: 1.4; color: #64748b; }
@@ -453,6 +457,8 @@
       </div>
       <div class="flex items-center gap-3 shrink-0" id="nl-footer-actions">
         <button class="glass-pill" onclick="closeNewLeadModal()">Cancel</button>
+        <!-- THE REQUEST: what Generate Session sends, as HTTP or cURL (js/session-request.js) -->
+        <button class="glass-pill glass-pill-icon" onclick="openRequestPreview()" title="See the request Generate Session sends, as HTTP or cURL" aria-label="See the request"><i class="fa-solid fa-code"></i></button>
         <button class="glass-pill glass-pill-brand" id="generateLeadBtn" onclick="generateLeadSession();">
           <span class="hidden sm:inline">Generate Session</span>
           <span class="inline sm:hidden">Generate</span>
@@ -903,6 +909,7 @@
 <script src="../../js/session-ending.js?v=2"></script>
 <script src="../../js/session-capabilities.js?v=1"></script>
 <script src="../../js/session-launcher.js?v=2"></script>
-<script src="../../js/es-public-administration.js?v=12"></script>
+<script src="../../js/session-request.js?v=1"></script>
+<script src="../../js/es-public-administration.js?v=14"></script>
 </body>
 </html>

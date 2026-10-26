@@ -1,8 +1,8 @@
 /*
  * session-form.css
  * The pieces every flow's New Lead dialog draws the same way: a switch, a setting a capability holds
- * (js/session-capabilities.js) with the notice inside its box, a note on a locked choice, and the ways
- * into the documentation beside a title.
+ * (js/session-capabilities.js) with the notice inside its box, a note on a locked choice, the ways
+ * into the documentation beside a title, and the request it is about to send (js/session-request.js).
  */
 
 /* a switch: a hidden checkbox and its track */
@@ -45,3 +45,23 @@ label:has(input:disabled) { cursor: not-allowed; }
 .sf-doc-link:hover { filter: brightness(0.94); }
 .sf-mini-action { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.1); background: #fff; color: #475569; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; transition: all 150ms; }
 .sf-mini-action:hover { border-color: var(--primary); color: var(--primary); }
+
+/* the request a New Lead dialog is about to send, as raw HTTP or cURL (js/session-request.js) */
+.sr-format { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(148,163,184,0.25); }
+.sr-format button { padding: 4px 11px; border-radius: 7px; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #94a3b8; transition: all 150ms; }
+.sr-format button:hover { color: #e2e8f0; }
+.sr-format button.is-on { background: rgba(255,255,255,0.14); color: #fff; }
+.sr-command { color: #dcdcaa; font-weight: 700; }
+.sr-flag { color: #569cd6; }
+.sr-method { color: #c586c0; font-weight: 700; }
+.sr-path { color: #dcdcaa; }
+.sr-header { color: #9cdcfe; }
+.sr-value { color: #ce9178; }
+.sr-secret { color: #fbbf24; font-weight: 700; }
+.sr-muted { color: #858585; }
+.sr-error { color: #f48771; }
+#requestPreview .json-key { color: #9cdcfe; }
+#requestPreview .json-string { color: #ce9178; }
+#requestPreview .json-number { color: #b5cea8; }
+#requestPreview .json-boolean { color: #569cd6; font-weight: bold; }
+#requestPreview .json-null { color: #c586c0; font-weight: bold; }
