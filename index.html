@@ -103,11 +103,14 @@
          are painted on and the ink that reads over them. */
       /* No stacking context of its own: the navigation floats inside it with a z-index that
          has to beat everything that follows on the page */
+      /* How far the flows climb into the hero: their title and the top of their cards sit on its scene */
+      :root { --flows-lift: 8.5rem; }
+      @media (min-width: 768px) { :root { --flows-lift: 9.5rem; } }
       .hero {
         position: relative;
         overflow: hidden;
-        min-height: 54vh;
-        padding: 8.5rem 1.5rem 4.5rem;
+        min-height: 0;
+        padding: 8.5rem 1.5rem calc(var(--flows-lift) + 2rem);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -117,7 +120,7 @@
         transition: background-color var(--motion-duration-medium), color var(--motion-duration-medium);
       }
       @media (min-width: 768px) {
-        .hero { padding-top: 9.5rem; padding-bottom: 5.5rem; }
+        .hero { padding-top: 9rem; padding-bottom: calc(var(--flows-lift) + 2.5rem); }
       }
       .hero-scene {
         position: absolute;
@@ -246,10 +249,24 @@
       /* The interactive flows: Financial Rider first and largest; Spain Public Administration beside it,
          and under it the use cases it is offered as — smaller, joined to it by a branch — so they read
          as ways of using that flow, not as flows of their own. */
+      .flows-stage { position: relative; z-index: 1; margin-top: calc(-1 * var(--flows-lift)); }
+      .flows-head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; color: var(--hero-ink, #fff); }
+      .flows-head-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 14px; font-size: 17px; background: color-mix(in srgb, var(--hero-ink, #fff) 14%, transparent); border: 1px solid color-mix(in srgb, var(--hero-ink, #fff) 24%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+      .flows-head-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; min-width: 0; }
+      .flows-head-text h2 { margin: 0; font-size: 22px; font-weight: 700; color: inherit; }
+      .flows-head-text p { margin: 0; font-size: 13px; color: color-mix(in srgb, var(--hero-ink, #fff) 78%, transparent); }
       .flows-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+      /* the cards float, gently: Spain Public Administration and its use cases as one, so the branch never parts */
+      @keyframes flow-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+      .flows-grid > .flow-card, .flows-grid > .flow-cases { animation: flow-float 7s ease-in-out infinite; }
+      .flows-grid > .flow-card.is-featured { animation-delay: -3.5s; }
+      @media (prefers-reduced-motion: reduce) { .flows-grid > .flow-card, .flows-grid > .flow-cases { animation: none; } }
       .flow-card { position: relative; display: flex; flex-direction: column; padding: 32px; border-radius: 28px; transition: border-color 150ms, box-shadow 150ms; }
-      .flow-card.is-featured { cursor: pointer; background: linear-gradient(165deg, rgba(255, 255, 255, 0.94) 45%, var(--primary-container) 150%); }
-      .flow-card.is-featured:hover, .flow-card.is-featured:focus-visible { border-color: var(--primary); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08); outline: none; }
+      /* opaque: half of each card sits on the hero's scene, which must never show through */
+      .flow-card { background: #fff; box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12); }
+      .flow-card.is-featured { background: linear-gradient(165deg, transparent 45%, var(--primary-container) 150%), #fff; }
+      .flow-card.is-link { cursor: pointer; }
+      .flow-card.is-link:hover, .flow-card.is-link:focus-visible { border-color: var(--primary); box-shadow: 0 28px 56px rgba(15, 23, 42, 0.16); outline: none; }
       .flow-badge { position: absolute; top: 24px; right: 24px; padding: 4px 8px; border-radius: 8px; background: var(--primary-container); color: var(--primary); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.14em; }
       .flow-icon { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin-bottom: 22px; border-radius: 18px; background: var(--primary-container); color: var(--primary); font-size: 24px; }
       .flow-title { margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #0f172a; }
@@ -266,7 +283,7 @@
 
       /* The use cases: one under the other on a phone, a rail down their left and a twig into each */
       .flow-cases { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding-left: 26px; }
-      .usecase { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 22px; transition: border-color 150ms, box-shadow 150ms, transform 150ms; }
+      .usecase { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 22px; background: #fff; transition: border-color 150ms, box-shadow 150ms, transform 150ms; }
       .usecase:hover, .usecase:focus-visible { border-color: var(--primary); box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08); transform: translateY(-2px); outline: none; }
       .usecase::before, .usecase::after { content: ''; position: absolute; background: rgba(var(--primary-rgb), 0.28); border-radius: 2px; pointer-events: none; }
       .usecase::before { left: -16px; top: 35px; width: 16px; height: 2px; }
@@ -573,22 +590,22 @@
   </section>
 
 </div>
-<div id="flows" class="w-full pt-12">
-<div class="fade-in w-full px-4 py-12">
+<div id="flows" class="flows-stage w-full">
+<div class="fade-in w-full px-4 pb-16">
 <div class="max-w-7xl mx-auto">
-<div class="text-center mb-12">
-  <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mb-4">
-    <i class="fa-solid fa-layer-group text-2xl"></i>
+<div class="flows-head">
+  <span class="flows-head-icon"><i class="fa-solid fa-layer-group"></i></span>
+  <div class="flows-head-text">
+    <h2>Interactive Flows</h2>
+    <p>Select a module to test the integration in the current environment</p>
   </div>
-  <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Interactive Flows</h2>
-  <p class="text-sm text-slate-500 mt-2">Select a module to test the integration in the current environment</p>
 </div>
 <div class="flows-grid">
 <!-- Financial Rider. The horse is on purpose — the name is Rider, not Reader, and the title says
      so: it reads "Reader" for a beat on arrival, then rides into "Rider"; hovering shows the word
      it is NOT, and leaving brings the rider back. The whole card opens the flow; the docs link
      inside it keeps its own way out. -->
-<div class="glass-panel flow-card is-featured rider-card" id="financialRiderCard" role="link" tabindex="0" data-href="flows/financial-rider/financial-rider.html" data-rider>
+<div class="glass-panel flow-card is-featured is-link rider-card" id="financialRiderCard" role="link" tabindex="0" data-href="flows/financial-rider/financial-rider.html" data-rider>
   <span class="flow-badge">New</span>
   <div class="flow-icon"><i class="fa-solid fa-building-columns"></i></div>
   <h3 class="flow-title flex items-center gap-2 flex-wrap">
@@ -599,12 +616,17 @@
   </h3>
   <p class="flow-text">Open Banking in a widget we host: your customer connects their banks and you read one financial position. The definitive multi-market solution.</p>
   <ul class="flow-reads" aria-label="What it reads">
+    <li><i class="fa-solid fa-id-card"></i>Customer profile</li>
     <li><i class="fa-solid fa-piggy-bank"></i>Accounts</li>
+    <li><i class="fa-solid fa-arrow-right-arrow-left"></i>Movements</li>
     <li><i class="fa-solid fa-credit-card"></i>Cards</li>
     <li><i class="fa-solid fa-vault"></i>Deposits</li>
-    <li><i class="fa-solid fa-hand-holding-dollar"></i>Loans</li>
-    <li><i class="fa-solid fa-chart-line"></i>Investments</li>
-    <li><i class="fa-solid fa-money-bill-transfer"></i>Direct debits</li>
+    <li><i class="fa-solid fa-hand-holding-dollar"></i>Loans &amp; mortgages</li>
+    <li><i class="fa-solid fa-briefcase"></i>Securities accounts</li>
+    <li><i class="fa-solid fa-chart-column"></i>Stocks</li>
+    <li><i class="fa-solid fa-layer-group"></i>Funds</li>
+    <li><i class="fa-solid fa-umbrella"></i>Pension plans</li>
+    <li><i class="fa-solid fa-money-bill-transfer"></i>Direct debits &amp; receipts</li>
   </ul>
   <div class="flow-foot">
     <a class="flow-link" href="flows/financial-rider/financial-rider.html">Open Flow <i class="fa-solid fa-arrow-right"></i></a>
@@ -613,16 +635,18 @@
 </div>
 <script>
   (function () {
-    // The card opens the flow, as the use cases do; its links keep their own targets
-    const card = document.getElementById('financialRiderCard');
-    const open = () => { window.location.href = card.dataset.href; };
-    card.addEventListener('click', (event) => { if (!event.target.closest('a')) open(); });
-    card.addEventListener('keydown', (event) => { if (event.key === 'Enter') open(); });
+    // The flows' cards open their flow, as the use cases do — Spain Public Administration's opens it
+    // as it is, the first use case; the links inside them keep their own targets
+    document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.flow-card.is-link').forEach(card => {
+      const open = () => { window.location.href = card.dataset.href; };
+      card.addEventListener('click', (event) => { if (!event.target.closest('a')) open(); });
+      card.addEventListener('keydown', (event) => { if (event.key === 'Enter') open(); });
+    }));
   })();
 </script>
 <!-- Spain Public Administration: the flow, and under it the use cases it is offered as — each one
      the same pages with a preset (js/es-public-administration-presets.js), with its own history. -->
-<section class="glass-panel flow-card is-group" aria-labelledby="espaFlowTitle">
+<section class="glass-panel flow-card is-group is-link" id="espaFlowCard" aria-labelledby="espaFlowTitle" role="link" tabindex="0" data-href="flows/es-public-administration/es-public-administration.html" title="Open Spain Public Administration: do it yourself">
   <div class="flow-icon"><i class="fa-solid fa-person-shelter"></i></div>
   <h3 class="flow-title" id="espaFlowTitle">Spain Public Administration</h3>
   <p class="flow-text">Official Spanish records, read with your customer's consent in a widget we host: work history and contribution bases, public pensions, the CIRBE credit registry, driving licence and vehicles, tax data, properties and official degrees. For onboarding, underwriting and background checks.</p>

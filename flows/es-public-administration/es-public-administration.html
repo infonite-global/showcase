@@ -467,96 +467,13 @@
 
     <!-- FORM VIEW -->
     <div id="nl-form-view" class="flex flex-col">
-     <!-- Two columns on desktop: the modules on the right, everything else stacked on the left.
-          One flat grid, ordered so a phone reads Customer ID, Modules, Fixed Parameters, Advanced. -->
-     <div class="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] gap-x-6 gap-y-4 items-start">
-      <!-- Customer ID -->
-      <div class="order-1 lg:col-start-1 lg:row-start-1 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
-        <label for="generate-customer-id" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-           <i class="fa-solid fa-fingerprint text-[var(--primary)]"></i> Customer ID
-        </label>
-        <p class="text-[9px] text-slate-500 font-medium leading-tight">Your own identifier for the end user, up to 64 characters. It comes back with every read and every event of the session.</p>
-        <input type="text" id="generate-customer-id" maxlength="64" placeholder="ES-PUBLIC-ADMINISTRATION-..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono mt-1">
-        
-        <!-- SANDBOX: held on while the application cannot run Spain Public Administration in production -->
-        <div class="sf-cap-box mt-3">
-          <label class="sf-cap-row">
-            <span class="flex flex-col min-w-0">
-              <span class="sf-cap-title"><i class="fa-solid fa-code text-amber-500"></i> Sandbox Execution <span id="espa-reach-product" class="sf-reach is-sandbox hidden">Sandbox only</span><a class="sf-crumb" href="https://infonite.dev/flows/spain-public-administration/overview#sandbox-and-production" target="_blank" rel="noopener" title="Sandbox and production, on infonite.dev"><i class="fa-solid fa-book-open"></i></a></span>
-              <span class="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Demo identities, no real administration</span>
-            </span>
-            <input type="checkbox" id="generate-sandbox-mode" class="sr-only sf-switch-amber" onchange="syncReach()">
-            <span class="sf-switch-track"></span>
-          </label>
-          <div id="espa-sandbox-notice" class="sf-cap-notice hidden">
-            <i class="fa-solid fa-lock"></i>
-            <div class="sf-cap-notice-body">
-              <p class="sf-cap-notice-text"></p>
-              <a class="sf-cap-action" target="_blank" rel="noopener"></a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- FIXED PARAMETERS Accordion -->
-      <div class="order-3 lg:col-start-1 lg:row-start-2">
-        <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-fixed-parameters')">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
-              <i class="fa-solid fa-lock"></i>
-            </div>
-            <div class="text-left">
-               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest">Fixed Parameters</h4>
-               <p class="text-[9px] text-slate-500 font-medium">What you already know about the customer</p>
-            </div>
-          </div>
-          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300" id="acc-fixed-parameters-icon"></i>
-        </button>
-        
-        <div id="acc-fixed-parameters" class="hidden mt-2 bg-white border border-black/5 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
-            <div class="flex flex-col gap-2">
-              <label for="generate-fixed-user-document" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                <i class="fa-solid fa-id-card text-indigo-500"></i> User Document (DNI/NIE)
-              </label>
-              <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Optional Spanish NIF/NIE to enforce during authentication. The widget will restrict access to this user.</p>
-              <input type="text" id="generate-fixed-user-document" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors uppercase" placeholder="e.g. 44444444A or X4444444Q" />
-              <p class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
-                If specified, the resulting widget will restrict authentication strictly to the provided Spanish NIF/NIE, preventing the end user from modifying or inputting a different document number.
-              </p>
-            </div>
-
-            <div class="flex flex-col gap-2 border-t border-slate-100 pt-4">
-              <label for="generate-fixed-user-email" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                <i class="fa-solid fa-envelope text-indigo-500"></i> User Email
-              </label>
-              <p id="generate-fixed-user-email-optional" class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Optional fallback email address for the customer.</p>
-              <p id="generate-fixed-user-email-required" class="hidden text-[10px] font-black text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-snug flex items-start gap-2">
-                <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-                <span>Required: Credit Registry (CIRBE) is selected, and the request to the Bank of Spain is filed with the customer's email. <a class="underline font-black" href="https://infonite.dev/flows/spain-public-administration/sources#the-cirbe-report-and-bde" target="_blank" rel="noopener">Why</a></span>
-              </p>
-              <input type="email" id="generate-fixed-user-email" oninput="syncEmailRequirement()" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="e.g. demo.person1@example.com" />
-              <p id="generate-fixed-user-email-optional-note" class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
-                Optional customer email used as a fallback (e.g. for CIRBE notifications) if no email is found in the user's public administration profile.
-              </p>
-            </div>
-
-            <div class="flex flex-col gap-2 border-t border-slate-100 pt-4">
-              <label for="generate-fixed-birth-date" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                <i class="fa-solid fa-cake-candles text-indigo-500"></i> Date of Birth
-              </label>
-              <input type="date" id="generate-fixed-birth-date" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors" />
-              <p class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
-                Optional. The Banco de España files its credit registry request with it: given here, the person is not asked for it there; otherwise the widget asks them.
-              </p>
-            </div>
-        </div>
-      </div>
-
-      <!-- What the session reads and where: the modules, their options and the administrations — the
-           right column on desktop, after the Customer ID on a phone -->
-      <div class="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-3 flex flex-col gap-4">
+     <!-- Two columns on desktop, as in Financial Rider: what the session reads and where the person signs
+          in on the left, the rest on the right. On a phone the columns dissolve (display: contents) and
+          `order` makes one list of them: Customer ID, Modules, Administrations, Fixed Parameters, Advanced. -->
+     <div class="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:gap-x-6 lg:items-start">
+      <div class="contents lg:flex lg:flex-col lg:gap-4">
         <!-- MODULES: an accordion on a phone, always open on desktop, where there is room for it -->
-        <div>
+        <div class="order-2">
           <div class="w-full flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-black/5 rounded-2xl shadow-sm">
             <button type="button" class="flex items-center gap-3 min-w-0 flex-1 basis-56 text-left lg:cursor-default" onclick="toggleAccordion('acc-modules')">
               <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 shrink-0">
@@ -595,7 +512,7 @@
         </div>
 
         <!-- ADMINISTRATIONS: where the person may be asked to sign in, and in which order -->
-        <div class="bg-white p-4 rounded-2xl border border-black/5 shadow-sm flex flex-col gap-4">
+        <div class="order-3 bg-white p-4 rounded-2xl border border-black/5 shadow-sm flex flex-col gap-4">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
               <div class="w-8 h-8 rounded-lg bg-[var(--primary-container)] flex items-center justify-center text-[var(--primary)] shrink-0">
@@ -638,10 +555,91 @@
             <li><i class="fa-solid fa-building-columns"></i><span><b>The CIRBE report.</b> With the Banco de España allowed, it is read there and nowhere else.</span></li>
           </ul>
         </div>
+
+      </div>
+      <div class="contents lg:flex lg:flex-col lg:gap-4">
+      <!-- Customer ID -->
+      <div class="order-1 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
+        <label for="generate-customer-id" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+           <i class="fa-solid fa-fingerprint text-[var(--primary)]"></i> Customer ID
+        </label>
+        <p class="text-[9px] text-slate-500 font-medium leading-tight">Your own identifier for the end user, up to 64 characters. It comes back with every read and every event of the session.</p>
+        <input type="text" id="generate-customer-id" maxlength="64" placeholder="ES-PUBLIC-ADMINISTRATION-..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono mt-1">
+        
+        <!-- SANDBOX: held on while the application cannot run Spain Public Administration in production -->
+        <div class="sf-cap-box mt-3">
+          <label class="sf-cap-row">
+            <span class="flex flex-col min-w-0">
+              <span class="sf-cap-title"><i class="fa-solid fa-code text-amber-500"></i> Sandbox Execution <span id="espa-reach-product" class="sf-reach is-sandbox hidden">Sandbox only</span><a class="sf-crumb" href="https://infonite.dev/flows/spain-public-administration/overview#sandbox-and-production" target="_blank" rel="noopener" title="Sandbox and production, on infonite.dev"><i class="fa-solid fa-book-open"></i></a></span>
+              <span class="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Demo identities, no real administration</span>
+            </span>
+            <input type="checkbox" id="generate-sandbox-mode" class="sr-only sf-switch-amber" onchange="syncReach()">
+            <span class="sf-switch-track"></span>
+          </label>
+          <div id="espa-sandbox-notice" class="sf-cap-notice hidden">
+            <i class="fa-solid fa-lock"></i>
+            <div class="sf-cap-notice-body">
+              <p class="sf-cap-notice-text"></p>
+              <a class="sf-cap-action" target="_blank" rel="noopener"></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FIXED PARAMETERS Accordion -->
+      <div class="order-4">
+        <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-fixed-parameters')">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+              <i class="fa-solid fa-lock"></i>
+            </div>
+            <div class="text-left">
+               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest">Fixed Parameters</h4>
+               <p class="text-[9px] text-slate-500 font-medium">What you already know about the customer</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-300" id="acc-fixed-parameters-icon"></i>
+        </button>
+        
+        <div id="acc-fixed-parameters" class="hidden mt-2 bg-white border border-black/5 rounded-2xl p-4 shadow-sm flex flex-col gap-4">
+            <div class="flex flex-col gap-2">
+              <label for="generate-fixed-user-document" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-id-card text-indigo-500"></i> User Document (DNI/NIE)
+              </label>
+              <input type="text" id="generate-fixed-user-document" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors uppercase" placeholder="e.g. 44444444A or X4444444Q" />
+              <p class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
+                Optional. The widget restricts the sign-in to this Spanish NIF/NIE: the person cannot type a different one.
+              </p>
+            </div>
+
+            <div class="flex flex-col gap-2 border-t border-slate-100 pt-4">
+              <label for="generate-fixed-user-email" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-envelope text-indigo-500"></i> User Email
+              </label>
+              <p id="generate-fixed-user-email-required" class="hidden text-[10px] font-black text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-snug flex items-start gap-2">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                <span>Required: Credit Registry (CIRBE) is selected, and the request to the Bank of Spain is filed with the customer's email. <a class="underline font-black" href="https://infonite.dev/flows/spain-public-administration/sources#the-cirbe-report-and-bde" target="_blank" rel="noopener">Why</a></span>
+              </p>
+              <input type="email" id="generate-fixed-user-email" oninput="syncEmailRequirement()" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="e.g. demo.person1@example.com" />
+              <p id="generate-fixed-user-email-optional-note" class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
+                Optional customer email used as a fallback (e.g. for CIRBE notifications) if no email is found in the user's public administration profile.
+              </p>
+            </div>
+
+            <div class="flex flex-col gap-2 border-t border-slate-100 pt-4">
+              <label for="generate-fixed-birth-date" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                <i class="fa-solid fa-cake-candles text-indigo-500"></i> Date of Birth
+              </label>
+              <input type="date" id="generate-fixed-birth-date" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors" />
+              <p class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
+                Optional. The Banco de España files its credit registry request with it: given here, the person is not asked for it there; otherwise the widget asks them.
+              </p>
+            </div>
+        </div>
       </div>
 
       <!-- ADVANCED Accordion -->
-      <div class="order-4 lg:col-start-1 lg:row-start-3">
+      <div class="order-5">
         <button class="w-full flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-advanced')">
           <div class="flex items-center gap-3 min-w-0 flex-1 basis-56">
             <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
@@ -702,6 +700,7 @@
            <!-- WHERE THE SESSION ENDS: the presets every flow shares (js/session-ending.js) -->
            <div id="session-ending"></div>
          </div>
+      </div>
       </div>
      </div>
       </div>

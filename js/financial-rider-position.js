@@ -34,6 +34,12 @@
         { key: 'pensions', title: 'Pension plans', one: 'pension plan', many: 'pension plans', icon: 'fa-solid fa-umbrella' },
     ];
 
+    /**
+     * The pension plans on a page of their own, besides Investments, which keeps them inside the
+     * securities account that holds them. Its entry in the rail shows only when the session read one.
+     */
+    const PENSIONS = { key: 'pensions', title: 'Pension plans', one: 'pension plan', many: 'pension plans', icon: 'fa-solid fa-umbrella', features: ['pensions_read'], blurb: 'Each pension plan the banks hold: what was contributed, what it is worth and how it performs. Investments shows them too, inside the securities account that holds them.' };
+
     // ---------------------------------------------------------------- reading the results
 
     const RK = window.InfoniteResults;
@@ -267,12 +273,20 @@
 
     /** The rail's counts: how many of each family the bank filter lets through; a family with none goes quiet. */
     function renderRailCounts() {
+        const count = { investments: () => portfolios().length, pensions: () => pensionPlans().length };
         document.querySelectorAll('.rk-rail-item [data-count]').forEach(slot => {
             let n = 0;
-            try { n = slot.dataset.count === 'investments' ? portfolios().length : productsOf(slot.dataset.count).length; } catch { n = 0; }
+            try { n = (count[slot.dataset.count] || (() => productsOf(slot.dataset.count).length))(); } catch { n = 0; }
             slot.textContent = n ? String(n) : '';
             slot.closest('.rk-rail-item')?.classList.toggle('is-empty', !n);
         });
+        // the pension plans have an entry only when the session read one
+        const pensions = document.getElementById('nav-pensions');
+        if (pensions) {
+            let any = false;
+            try { any = pensionPlans(false).length > 0; } catch { any = false; }
+            pensions.style.display = any ? '' : 'none';
+        }
     }
 
     // ---------------------------------------------------------------- the profile, behind the avatar
@@ -657,6 +671,64 @@
             </tr>`;
     }
 
+    // ---------------------------------------------------------------- the pension plans, on a page of their own
+
+    /** The pension plans the bank filter lets through (`scoped`), each as an item of a family. */
+    const pensionPlans = (scoped = true) => listOf(data().investments?.pensions).filter(isProduct)
+        .filter(product => !scoped || inScope(product)).map(product => ({ product }));
+
+    /**
+     * A pension plan in full: what it is worth, what was contributed, how it performs, and the term
+     * it runs for — the years left counted from today, only when the bank gave both ends.
+     */
+    function pensionCard(p) {
+        const id = p.identifier?.value || p.contract?.value;
+        const begins = Date.parse(p.begin_date);
+        const ends = Date.parse(p.end_date);
+        let gauge = '';
+        if (Number.isFinite(begins) && Number.isFinite(ends) && ends > begins) {
+            const left = Math.max(0, Math.floor((ends - Date.now()) / 31557600000));
+            gauge = meter((Date.now() - begins) / (ends - begins), {
+                left: `Since <b>${day(p.begin_date, { month: true })}</b>`,
+                right: `Until <b>${day(p.end_date, { month: true })}</b>${left ? ` · ${plural(left, 'year', 'years')} left` : ''}`,
+            });
+        }
+        return productCard({
+            title: nameOf(p, 'Pension plan'),
+            tags: kindTag(p.sub_family) + (p.category ? `<span class="rk-tag is-quiet">${esc(tidy(p.category))}</span>` : ''),
+            sub: subLine(bankLine(p), id ? `<span class="rk-mono">${esc(id)}</span>` : '', esc(describe(p))),
+            main: has(p.valuation) ? amount('Valuation', money(p.valuation), { sub: p.valuation_date ? `on ${day(p.valuation_date)}` : '' }) : '',
+            gauge,
+            facts: [
+                fact('Contributed', has(p.total_contribution) ? money(p.total_contribution) : ''),
+                fact('Contributed this year', has(p.year_to_date_contribution) ? money(p.year_to_date_contribution) : ''),
+                fact('Gain', has(p.appreciation) ? money(p.appreciation, { sign: true }) : '', { tone: signOf(p.appreciation) }),
+                fact('Return', pct(p.performance, { sign: true }), { tone: signOfRate(p.performance) }),
+                fact('Return this year', pct(p.performance_year_to_date, { sign: true }), { tone: signOfRate(p.performance_year_to_date) }),
+                fact('Last 12 months', pct(p.performance_last_12_months, { sign: true }), { tone: signOfRate(p.performance_last_12_months) }),
+                fact('Units', qty(p.quantity), { sub: has(p.unit_price) ? `× ${money(p.unit_price, { decimals: 6 })}` : '' }),
+                accountFact('Linked account', p.linked_account),
+            ],
+        });
+    }
+
+    function renderPensions() {
+        const head = familyHead(PENSIONS);
+        if (!requested(PENSIONS)) {
+            return `<div class="rk-page">${head}${emptyState('fa-solid fa-lock', 'Not requested', 'The session was not created to read pension plans, so no bank was asked for them.')}</div>`;
+        }
+        const items = pensionPlans();
+        if (!items.length) {
+            return `<div class="rk-page">${head}${emptyState(PENSIONS.icon, 'No pension plans', FR_RESULTS.filter === 'all' ? 'The banks returned no pension plan.' : 'This bank returned no pension plan.')}</div>`;
+        }
+        const groups = byBank(items).map(group => `
+            <section class="frp-bank-group">
+                ${groupHead(group.bank, plural(group.items.length, PENSIONS.one, PENSIONS.many))}
+                <div class="frp-cards">${group.items.map(item => safely(pensionCard, [item.product])).join('')}</div>
+            </section>`).join('');
+        return `<div class="rk-page">${head}${groups}</div>`;
+    }
+
     // ---------------------------------------------------------------- an account's or a card's own page
 
     const crumbs = (familyKey, title) => RK.crumbs({ label: FAMILIES.find(f => f.key === familyKey).title, open: `switchDashboardView('${familyKey}')`, title });
@@ -902,9 +974,9 @@
 
     /** Draws a view into the page's root; true when this module drew it. */
     function render(view, root) {
-        if (view !== 'overview' && !FAMILIES.some(f => f.key === view)) return false;
+        if (view !== 'overview' && view !== PENSIONS.key && !FAMILIES.some(f => f.key === view)) return false;
         try {
-            root.innerHTML = view === 'overview' ? renderOverview() : renderFamily(view);
+            root.innerHTML = view === 'overview' ? renderOverview() : view === PENSIONS.key ? renderPensions() : renderFamily(view);
         } catch (error) {
             console.warn(`Financial Rider position: the ${view} view could not be drawn`, error);
             root.innerHTML = RK.undrawn();
