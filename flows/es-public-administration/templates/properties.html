@@ -1,5 +1,5 @@
 <!-- CATEGORY VIEW: PROPERTIES -->
-<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in overflow-y-auto">
+<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-5 md:p-8 fade-in overflow-y-auto">
     <!-- View Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 relative">
         <div class="flex items-center gap-4 relative z-10">
@@ -21,6 +21,7 @@
     <!-- Properties Section -->
     <div class="flex flex-col gap-6 flex-1">
         <div id="properties-wrapper" class="flex flex-col gap-4">
+            <div id="propertiesSearch" class="empty:hidden"></div>
             <div id="propertiesList" class="flex flex-col gap-6">
                 <!-- JS Injection -->
                 <div class="p-6 text-center text-slate-400 text-sm italic border border-slate-200 border-dashed rounded-xl" id="properties-empty">Loading properties data...</div>

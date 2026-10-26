@@ -322,98 +322,34 @@ window.pickEngine = function(reference) {
 };
 
 // --------------------------------------------------------------------------------
-// What the application holds: GET /api/app/capabilities, beside GET /api/app
+// What the application holds: the capabilities every flow reads the same way, js/session-capabilities.js
 // --------------------------------------------------------------------------------
 
-/** The reach of each capability (`production` or `sandbox`), once the service has answered. */
-const FR_CAPABILITIES = { known: false, reach: {} };
-
-/** Whether a capability reaches production. Unknown — an older service — gates nothing. */
-const reachesProduction = (capability) => !FR_CAPABILITIES.known || FR_CAPABILITIES.reach[capability] === 'production';
-
-/** Whether the application itself is a production one (`GET /api/app`): a sandbox one never opens a production session. */
-function appInProduction() {
-    const environment = window.InfoniteConfigManager?.getConfig()?.appDetails?.environment;
-    return !environment || environment === 'production';
+function loadCapabilities() {
+    InfoniteCapabilities.load().then(syncReach);
 }
 
-/** Whether a production session of Financial Rider may be asked for: the application and the product, both in production. */
-const productionAllowed = () => appInProduction() && reachesProduction('product:financial_rider');
-
-async function loadCapabilities() {
-    const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
-    if (!config || config.isMock || !config.secret || !config.widgetUrl) return;
-    try {
-        const response = await fetch(`${config.widgetUrl}/api/app/capabilities`, { headers: { 'X-APP-SECRET': config.secret } });
-        if (response.ok) {
-            const rows = await response.json();
-            FR_CAPABILITIES.reach = Object.fromEntries(rows.map(row => [row.capability, row.environment]));
-            FR_CAPABILITIES.known = true;
-        }
-    } catch (e) {
-        console.warn('The capabilities could not be read:', e);
-    }
-    syncReach();
-}
-
-/** Where production reach is asked for: a capability, or the application itself. */
-const FR_CAPABILITIES_DOCS = 'https://infonite.dev/console/capabilities';
-const FR_GO_LIVE_DOCS = 'https://infonite.dev/console/your-first-app#asking-for-production';
-
-/** What each capability is called in the Console, beside its code. */
-const FR_CAPABILITY_NAMES = { 'product:financial_rider': 'Financial Rider', 'login:tokenized_access': 'Tokenized access' };
-
-const capabilityRequest = (capability) => ({ label: `Request ${FR_CAPABILITY_NAMES[capability]}`, code: capability, href: FR_CAPABILITIES_DOCS });
-
-/**
- * A capability box's notice: why its switch is held, and a button naming what to ask for, opening in
- * a new tab. Null hides it. Both boxes say it the same way.
- */
-function capNotice(id, notice) {
-    const box = document.getElementById(id);
-    if (!box) return;
-    box.classList.toggle('hidden', !notice);
-    if (!notice) return;
-    box.querySelector('.fr-cap-notice-text').textContent = notice.text;
-    const action = box.querySelector('.fr-cap-action');
-    action.href = notice.href;
-    action.innerHTML = `<span>${escapeHtml(notice.label)}</span>${notice.code ? `<code>${escapeHtml(notice.code)}</code>` : ''}<i class="fa-solid fa-arrow-up-right-from-square"></i>`;
-}
-
-/**
- * Offers only what the application may run, and says why when it does not. Each box wears a
- * "Sandbox only" tag while its switch is held to sandbox, and nothing otherwise: a "Production" tag
- * beside a Sandbox switch reads as the opposite of it.
- */
+/** Offers only what the application may run, and says why when it does not: Sandbox, then Recurring access. */
 function syncReach() {
     const sandbox = document.getElementById('generate-sandbox-mode');
     const recurring = document.getElementById('generate-recurring-access');
     if (!sandbox || !recurring) return;
 
     // SANDBOX: held on for a sandbox application, or one without Financial Rider in production
-    const productInProduction = productionAllowed();
-    if (!productInProduction) sandbox.checked = true;
-    sandbox.disabled = !productInProduction;
-    document.getElementById('fr-reach-product').classList.toggle('hidden', productInProduction);
-    capNotice('fr-sandbox-notice', productInProduction ? null : appInProduction()
-        ? {
-            text: 'This application runs Financial Rider in sandbox only: production is not enabled for it yet. Ask for the capability in the Console to open sessions on real banks.',
-            ...capabilityRequest('product:financial_rider'),
-        }
-        : {
-            text: 'This is a sandbox application: every session it opens runs in sandbox. A production session needs the application in production.',
-            label: 'Ask for production', href: FR_GO_LIVE_DOCS,
-        });
+    InfoniteCapabilities.holdSandbox({
+        product: 'product:financial_rider', flow: 'Financial Rider', real: 'open sessions on real banks',
+        tagId: 'fr-reach-product', noticeId: 'fr-sandbox-notice',
+    });
 
     // RECURRING ACCESS: in production only with tokenized access granted; in sandbox, always
-    const tokenizedInProduction = reachesProduction('login:tokenized_access') && appInProduction();
+    const tokenizedInProduction = InfoniteCapabilities.reachesProduction('login:tokenized_access') && InfoniteCapabilities.appInProduction();
     const recurringAllowed = tokenizedInProduction || sandbox.checked;
     if (!recurringAllowed) recurring.checked = false;
     recurring.disabled = !recurringAllowed;
     document.getElementById('fr-reach-recurring').classList.toggle('hidden', tokenizedInProduction);
-    capNotice('fr-recurring-notice', recurringAllowed ? null : {
+    InfoniteCapabilities.notice('fr-recurring-notice', recurringAllowed ? null : {
         text: 'Recurring access runs in sandbox only for this application: turn Sandbox on to try it, or ask for tokenized access in the Console to use it in production.',
-        ...capabilityRequest('login:tokenized_access'),
+        ...InfoniteCapabilities.request('login:tokenized_access'),
     });
 }
 
@@ -870,58 +806,20 @@ window.selDropCatalogue = function(event) {
 // Launching the widget from the demo
 // --------------------------------------------------------------------------------
 
-/**
- * Whether a session opens in the demo's dialog: only one that stays on its final screen. A redirect
- * inside the dialog's iframe would carry the frame away, and the dialog with it — so a redirecting
- * session, or one whose settings are not known yet, opens in a tab of its own.
- */
-const opensInDialog = (settings) => settings?.completion_mode === 'do_nothing';
-
-function launchWidget(widgetUrl, settings) {
-    if (!widgetUrl) return;
-    if (!opensInDialog(settings)) {
-        window.open(widgetUrl, '_blank', 'noopener');
-        return;
-    }
-    const modal = document.getElementById('widgetLauncher');
-    if (window.glassHaloInk) glassHaloInk(modal.querySelector('.glass-halo'));
-    document.getElementById('widgetLauncherFrame').src = widgetUrl;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-window.closeWidgetLauncher = function() {
-    const modal = document.getElementById('widgetLauncher');
-    if (!modal || modal.classList.contains('hidden')) return;
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    document.getElementById('widgetLauncherFrame').src = 'about:blank';
-    renderHistory();
-};
-
-// The widget says when it is done, with the `financial-rider:ended` message the docs describe: the
-// dialog leaves its final screen in sight a moment, closes, and the history reads the session again
-window.addEventListener('message', (event) => {
-    const frame = document.getElementById('widgetLauncherFrame');
-    if (!frame || event.source !== frame.contentWindow || event.data?.event !== 'financial-rider:ended') return;
-    setTimeout(closeWidgetLauncher, 2500);
-});
-
-/** How a launch opens, said beside its button. */
-const launchHint = (settings) => opensInDialog(settings)
-    ? 'Opens here, in a dialog: the session stays on its final screen.'
-    : 'Opens in a new tab: the session redirects when it ends, and a dialog would lose it.';
+// The widget, opened from the demo the way every flow opens it (js/session-launcher.js): it closes
+// a moment after `financial-rider:ended`, and the history reads the session again
+InfoniteLauncher.mount({ event: 'financial-rider:ended', onClosed: () => renderHistory() });
 
 /** The session the New Lead dialog has just created, for its Launch button. */
 let lastCreated = null;
 
-window.launchCreated = () => lastCreated && launchWidget(lastCreated.widget_url, lastCreated.settings);
+window.launchCreated = () => lastCreated && InfoniteLauncher.launch(lastCreated.widget_url, lastCreated.settings);
 
 window.launchSession = function(sid) {
     const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
     const session = (window.InfoniteFlowsManager.getSessions(config?.appId, window.FR_HISTORY_CONTEXT, config?.widgetUrl) || [])
         .find(s => s.session_id === sid);
-    if (session) launchWidget(session.widget_url, session.session_settings);
+    if (session) InfoniteLauncher.launch(session.widget_url, session.session_settings);
 };
 
 // --------------------------------------------------------------------------------
@@ -963,32 +861,25 @@ function getStatusBadge(statusCode) {
 }
 
 /** What the session was created with, as small chips: read from its settings once they are known. */
+/** What a session was created with: the chips every flow draws, with Financial Rider's own — its entity, or its markets and how many. */
 function setupChips(settings) {
     if (!settings) return '';
-    const chip = (text, tone = 'bg-slate-100 text-slate-500 border-slate-200') =>
-        `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-widest ${tone}">${text}</span>`;
-    const chips = [];
-    if (settings.sandbox) chips.push(chip('<i class="fa-solid fa-code"></i> Sandbox', 'bg-amber-50 text-amber-700 border-amber-200'));
+    const { chip } = InfoniteLauncher;
+    const own = [];
     if (settings.engine_reference) {
-        chips.push(chip(`<img src="${engineLogoUrl(settings.engine_reference)}" class="w-3 h-3 rounded-sm" alt=""> ${settings.engine_reference.split('-')[0]}`));
+        own.push(chip(`<img src="${engineLogoUrl(settings.engine_reference)}" class="w-3 h-3 rounded-sm" alt=""> ${escapeHtml(settings.engine_reference.split('-')[0])}`));
     } else {
-        if (settings.markets?.length) chips.push(chip(settings.markets.join(' · ')));
-        if (settings.max_connections) chips.push(chip(`Up to ${settings.max_connections}`));
+        if (settings.markets?.length) own.push(chip(escapeHtml(settings.markets.join(' · '))));
+        if (settings.max_connections) own.push(chip(`Up to ${Number(settings.max_connections)}`));
     }
-    if (settings.tokenized_access) chips.push(chip('<i class="fa-solid fa-rotate"></i> Recurring', 'bg-[var(--primary-container)] text-[var(--primary)] border-transparent'));
-    if (settings.completion_mode && settings.completion_mode !== 'do_nothing' && settings.completion_url) {
-        const host = InfoniteSessionEnding.hostOf(settings.completion_url);
-        const icon = /(^|\.)(wa\.me|whatsapp\.com)$/.test(host) ? 'fa-brands fa-whatsapp' : (host === 'infonite.dev' ? 'fa-solid fa-book-open' : 'fa-solid fa-diamond-turn-right');
-        chips.push(chip(`<i class="${icon}"></i> ${escapeHtml(host)}`));
-    }
-    if (settings.consent_level === 'none') chips.push(chip('No consent screen'));
-    return chips.length ? `<div class="flex flex-wrap items-center gap-1 mt-1.5">${chips.join('')}</div>` : '';
+    if (settings.tokenized_access) own.push(chip('<i class="fa-solid fa-rotate"></i> Recurring', 'bg-[var(--primary-container)] text-[var(--primary)] border-transparent'));
+    return InfoniteLauncher.chips(settings, own);
 }
 
 window.activePollers = window.activePollers || {};
 
 const copyButton = (value, title, extra = '') =>
-    `<button onclick="navigator.clipboard.writeText('${value}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors ${extra}" title="${title}"><i class="fa-regular fa-copy"></i></button>`;
+    InfoniteLauncher.copyButton(value, title, `text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors ${extra}`);
 
 window.renderHistory = function() {
     const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
@@ -1046,9 +937,9 @@ window.renderHistory = function() {
         const actionButton = (icon, title, onclick, tone) =>
             `<button class="bg-white border ${tone} w-7 h-7 rounded-lg text-[10px] flex items-center justify-center transition-colors shadow-sm ml-1.5 shrink-0" title="${title}" onclick="${onclick}"><i class="${icon}"></i></button>`;
         const launchActionUi = (needsPolling && wUrl)
-            ? actionButton('fa-solid fa-play', opensInDialog(session.session_settings) ? 'Launch it here' : 'Launch it in a new tab: it redirects when it ends', `launchSession('${sid}')`, 'border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary-container)]')
+            ? actionButton('fa-solid fa-play', InfoniteLauncher.opensInDialog(session.session_settings) ? 'Launch it here' : 'Launch it in a new tab: it redirects when it ends', `launchSession('${sid}')`, 'border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary-container)]')
             : '';
-        const copyActionUi = wUrl ? `<button class="bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-600 hover:bg-indigo-50 w-7 h-7 rounded-lg text-[10px] flex items-center justify-center transition-colors shadow-sm ml-1.5 shrink-0" title="Copy URL" onclick="navigator.clipboard.writeText('${wUrl}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)"><i class="fa-regular fa-copy"></i></button>` : '';
+        const copyActionUi = wUrl ? InfoniteLauncher.copyButton(wUrl, 'Copy URL', 'bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-600 hover:bg-indigo-50 w-7 h-7 rounded-lg text-[10px] flex items-center justify-center transition-colors shadow-sm ml-1.5 shrink-0') : '';
         const cancelActionUi = needsPolling ? actionButton('fa-solid fa-times', 'Cancel Session', `cancelActiveSession('${sid}')`, 'border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50') : '';
         const deleteActionUi = (!needsPolling && isClosed === true) ? actionButton('fa-solid fa-trash-can', 'Delete Local Record', `deleteLocalSession('${sid}')`, 'border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50') : '';
         const syncActionUi = isErrorState ? actionButton('fa-solid fa-sync', 'Sync Session', `syncActiveSession('${sid}')`, 'border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50') : '';
@@ -1307,10 +1198,10 @@ function buildLeadPayload() {
         ...InfoniteSessionEnding.settings(),
     };
 
-    if (!settings.sandbox && !productionAllowed()) {
+    if (!settings.sandbox && !InfoniteCapabilities.productionAllowed('product:financial_rider')) {
         throw new Error("This application runs Financial Rider in sandbox only: turn Sandbox on.");
     }
-    if (settings.tokenized_access && !settings.sandbox && !reachesProduction('login:tokenized_access')) {
+    if (settings.tokenized_access && !settings.sandbox && !InfoniteCapabilities.reachesProduction('login:tokenized_access')) {
         throw new Error("Recurring access is enabled in sandbox only for this application: turn Sandbox on or switch it off.");
     }
 
@@ -1386,7 +1277,7 @@ window.generateLeadSession = async function() {
         InfoniteSessionEnding.remember();
         document.getElementById('nl-success-url').value = result.widget_url;
         lastCreated = { widget_url: result.widget_url, settings: { completion_mode: payload.settings.completion_mode } };
-        document.getElementById('nl-success-launch-hint').textContent = launchHint(lastCreated.settings);
+        document.getElementById('nl-success-launch-hint').textContent = InfoniteLauncher.hint(lastCreated.settings);
         // The ticket of a recurring access is shown here and nowhere else
         document.getElementById('nl-success-ticket-box').classList.toggle('hidden', !result.ticket);
         document.getElementById('nl-success-ticket').value = result.ticket || '';

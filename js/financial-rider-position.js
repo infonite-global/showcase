@@ -10,8 +10,10 @@
  * gave, and never two currencies.
  *
  * It reads the results page's state — FR_RESULTS, inScope(), the session (currentSessionData) and
- * its environment (configObj) — and the entity helpers of financial-rider-entities.js. Styles:
- * css/financial-rider-position.css.
+ * its environment (configObj) — and the entity helpers of financial-rider-entities.js. What every
+ * flow's results draw the same way (figures, cards, the search, the document viewer, the profile)
+ * is the results kit's: js/results-kit.js. Styles: css/financial-rider-position.css over
+ * css/results-kit.css.
  */
 (function () {
     'use strict';
@@ -34,20 +36,15 @@
 
     // ---------------------------------------------------------------- reading the results
 
+    const RK = window.InfoniteResults;
+    const {
+        esc, has, plural, kindOf, titleCase, tidy, money, pct, qty, share, day, term, signOf, signOfRate,
+        isRecord: isProduct, listOf, amount, fact, facts: factsHtml, ledger, meter, subLine, go,
+        card: productCard, empty: emptyState, initials, fold, leaves, spellings, searchBox, searchNone,
+    } = RK;
+
     const results = () => window.currentResultData || {};
     const data = () => results().data || {};
-    const esc = (value) => escapeHtml(value ?? '');
-    /** Whether the bank returned an amount: a number, never an empty or `NaN` placeholder. */
-    const has = (money) => !!money && money.amount !== null && money.amount !== undefined && money.amount !== '' && Number.isFinite(Number(money.amount));
-    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-    const kindOf = (subFamily) => (subFamily ? String(subFamily).split(':').pop().replace(/_/g, ' ') : '');
-    const titleCase = (text) => String(text || '').toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (_, gap, letter) => gap + letter.toUpperCase());
-
-    /** A name as the bank wrote it, with one repair: capitals whose accented letters came small («MI PRéSTAMO») are capitals throughout. */
-    function tidy(text) {
-        const value = String(text ?? '').trim();
-        return /[a-z]/.test(value) || !/\p{Ll}/u.test(value) ? value : value.toUpperCase();
-    }
 
     /** A product's name: its alias when the alias is a name (some banks put a number there), else the product's. */
     function nameOf(product, fallback) {
@@ -66,57 +63,6 @@
 
     // ---------------------------------------------------------------- how a figure is written
 
-    const formats = new Map();
-    const formatter = (key, build) => formats.get(key) || formats.set(key, build()).get(key);
-
-    /**
-     * An amount in the house's notation, grouped at every size: the Spanish default leaves four
-     * digits ungrouped, and 6541,73 € beside 11.000,00 € reads as two different styles.
-     */
-    function money(value, { sign = false, decimals = 2 } = {}) {
-        if (!has(value)) return '—';
-        const shape = { minimumFractionDigits: Math.min(2, decimals), maximumFractionDigits: decimals, useGrouping: 'always', signDisplay: sign ? 'exceptZero' : 'auto' };
-        const currency = /^[A-Z]{3}$/.test(value.currency || '') ? value.currency : null;
-        if (!currency) {
-            const number = formatter(`n${decimals}${sign}`, () => new Intl.NumberFormat('es-ES', shape)).format(Number(value.amount));
-            return `${number} ${esc(value.currency || '')}`.trim();
-        }
-        return formatter(`${currency}${decimals}${sign}`, () => new Intl.NumberFormat('es-ES', { style: 'currency', currency, ...shape })).format(Number(value.amount));
-    }
-
-    /** A rate or a return as people read it: «6,025 %», «+36,48 %». Empty when the bank gave none. */
-    function pct(rate, { sign = false } = {}) {
-        if (!rate || !Number.isFinite(Number(rate.value)) || rate.value === '' || rate.value === null) return '';
-        const number = formatter(`p${sign}`, () => new Intl.NumberFormat('es-ES', { maximumFractionDigits: 3, signDisplay: sign ? 'exceptZero' : 'auto' })).format(Number(rate.value));
-        return `${number} ${esc(rate.unit || '%')}`;
-    }
-
-    /** A quantity without the bank's trailing zeros: `12.456600` is 12,4566. Empty when there is none. */
-    function qty(value) {
-        if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return '';
-        return formatter('q', () => new Intl.NumberFormat('es-ES', { maximumFractionDigits: 6, useGrouping: 'always' })).format(Number(value));
-    }
-
-    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    /** A calendar date, never moved by the reader's time zone: «07 Oct 2026» (or «Oct 2026»). */
-    function day(value, { month = false } = {}) {
-        if (!value) return '—';
-        const text = String(value);
-        const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(text) ? `${text}T00:00:00Z` : text);
-        if (Number.isNaN(date.getTime())) return esc(text);
-        const tail = `${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-        return month ? tail : `${String(date.getUTCDate()).padStart(2, '0')} ${tail}`;
-    }
-
-    /** A moment, to the second and in UTC, so a piece of evidence reads the same everywhere: «12 Sep 2026 · 12:16:20 UTC». */
-    function stamp(value) {
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? String(value ?? '') : `${day(value)} · ${date.toISOString().slice(11, 19)} UTC`;
-    }
-
-    /** A product's life in one line: «Dec 2024 – Dec 2028». */
-    const term = (from, to) => (from || to ? `${day(from, { month: true })} – ${day(to, { month: true })}` : '');
-
     /** A card's expiry the way the plastic prints it: `2030-12-31` is 12/30. */
     const expiry = (value) => (/^\d{4}-\d{2}/.test(String(value || '')) ? `${String(value).slice(5, 7)}/${String(value).slice(2, 4)}` : '');
 
@@ -134,10 +80,8 @@
     };
 
     const TONES = { active: 'is-ok', booked: 'is-ok', pending: 'is-warn', suspended: 'is-warn', blocked: 'is-warn', cancelled: 'is-off', expired: 'is-off', failed: 'is-bad', reversed: 'is-bad' };
-    const statusTag = (status) => (status && status !== 'unknown' ? `<span class="frp-tag ${TONES[status] || 'is-quiet'}">${esc(kindOf(status))}</span>` : '');
-    const kindTag = (subFamily) => (subFamily ? `<span class="frp-tag">${esc(kindOf(subFamily))}</span>` : '');
-    const signOf = (value) => (has(value) ? (Number(value.amount) < 0 ? 'is-negative' : Number(value.amount) > 0 ? 'is-positive' : '') : '');
-    const signOfRate = (rate) => (rate && Number.isFinite(Number(rate.value)) ? (Number(rate.value) < 0 ? 'is-negative' : Number(rate.value) > 0 ? 'is-positive' : '') : '');
+    const statusTag = (status) => (status && status !== 'unknown' ? `<span class="rk-tag ${TONES[status] || 'is-quiet'}">${esc(kindOf(status))}</span>` : '');
+    const kindTag = (subFamily) => (subFamily ? `<span class="rk-tag">${esc(kindOf(subFamily))}</span>` : '');
 
     // ---------------------------------------------------------------- the products, bank by bank
 
@@ -147,30 +91,19 @@
         return scoped ? items.filter(item => inScope(item.product)) : items;
     }
 
-    const isProduct = (value) => !!value && typeof value === 'object' && !Array.isArray(value);
-    /** A list the bank may have sent as something else: anything but an array reads as an empty one. */
-    const listOf = (value) => (Array.isArray(value) ? value : []);
-
     /**
      * A product drawn whatever its shape: one the bank sent in a form this page does not expect
      * takes its place as a note pointing at the raw JSON, and the rest of the view still draws.
      */
     function safely(draw, args, shape = 'card') {
-        try {
-            return draw(...args);
-        } catch (error) {
-            console.warn('Financial Rider position: a product could not be drawn', error);
+        return RK.safely(draw, args, () => {
             const product = args.find(isProduct);
-            const name = esc((isProduct(product) && (product.product_alias || product.product_name || product.beneficiary?.name || product.id)) || 'A product');
+            const name = (isProduct(product) && (product.product_alias || product.product_name || product.beneficiary?.name || product.id)) || 'A product';
             const note = 'It came in a shape this demo does not draw. RAW JSON shows it as the bank returned it.';
-            if (shape === 'tr') return `<tr><td colspan="5"><b>${name}</b><small>${note}</small></td></tr>`;
-            if (shape === 'row') return `<div class="frp-row"><span class="frp-row-main"><b>${name}</b><small>${note}</small></span></div>`;
-            return `
-                <article class="frp-card is-broken">
-                    <div class="frp-card-title"><h3>${name}</h3><span class="frp-tag is-warn">not drawn</span></div>
-                    <p class="frp-muted">${note}</p>
-                </article>`;
-        }
+            if (shape === 'tr') return `<tr><td colspan="5"><b>${esc(name)}</b><small>${note}</small></td></tr>`;
+            if (shape === 'row') return `<div class="frp-row"><span class="frp-row-main"><b>${esc(name)}</b><small>${note}</small></span></div>`;
+            return RK.broken(name, note);
+        });
     }
 
     /** Whether the session was created to read the family at all. */
@@ -191,8 +124,8 @@
     }
 
     const bankLogo = (bank, size = '') => bank
-        ? `<span class="frp-logo ${size}"><img src="${engineLogoUrl(bank.engines[0].code)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('i'), {className: 'fa-solid fa-building-columns'}))"></span>`
-        : `<span class="frp-logo ${size} is-unknown"><i class="fa-solid fa-circle-question"></i></span>`;
+        ? `<span class="rk-logo ${size}"><img src="${engineLogoUrl(bank.engines[0].code)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('i'), {className: 'fa-solid fa-building-columns'}))"></span>`
+        : `<span class="rk-logo ${size} is-unknown"><i class="fa-solid fa-circle-question"></i></span>`;
 
     /** The name of a bank no connection of the session reads: its entity code, if the product gives one. */
     function strangerName(product) {
@@ -216,9 +149,9 @@
     function accountFact(label, identifier, options = {}) {
         if (!identifier || !(identifier.masked || identifier.value)) return null;
         const account = accountNamed(identifier);
-        const number = `<span class="frp-mono" title="${esc(grouped(identifier))}">${esc(tail(identifier))}</span>`;
+        const number = `<span class="rk-mono" title="${esc(grouped(identifier))}">${esc(tail(identifier))}</span>`;
         if (!account) return fact(label, number, options);
-        const link = `<button type="button" class="frp-inline-link" title="${esc(grouped(identifier))}" onclick="event.stopPropagation(); FRP.showAccount('${esc(account.id)}')"><span>${esc(nameOf(account, 'Account'))}</span><i class="fa-solid fa-chevron-right"></i></button>`;
+        const link = `<button type="button" class="rk-inline-link" title="${esc(grouped(identifier))}" onclick="event.stopPropagation(); FRP.showAccount('${esc(account.id)}')"><span>${esc(nameOf(account, 'Account'))}</span><i class="fa-solid fa-chevron-right"></i></button>`;
         return fact(label, link, { ...options, sub: number });
     }
 
@@ -301,28 +234,13 @@
     const crossedIdentity = () => listOf(results().messages).find(message => message.message_id === 'crossed_identity') || null;
     const identityMismatch = () => listOf(results().messages).find(message => message.message_id === 'profile_identity_mismatch') || null;
 
-    function initials(person) {
-        const first = String(person?.name || '').trim();
-        const last = String(person?.name_extra || '').trim();
-        return ((first[0] || '') + (last[0] || first[1] || '')).toUpperCase() || '?';
-    }
-
     /** The banner every screen of the position carries while the banks disagree on who the person is. */
     function renderIdentityBanner() {
-        const box = document.getElementById('identityBanner');
-        if (!box) return;
-        const flag = crossedIdentity();
-        box.classList.toggle('hidden', !flag);
-        if (!flag) return;
-        const detail = identityMismatch()?.message;
-        box.innerHTML = `
-            <span class="frp-identity-icon"><i class="fa-solid fa-people-arrows"></i></span>
-            <div class="frp-identity-text">
-                <strong>Crossed identity</strong>
-                <span>${esc(flag.message || 'Two banks returned a different identity for this session.')}</span>
-                ${detail ? `<small>${esc(detail)}</small>` : ''}
-            </div>
-            <button type="button" class="frp-identity-link" onclick="switchDashboardView('audit')">Details <i class="fa-solid fa-chevron-right"></i></button>`;
+        RK.identityBanner(document.getElementById('identityBanner'), {
+            flag: crossedIdentity(),
+            detail: identityMismatch()?.message,
+            fallback: 'Two banks returned a different identity for this session.',
+        });
     }
 
     /** The bar over every view: which bank, and the person whose position it is. */
@@ -340,12 +258,7 @@
                 <span class="frp-bar-label">Bank</span>
                 ${chips.map(chip => `<button type="button" class="fr-bank-filter ${FR_RESULTS.filter === chip.key ? 'is-on' : ''}" onclick="setBankFilter('${chip.key}')">${chip.icon}<span>${esc(chip.label)}</span></button>`).join('')}
             </div>` : '<div class="frp-bar-banks"></div>';
-        const me = person ? `
-            <button type="button" class="frp-me" onclick="FRP.openProfile()" title="The customer's profile">
-                <span class="frp-avatar">${esc(initials(person))}${crossedIdentity() ? '<i class="frp-avatar-alert fa-solid fa-exclamation"></i>' : ''}</span>
-                <span class="frp-me-name">${esc(titleCase(person.name || 'Customer'))}</span>
-                <i class="fa-solid fa-chevron-down"></i>
-            </button>` : '';
+        const me = person ? RK.personChip(person, { alert: !!crossedIdentity(), open: 'FRP.openProfile()' }) : '';
         bar.classList.remove('hidden');
         bar.innerHTML = filters + me;
         renderIdentityBanner();
@@ -354,90 +267,18 @@
 
     /** The rail's counts: how many of each family the bank filter lets through; a family with none goes quiet. */
     function renderRailCounts() {
-        document.querySelectorAll('.frp-rail-item [data-count]').forEach(slot => {
+        document.querySelectorAll('.rk-rail-item [data-count]').forEach(slot => {
             let n = 0;
             try { n = slot.dataset.count === 'investments' ? portfolios().length : productsOf(slot.dataset.count).length; } catch { n = 0; }
             slot.textContent = n ? String(n) : '';
-            slot.closest('.frp-rail-item')?.classList.toggle('is-empty', !n);
+            slot.closest('.rk-rail-item')?.classList.toggle('is-empty', !n);
         });
     }
 
     // ---------------------------------------------------------------- the profile, behind the avatar
 
-    function field(label, value) {
-        return `<div class="frp-field"><span>${label}</span><b>${value || '—'}</b></div>`;
-    }
-
-    /** An address in one line, the way the bank split it. */
-    function addressLine(address) {
-        if (address.full_text) return address.full_text;
-        const place = [address.zip_code || address.postal_code, address.municipality || address.city].filter(Boolean).join(' ');
-        const city = address.city && address.city !== address.municipality ? titleCase(address.city) : '';
-        return [[address.street, address.number, address.street_extra].filter(Boolean).join(' '), place, city, address.state || address.region].filter(Boolean).join(', ');
-    }
-
     function openProfile() {
-        const person = profile();
-        if (!person) return;
-        let modal = document.getElementById('frpProfile');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'frpProfile';
-            modal.className = 'frp-modal';
-            modal.addEventListener('click', (event) => { if (event.target === modal) closeProfile(); });
-            document.body.appendChild(modal);
-            document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeProfile(); });
-        }
-        const documents = listOf(person.identification_numbers).map(doc => `
-            <div class="frp-doc"><span>${esc(String(doc.type || '').split(':').pop().toUpperCase())}</span><b>${esc(doc.value)}</b>${doc.validated ? '<i class="fa-solid fa-circle-check" title="Validated"></i>' : ''}</div>`).join('');
-        const addresses = listOf(person.addresses).map(address => `
-            <div class="frp-address"><i class="fa-solid fa-location-dot"></i><span>${esc(addressLine(address) || '—')}${address.title ? ` <em class="frp-tag is-quiet">${esc(address.title)}</em>` : ''}</span>${address.country ? `<img src="${flagUrl(address.country)}" alt="">` : ''}</div>`).join('');
-        const flag = crossedIdentity();
-        modal.innerHTML = `
-            <div class="frp-modal-panel" role="dialog" aria-modal="true" aria-label="Customer profile">
-                <button type="button" class="frp-modal-close" onclick="FRP.closeProfile()" title="Close"><i class="fa-solid fa-xmark"></i></button>
-                <div class="frp-profile-head">
-                    <span class="frp-avatar lg">${esc(initials(person))}</span>
-                    <div class="min-w-0">
-                        <h3>${esc(titleCase([person.name, person.name_extra].filter(Boolean).join(' ')))}</h3>
-                        <div class="frp-profile-tags">
-                            ${person.type ? `<span class="frp-tag">${person.type === 'company' ? 'Legal entity' : 'Natural person'}</span>` : ''}
-                            ${person.alias ? `<span class="frp-tag is-quiet">“${esc(person.alias)}”</span>` : ''}
-                        </div>
-                    </div>
-                </div>
-                ${flag ? `<div class="frp-identity is-inline"><span class="frp-identity-icon"><i class="fa-solid fa-people-arrows"></i></span><div class="frp-identity-text"><strong>Crossed identity</strong><span>The banks disagree on who this person is: this profile is the first bank's.</span></div></div>` : ''}
-                <div class="frp-profile-section">
-                    <span class="frp-section-label">Identity</span>
-                    <div class="frp-docs">${documents || '<span class="frp-muted">No document returned.</span>'}</div>
-                    <div class="frp-fields">
-                        ${field('Born', day(person.birth_date))}
-                        ${field('Gender', esc(titleCase(person.gender)))}
-                        ${field('Civil status', esc(titleCase(person.civil_status)))}
-                        ${field('Nationality', person.nationality_country ? `<img src="${flagUrl(person.nationality_country)}" alt=""> ${esc(person.nationality_country)}` : '')}
-                        ${field('Residence', person.residence_country ? `<img src="${flagUrl(person.residence_country)}" alt=""> ${esc(person.residence_country)}` : '')}
-                        ${field('Customer since', person.member_since ? day(person.member_since) : '')}
-                    </div>
-                </div>
-                <div class="frp-profile-section">
-                    <span class="frp-section-label">Contact</span>
-                    <div class="frp-fields is-wide">
-                        ${listOf(person.emails).map(mail => field('Email', esc(mail))).join('') || field('Email', '')}
-                        ${listOf(person.phones).map(phone => field('Phone', esc(phone))).join('') || field('Phone', '')}
-                    </div>
-                </div>
-                <div class="frp-profile-section">
-                    <span class="frp-section-label">Addresses</span>
-                    ${addresses || '<span class="frp-muted">No address returned.</span>'}
-                </div>
-            </div>`;
-        modal.classList.add('is-open');
-        document.body.classList.add('overflow-hidden');
-    }
-
-    function closeProfile() {
-        document.getElementById('frpProfile')?.classList.remove('is-open');
-        document.body.classList.remove('overflow-hidden');
+        RK.openProfile(profile(), { flag: crossedIdentity(), flagText: "The banks disagree on who this person is: this profile is the first bank's." });
     }
 
     // ---------------------------------------------------------------- the pieces a product is drawn with
@@ -453,46 +294,6 @@
             direct_debits: () => pick(['Last charge', lastCharge(p)?.amount]),
         }[familyKey]?.();
         return found ? { label: found[0], value: found[1] } : null;
-    }
-
-    /** The headline figure of a card: its label over it, both flush right, and what dates it under. */
-    function amount(label, value, { sub = '', tone = '' } = {}) {
-        return `<div class="frp-amount"><small>${label}</small><b class="${tone}">${value}</b>${sub ? `<span>${sub}</span>` : ''}</div>`;
-    }
-
-    /** A fact the bank returned, for a row of facts or a ledger; nothing when it returned none. */
-    const fact = (label, value, options = {}) => (value && value !== '—' ? { label, value, ...options } : null);
-
-    /** The facts under a product's name: a row of label and value, all one size. */
-    function factsHtml(facts) {
-        const list = facts.filter(Boolean);
-        if (!list.length) return '';
-        return `<dl class="frp-facts">${list.map(item => `<div class="${item.wide ? 'is-wide' : ''}"><dt>${item.label}</dt><dd class="${item.tone || ''}"><span>${item.value}</span>${item.sub ? `<small>${item.sub}</small>` : ''}</dd></div>`).join('')}</dl>`;
-    }
-
-    /** A statement: label left, value flush right, the headline line first and larger; a meter may sit under it. */
-    function ledger(rows) {
-        const list = rows.filter(Boolean);
-        if (!list.length) return '';
-        return `<dl class="frp-ledger">${list.map(item => (item.meter
-            ? `<div class="frp-ledger-meter">${item.meter}</div>`
-            : `<div class="${item.main ? 'is-main' : ''}"><dt>${item.label}</dt><dd class="${item.tone || ''}"><span>${item.value}</span>${item.sub ? `<small>${item.sub}</small>` : ''}</dd></div>`)).join('')}</dl>`;
-    }
-
-    /** A share as people read it: «40,5 %», and «<0,1 %» for some, but too little to round. */
-    function share(part) {
-        if (part > 0 && part < 0.001) return '&lt;0,1 %';
-        return `${formatter('s', () => new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 })).format(part * 100)} %`;
-    }
-
-    /** A bar and its legend: how far along a product is, from two figures its bank gave. */
-    function meter(part, { left, right = '', tone = '' }) {
-        const width = Math.max(0, Math.min(1, part)) * 100;
-        return `
-            <div class="frp-meter ${tone} ${part > 0 ? '' : 'is-zero'}" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${width.toFixed(1)}">
-                <div class="frp-meter-bar"><span style="width:${width.toFixed(2)}%"></span></div>
-                <div class="frp-meter-legend"><span>${left}</span>${right ? `<span>${right}</span>` : ''}</div>
-            </div>`;
     }
 
     /** How much of a loan is repaid — only when the bank gave both what it lent and what is left. */
@@ -512,33 +313,6 @@
         return { part, tone: part >= 0.9 ? 'is-high' : part >= 0.7 ? 'is-mid' : '' };
     }
 
-    /** A line of small things beside a name: a number, what the bank calls the product. */
-    const subLine = (...parts) => parts.filter(Boolean).map(part => `<span>${part}</span>`).join('<i class="frp-dot"></i>');
-
-    const go = (label) => `<span class="frp-card-go">${label} <i class="fa-solid fa-chevron-right"></i></span>`;
-
-    /**
-     * One product, one card: its name and number on the left, the figure the family is read by on
-     * the right, and the rest of what the bank said in a row of facts underneath.
-     */
-    function productCard({ open = '', title, tags = '', sub = '', main = '', gauge = '', facts = [], below = '', foot = '', after = '' }) {
-        return `
-            <article class="frp-card ${open ? 'is-link' : ''}" ${open ? `onclick="${open}"` : ''}>
-                <header class="frp-card-head">
-                    <div class="frp-card-id">
-                        <div class="frp-card-title"><h3 title="${esc(title)}">${esc(title)}</h3>${tags}</div>
-                        ${sub ? `<div class="frp-card-sub">${sub}</div>` : ''}
-                    </div>
-                    ${main}
-                </header>
-                ${gauge}
-                ${factsHtml(facts)}
-                ${below}
-                ${foot ? `<footer class="frp-card-foot">${foot}</footer>` : ''}
-                ${after}
-            </article>`;
-    }
-
     // ---------------------------------------------------------------- the global position
 
     /** One line of a family's list: the product, its bank and the figure that bank returned for it. */
@@ -552,7 +326,7 @@
             <button type="button" class="frp-row" onclick="${open}">
                 <span class="frp-row-main">
                     <b title="${esc(title)}">${esc(title)}</b>
-                    <small>${bankLine(p)}${number ? `<i class="frp-dot"></i><span class="frp-mono">${esc(number)}</span>` : ''}</small>
+                    <small>${bankLine(p)}${number ? `<i class="rk-dot"></i><span class="rk-mono">${esc(number)}</span>` : ''}</small>
                 </span>
                 ${head ? `<span class="frp-row-figure"><b class="${signOf(head.value) === 'is-negative' && head.label === 'Available' ? 'is-negative' : ''}">${money(head.value)}</b><small>${head.label}</small></span>` : ''}
                 <i class="fa-solid fa-chevron-right frp-row-go"></i>
@@ -568,7 +342,7 @@
             <button type="button" class="frp-row" onclick="switchDashboardView('investments')">
                 <span class="frp-row-main">
                     <b title="${esc(folioTitle(folio))}">${esc(folioTitle(folio))}</b>
-                    <small>${bankLine(anchor, folio.bank)}${number ? `<i class="frp-dot"></i><span class="frp-mono">${esc(number)}</span>` : ''}</small>
+                    <small>${bankLine(anchor, folio.bank)}${number ? `<i class="rk-dot"></i><span class="rk-mono">${esc(number)}</span>` : ''}</small>
                     <span class="frp-comps">${composition(folio)}</span>
                 </span>
                 ${account && has(account.valuation) ? `<span class="frp-row-figure"><b>${money(account.valuation)}</b><small>Valuation</small></span>` : ''}
@@ -597,7 +371,7 @@
                             <small><img src="${flagUrl(bank.country)}" alt=""> Entity ${esc(String(bank.entity).padStart(4, '0'))}</small>
                         </div>
                     </div>
-                    <div class="frp-bank-counts">${counts(items) || '<span class="frp-muted">Nothing read from this bank.</span>'}</div>
+                    <div class="frp-bank-counts">${counts(items) || '<span class="rk-muted">Nothing read from this bank.</span>'}</div>
                     <button type="button" class="frp-bank-action" onclick="setBankFilter('${on ? 'all' : bank.key}')">${on ? '<i class="fa-solid fa-xmark"></i> Show every bank' : '<i class="fa-solid fa-filter"></i> Only this bank'}</button>
                 </article>`;
         }).join('');
@@ -614,26 +388,26 @@
                 : productsOf(family.key).map(item => safely(row, [family.key, item.product], 'row'));
             if (!lines.length) return '';
             return `
-                <section class="frp-section">
-                    <div class="frp-section-head">
-                        <span class="frp-section-label"><i class="${family.icon}"></i> ${family.title}<em>${lines.length}</em></span>
-                        <button type="button" class="frp-link" onclick="switchDashboardView('${family.key}')">See all <i class="fa-solid fa-chevron-right"></i></button>
+                <section class="rk-section">
+                    <div class="rk-section-head">
+                        <span class="rk-section-label"><i class="${family.icon}"></i> ${family.title}<em>${lines.length}</em></span>
+                        <button type="button" class="rk-link" onclick="switchDashboardView('${family.key}')">See all <i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                     <div class="frp-list">${lines.join('')}</div>
                 </section>`;
         }).join('');
         return `
-            <div class="frp-page">
-                <header class="frp-head">
+            <div class="rk-page">
+                <header class="rk-head">
                     <div class="min-w-0">
-                        <span class="frp-eyebrow">Global position</span>
-                        <h2 class="frp-title">${person ? `Hello, ${esc(titleCase(person.name))}` : 'Global position'}</h2>
-                        <p class="frp-sub">${plural(banks.length, 'bank', 'banks')} connected in this session, and what each of them holds.</p>
+                        <span class="rk-eyebrow">Global position</span>
+                        <h2 class="rk-title">${person ? `Hello, ${esc(titleCase(person.name))}` : 'Global position'}</h2>
+                        <p class="rk-sub">${plural(banks.length, 'bank', 'banks')} connected in this session, and what each of them holds.</p>
                     </div>
                 </header>
-                <section class="frp-section">
-                    <div class="frp-section-head"><span class="frp-section-label"><i class="fa-solid fa-building-columns"></i> Connected banks<em>${banks.length}</em></span></div>
-                    <div class="frp-banks">${bankCards + orphan || '<p class="frp-muted">No connection recorded for this session.</p>'}</div>
+                <section class="rk-section">
+                    <div class="rk-section-head"><span class="rk-section-label"><i class="fa-solid fa-building-columns"></i> Connected banks<em>${banks.length}</em></span></div>
+                    <div class="frp-banks">${bankCards + orphan || '<p class="rk-muted">No connection recorded for this session.</p>'}</div>
                 </section>
                 ${sections || emptyState('fa-solid fa-box-open', 'Nothing to show', FR_RESULTS.filter === 'all' ? 'The banks returned no product.' : 'This bank returned no product.')}
             </div>`;
@@ -649,7 +423,7 @@
                 open: `FRP.showAccount('${esc(p.id)}')`,
                 title: nameOf(p, 'Account'),
                 tags: kindTag(p.sub_family),
-                sub: subLine(`<span class="frp-mono">${esc(grouped(p.identifier))}</span>`, esc(describe(p))),
+                sub: subLine(`<span class="rk-mono">${esc(grouped(p.identifier))}</span>`, esc(describe(p))),
                 main: head ? amount(head.label, money(head.value), { tone: signOf(head.value) === 'is-negative' ? 'is-negative' : '' }) : '',
                 facts: [
                     head?.label !== 'Booked' ? fact('Booked', money(p.booked)) : null,
@@ -668,7 +442,7 @@
                 open: `FRP.showCard('${esc(p.id)}')`,
                 title: nameOf(p, 'Card'),
                 tags: kindTag(p.sub_family) + statusTag(p.status),
-                sub: subLine(`<span class="frp-mono">${esc(grouped(p.identifier))}</span>`, esc(titleCase(p.identifier?.brand)), esc(describe(p))),
+                sub: subLine(`<span class="rk-mono">${esc(grouped(p.identifier))}</span>`, esc(titleCase(p.identifier?.brand)), esc(describe(p))),
                 main: head ? amount(head.label, money(head.value)) : '',
                 gauge: use ? meter(use.part, { left: `<b>${share(use.part)}</b> of the limit in use`, right: told ? `${money(p.available)} available` : '', tone: use.tone }) : '',
                 facts: [
@@ -686,7 +460,7 @@
             return productCard({
                 title: nameOf(p, 'Deposit'),
                 tags: kindTag(p.sub_family),
-                sub: subLine(p.contract?.value ? `<span class="frp-mono">${esc(p.contract.value)}</span>` : '', esc(describe(p))),
+                sub: subLine(p.contract?.value ? `<span class="rk-mono">${esc(p.contract.value)}</span>` : '', esc(describe(p))),
                 main: head ? amount(head.label, money(head.value)) : '',
                 facts: [
                     head?.label !== 'Available' && has(p.available) ? fact('Available', money(p.available)) : null,
@@ -703,7 +477,7 @@
             return productCard({
                 title: nameOf(p, 'Loan'),
                 tags: kindTag(p.sub_family),
-                sub: subLine(p.identifier?.value ? `<span class="frp-mono">${esc(p.identifier.value)}</span>` : '', esc(describe(p))),
+                sub: subLine(p.identifier?.value ? `<span class="rk-mono">${esc(p.identifier.value)}</span>` : '', esc(describe(p))),
                 main: has(p.outstanding_balance) ? amount('Outstanding', money(p.outstanding_balance)) : '',
                 gauge: paid ? meter(paid.part, { left: `<b>${share(paid.part)}</b> repaid`, right: `${money({ ...p.outstanding_balance, amount: paid.left })} left of ${money(p.initial_balance)}` }) : '',
                 facts: [
@@ -724,17 +498,17 @@
             return productCard({
                 title: tidy(beneficiary.name || 'Direct debit'),
                 tags: statusTag(p.status),
-                sub: subLine(beneficiary.identifier ? `<span title="The creditor's SEPA identifier">Creditor <span class="frp-mono">${esc(beneficiary.identifier)}</span></span>` : '', beneficiary.tax_id ? `Tax ID <span class="frp-mono">${esc(beneficiary.tax_id)}</span>` : '', esc([kindOf(p.sub_family).toUpperCase(), titleCase(p.customer_segment)].filter(Boolean).join(' · '))),
+                sub: subLine(beneficiary.identifier ? `<span title="The creditor's SEPA identifier">Creditor <span class="rk-mono">${esc(beneficiary.identifier)}</span></span>` : '', beneficiary.tax_id ? `Tax ID <span class="rk-mono">${esc(beneficiary.tax_id)}</span>` : '', esc([kindOf(p.sub_family).toUpperCase(), titleCase(p.customer_segment)].filter(Boolean).join(' · '))),
                 main: last && has(last.amount) ? amount('Last charge', money(last.amount), { sub: day(last.payment_date || last.issue_date) }) : '',
                 facts: [
-                    fact('Mandate', p.debit_reference ? `<span class="frp-mono" title="${esc(p.debit_reference)}">${esc(p.debit_reference)}</span>` : '', { wide: true }),
+                    fact('Mandate', p.debit_reference ? `<span class="rk-mono" title="${esc(p.debit_reference)}">${esc(p.debit_reference)}</span>` : '', { wide: true }),
                     accountFact('Charged to', p.account),
                     fact('Payer', p.payer?.name ? `<span title="${esc(titleCase(p.payer.name))}">${esc(titleCase(p.payer.name))}</span>` : '', { sub: esc(p.payer?.identifier || '') }),
-                    fact('Collects into', beneficiary.account ? `<span class="frp-mono">${esc(tail(beneficiary.account))}</span>` : ''),
+                    fact('Collects into', beneficiary.account ? `<span class="rk-mono">${esc(tail(beneficiary.account))}</span>` : ''),
                 ],
                 below: last?.concept ? `<p class="frp-concept" title="${esc(last.concept)}"><span>Concept</span>${esc(last.concept)}</p>` : '',
                 foot: `
-                    <button type="button" class="frp-toggle" aria-expanded="false" ${charges.length ? 'onclick="FRP.toggleCharges(this)"' : 'disabled'}><i class="fa-solid fa-chevron-right"></i>${charges.length ? `${plural(charges.length, 'charge', 'charges')} read` : 'No charge read'}</button>
+                    <button type="button" class="rk-toggle" aria-expanded="false" ${charges.length ? 'onclick="FRP.toggleCharges(this)"' : 'disabled'}><i class="fa-solid fa-chevron-right"></i>${charges.length ? `${plural(charges.length, 'charge', 'charges')} read` : 'No charge read'}</button>
                     ${receipt ? `<button type="button" class="frp-receipt" title="Open ${esc(receipt.content_name || 'the receipt')}" onclick="FRP.openReceipt(this, '${esc(receipt.id)}')"><i class="fa-solid fa-file-pdf"></i><span>Last receipt</span><i class="fa-solid fa-up-right-from-square"></i></button>` : ''}`,
                 after: charges.length ? `<div class="frp-charges">${chargesTable(charges, receipt)}</div>` : '',
             });
@@ -755,11 +529,11 @@
                 <tr>
                     <td class="frp-tx-date"><b>${day(paid)}</b>${issued}</td>
                     <td class="frp-charge-concept">${esc(charge.concept || '—')}</td>
-                    <td class="frp-tx-kind">${charge.status ? `<span class="frp-cat ${TONES[charge.status] || ''}">${esc(kindOf(charge.status))}</span>` : ''}</td>
+                    <td class="frp-tx-kind">${charge.status ? `<span class="rk-pill ${TONES[charge.status] || ''}">${esc(kindOf(charge.status))}</span>` : ''}</td>
                     <td class="frp-tx-amount"><b>${money(charge.amount)}</b>${clip}</td>
                 </tr>`;
         }).join('');
-        return `<table class="frp-table"><thead><tr><th>Paid</th><th>Concept</th><th class="frp-tx-kind">Status</th><th class="text-right">Amount</th></tr></thead><tbody>${rows}</tbody></table>`;
+        return `<table class="rk-table"><thead><tr><th>Paid</th><th>Concept</th><th class="frp-tx-kind">Status</th><th class="text-right">Amount</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     /** A bank's heading inside a family: its logo, its name and how much of the family it holds. */
@@ -767,34 +541,25 @@
         return `<div class="frp-group">${bankLogo(bank, 'sm')}<b>${bank ? esc(bank.name) : 'Not matched'}</b><small>${count}</small><span class="frp-group-rule"></span></div>`;
     }
 
-    function familyHead(family) {
-        return `
-            <header class="frp-head">
-                <span class="frp-head-icon"><i class="${family.icon}"></i></span>
-                <div class="min-w-0">
-                    <h2 class="frp-title">${family.title}</h2>
-                    <p class="frp-sub">${family.blurb}</p>
-                </div>
-            </header>`;
-    }
+    const familyHead = (family) => RK.head(family.icon, family.title, family.blurb);
 
     function renderFamily(familyKey) {
         const family = FAMILIES.find(f => f.key === familyKey);
         const head = familyHead(family);
         if (!requested(family)) {
-            return `<div class="frp-page">${head}${emptyState('fa-solid fa-lock', 'Not requested', 'The session was not created to read this family, so no bank was asked for it.')}</div>`;
+            return `<div class="rk-page">${head}${emptyState('fa-solid fa-lock', 'Not requested', 'The session was not created to read this family, so no bank was asked for it.')}</div>`;
         }
         if (familyKey === 'investments') return renderInvestments(head);
         const items = productsOf(familyKey);
         if (!items.length) {
-            return `<div class="frp-page">${head}${emptyState(family.icon, `No ${family.many}`, FR_RESULTS.filter === 'all' ? `The banks returned no ${family.one}.` : `This bank returned no ${family.one}.`)}</div>`;
+            return `<div class="rk-page">${head}${emptyState(family.icon, `No ${family.many}`, FR_RESULTS.filter === 'all' ? `The banks returned no ${family.one}.` : `This bank returned no ${family.one}.`)}</div>`;
         }
         const groups = byBank(items).map(group => `
             <section class="frp-bank-group">
                 ${groupHead(group.bank, plural(group.items.length, family.one, family.many))}
                 <div class="frp-cards">${group.items.map(item => safely(cardOf[familyKey], [item.product])).join('')}</div>
             </section>`).join('');
-        return `<div class="frp-page">${head}${groups}</div>`;
+        return `<div class="rk-page">${head}${groups}</div>`;
     }
 
     // ---------------------------------------------------------------- investments: each account and what it holds
@@ -802,7 +567,7 @@
     function renderInvestments(head) {
         const folios = portfolios();
         if (!folios.length) {
-            return `<div class="frp-page">${head}${emptyState('fa-solid fa-chart-line', 'No investments', FR_RESULTS.filter === 'all' ? 'The banks returned no securities account and no holding.' : 'This bank returned no securities account and no holding.')}</div>`;
+            return `<div class="rk-page">${head}${emptyState('fa-solid fa-chart-line', 'No investments', FR_RESULTS.filter === 'all' ? 'The banks returned no securities account and no holding.' : 'This bank returned no securities account and no holding.')}</div>`;
         }
         const groups = byBank(folios, folio => folio.bank).map(group => {
             const accounts = group.items.filter(folio => folio.account).length;
@@ -814,22 +579,22 @@
                     <div class="frp-cards">${group.items.map(folio => safely(folioCard, [folio])).join('')}</div>
                 </section>`;
         }).join('');
-        return `<div class="frp-page">${head}${groups}</div>`;
+        return `<div class="rk-page">${head}${groups}</div>`;
     }
 
     /** A securities account (or the holdings outside one): its own figures, then a table of what it holds. */
     function folioCard(folio) {
         const a = folio.account;
         const sub = a
-            ? subLine(a.identifier?.value ? `<span class="frp-mono">${esc(a.identifier.value)}</span>` : '', esc(describe(a)), a.valuation_date ? `Valued ${day(a.valuation_date)}` : '')
+            ? subLine(a.identifier?.value ? `<span class="rk-mono">${esc(a.identifier.value)}</span>` : '', esc(describe(a)), a.valuation_date ? `Valued ${day(a.valuation_date)}` : '')
             : `<span>${folio.named ? 'The bank returned what this account holds, not the account itself.' : 'Holdings the bank returned without a securities account to hold them.'}</span>`;
         return `
-            <article class="frp-card frp-folio ${a ? '' : 'is-loose'}">
-                <header class="frp-card-head">
+            <article class="rk-card frp-folio ${a ? '' : 'is-loose'}">
+                <header class="rk-card-head">
                     <span class="frp-folio-icon"><i class="fa-solid ${a ? 'fa-briefcase' : 'fa-layer-group'}"></i></span>
-                    <div class="frp-card-id">
-                        <div class="frp-card-title"><h3 title="${esc(folioTitle(folio))}">${esc(folioTitle(folio))}</h3>${a ? '' : '<span class="frp-tag is-quiet">No account returned</span>'}</div>
-                        <div class="frp-card-sub">${sub}</div>
+                    <div class="rk-card-id">
+                        <div class="rk-card-title"><h3 title="${esc(folioTitle(folio))}">${esc(folioTitle(folio))}</h3>${a ? '' : '<span class="rk-tag is-quiet">No account returned</span>'}</div>
+                        <div class="rk-card-sub">${sub}</div>
                     </div>
                     ${a && has(a.valuation) ? amount('Valuation', money(a.valuation)) : ''}
                 </header>
@@ -892,10 +657,6 @@
             </tr>`;
     }
 
-    function emptyState(icon, title, text) {
-        return `<div class="frp-empty"><span><i class="${icon}"></i></span><b>${title}</b><p>${text}</p></div>`;
-    }
-
     // ---------------------------------------------------------------- an account's or a card's own page
 
     function crumbs(familyKey, title) {
@@ -915,24 +676,6 @@
     }
 
     // ---------------------------------------------------------------- finding a movement
-
-    /** Text the way the search compares it: no accents, no case, one space between words. */
-    const fold = (text) => String(text ?? '').normalize('NFD').replace(/\p{M}+/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
-
-    /** Every text and number inside a value, a few levels deep: all a payee or a merchant says about itself. */
-    function leaves(value, depth = 3) {
-        if (value === null || value === undefined) return [];
-        if (typeof value === 'string' || typeof value === 'number') return [String(value)];
-        if (depth <= 0 || typeof value !== 'object') return [];
-        return (Array.isArray(value) ? value : Object.values(value)).flatMap(item => leaves(item, depth - 1));
-    }
-
-    /** An amount in every way someone may type it: -137.04, 137,04, 1033.55, 1.033,55. */
-    function spellings(value) {
-        if (!has(value)) return [];
-        const plain = Math.abs(Number(value.amount)).toFixed(2);
-        return [String(value.amount), plain, plain.replace('.', ','), money({ ...value, amount: plain })];
-    }
 
     /**
      * What a movement can be found by: its descriptions, the bank's id and reference, its category,
@@ -958,65 +701,17 @@
         }
     }
 
-    /** A search split into what must all be found: its words, or "a phrase" in quotes. */
-    function termsOf(query) {
-        const terms = [];
-        String(query || '').replace(/"([^"]*)"|(\S+)/g, (_, phrase, word) => {
-            const term = fold(phrase ?? word.replace(/"/g, ''));
-            if (term) terms.push(term);
-            return '';
-        });
-        return terms;
-    }
-
-    /** The movements on screen, each as the search reads it, in the table's order. */
-    let findables = [];
-
-    /** Leaves in the table the movements that hold every term; with no term, or on any failure, all of them. */
-    function searchMovements(input) {
-        const table = document.getElementById('frpTx');
-        if (!table) return;
-        const rows = [...table.querySelectorAll('tbody tr[data-i]')];
-        let terms = [];
-        try { terms = termsOf(input.value); } catch { terms = []; }
-        let shown = 0;
-        rows.forEach(row => {
-            let hit = true;
-            try { hit = !terms.length || terms.every(term => (findables[Number(row.dataset.i)] || '').includes(term)); } catch { hit = true; }
-            row.hidden = !hit;
-            if (hit) shown += 1;
-        });
-        const none = table.querySelector('.frp-tx-none');
-        if (none) none.hidden = shown > 0;
-        const count = document.getElementById('frpTxCount');
-        if (count) count.textContent = terms.length ? `${shown} of ${rows.length}` : String(rows.length);
-        input.closest('.frp-search')?.classList.toggle('is-filled', !!input.value);
-    }
-
-    function clearSearch(button) {
-        const input = button.closest('.frp-search')?.querySelector('input');
-        if (!input) return;
-        input.value = '';
-        searchMovements(input);
-        input.focus();
-    }
-
     /** The movements' heading: how many there are, and a box to find one by anything the bank said about it. */
     function movementsHead(list) {
         return `
-            <div class="frp-section-head is-search">
-                <span class="frp-section-label"><i class="fa-solid fa-list-ul"></i> Movements<em id="frpTxCount">${list.length}</em></span>
-                ${list.length ? `
-                <label class="frp-search" title="Descriptions, payer, payee, merchant, amount, date or the bank's id — every word must match; quotes keep a phrase together">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="search" placeholder="Search movements" autocomplete="off" spellcheck="false" aria-label="Search the movements" oninput="FRP.searchMovements(this)" onkeydown="if (event.key === 'Escape') { this.value = ''; FRP.searchMovements(this); }">
-                    <button type="button" class="frp-search-clear" onclick="FRP.clearSearch(this)" title="Clear the search"><i class="fa-solid fa-xmark"></i></button>
-                </label>` : ''}
+            <div class="rk-section-head is-search">
+                <span class="rk-section-label"><i class="fa-solid fa-list-ul"></i> Movements<em id="frpTxCount">${list.length}</em></span>
+                ${list.length ? searchBox({ target: 'frpTx', placeholder: 'Search movements', label: 'Search the movements', title: "Descriptions, payer, payee, merchant, amount, date or the bank's id — every word must match; quotes keep a phrase together" }) : ''}
             </div>`;
     }
 
     function movements(list) {
-        findables = list.map(findable);
+        RK.index('frpTx', list, findable);
         if (!list.length) return emptyState('fa-solid fa-list-ul', 'No movements', 'The bank returned no movement for this product in the window the session asked for.');
         const rows = list.map((tx, index) => {
             const amountValue = Number(tx.amount?.amount);
@@ -1028,12 +723,12 @@
                 <tr data-i="${index}">
                     <td class="frp-tx-date"><b>${day(tx.operation_date || tx.value_date)}</b>${tx.operation_date && tx.value_date && tx.value_date !== tx.operation_date ? `<small>Value ${day(tx.value_date)}</small>` : ''}</td>
                     <td class="frp-tx-what"><b title="${esc(first || '')}">${esc(first || '—')}</b>${second ? `<small title="${esc(second)}">${esc(second)}</small>` : ''}${who ? `<small class="frp-tx-who" title="${esc(who)}">${esc(who)}</small>` : ''}<small class="frp-tx-when">${day(tx.operation_date || tx.value_date)}</small></td>
-                    <td class="frp-tx-kind">${kind ? `<span class="frp-cat ${direction}">${esc(kind)}</span>` : ''}</td>
+                    <td class="frp-tx-kind">${kind ? `<span class="rk-pill ${direction}">${esc(kind)}</span>` : ''}</td>
                     <td class="frp-tx-amount"><b class="${amountValue > 0 ? 'is-positive' : ''}">${money(tx.amount, { sign: true })}</b>${has(tx.balance) ? `<small>${money(tx.balance)}</small>` : ''}</td>
                 </tr>`;
         }).join('');
-        const none = '<tr class="frp-tx-none" hidden><td colspan="4"><i class="fa-solid fa-magnifying-glass"></i>No movement matches the search.</td></tr>';
-        return `<div class="frp-table-card"><table class="frp-table" id="frpTx"><thead><tr><th class="frp-tx-date">Date</th><th>Description</th><th class="frp-tx-kind">Category</th><th class="text-right">Amount</th></tr></thead><tbody>${rows}${none}</tbody></table></div>`;
+        const none = searchNone('No movement matches the search.', 4);
+        return `<div class="rk-table-card"><table class="rk-table" id="frpTx"><thead><tr><th class="frp-tx-date">Date</th><th>Description</th><th class="frp-tx-kind">Category</th><th class="text-right">Amount</th></tr></thead><tbody>${rows}${none}</tbody></table></div>`;
     }
 
     function find(familyKey, id) {
@@ -1044,17 +739,17 @@
         const p = find('accounts', id);
         if (!p) return renderFamily('accounts');
         const holders = listOf(p.holders).map(holder => `
-            <div class="frp-holder"><span class="frp-avatar sm">${esc(initials({ name: holder.name, name_extra: String(holder.name || '').split(' ')[1] }))}</span><div><b>${esc(titleCase(holder.name))}</b><small>${esc(titleCase(holder.role || 'holder'))}${holder.identifier?.value ? ` · ${esc(holder.identifier.value)}` : ''}</small></div></div>`).join('');
+            <div class="frp-holder"><span class="rk-avatar sm">${esc(initials({ name: holder.name, name_extra: String(holder.name || '').split(' ')[1] }))}</span><div><b>${esc(titleCase(holder.name))}</b><small>${esc(titleCase(holder.role || 'holder'))}${holder.identifier?.value ? ` · ${esc(holder.identifier.value)}` : ''}</small></div></div>`).join('');
         const head = headline('accounts', p);
         return `
-            <div class="frp-page">
+            <div class="rk-page">
                 ${crumbs('accounts', nameOf(p, 'Account'))}
                 <section class="frp-hero">
                     <div class="frp-hero-main">
                         <div class="frp-hero-bank">${bankLine(p)}<span class="frp-hero-tags">${kindTag(p.sub_family)}</span></div>
                         <h2 class="frp-hero-title">${esc(nameOf(p, 'Account'))}</h2>
                         ${describe(p) ? `<p class="frp-hero-desc">${esc(describe(p))}</p>` : ''}
-                        <span class="frp-hero-number frp-mono">${esc(grouped(p.identifier, { full: true }) || '—')}</span>
+                        <span class="frp-hero-number rk-mono">${esc(grouped(p.identifier, { full: true }) || '—')}</span>
                     </div>
                     ${ledger([
                         head ? fact(head.label, money(head.value), { main: true, tone: signOf(head.value) === 'is-negative' ? 'is-negative' : '' }) : null,
@@ -1064,7 +759,7 @@
                         fact('Read on', p.fetch_date ? day(p.fetch_date) : ''),
                     ])}
                 </section>
-                ${holders ? `<div class="frp-section-head"><span class="frp-section-label"><i class="fa-solid fa-user-group"></i> Holders<em>${p.holders.length}</em></span></div><div class="frp-holders">${holders}</div>` : ''}
+                ${holders ? `<div class="rk-section-head"><span class="rk-section-label"><i class="fa-solid fa-user-group"></i> Holders<em>${p.holders.length}</em></span></div><div class="frp-holders">${holders}</div>` : ''}
                 ${movementsHead(listOf(p.transactions))}
                 ${movements(listOf(p.transactions))}
             </div>`;
@@ -1156,7 +851,7 @@
         const use = inUse(p);
         const linked = accountFact('Linked account', p.linked_account);
         return `
-            <div class="frp-page">
+            <div class="rk-page">
                 ${crumbs('cards', nameOf(p, 'Card'))}
                 <section class="frp-hero is-card">
                     <div class="frp-hero-plastic">
@@ -1186,7 +881,7 @@
     // ---------------------------------------------------------------- a direct debit's receipt and charges
 
     function toggleCharges(button) {
-        const card = button.closest('.frp-card');
+        const card = button.closest('.rk-card');
         const open = !card.classList.contains('is-open');
         card.classList.toggle('is-open', open);
         button.setAttribute('aria-expanded', String(open));
@@ -1194,91 +889,19 @@
 
     const attachmentOf = (id) => listOf(data().direct_debits).filter(isProduct).flatMap(p => listOf(p.attachments)).find(file => String(file?.id) === String(id)) || null;
 
-    /** The receipts already fetched: the API serves a document once every 5 seconds, so a second look is free. */
-    const receipts = new Map();
-    let onScreen = null;
-
-    /**
-     * Opens a receipt over the page in the browser's own PDF viewer, the way the Spain Public
-     * Administration results show every document. The application secret travels in a header, which
-     * no link can carry, so the file is fetched and shown from memory; «Save to disk» keeps its name.
-     */
-    async function openReceipt(button, id) {
+    /** Opens a direct debit's receipt over the page, in the kit's document viewer. */
+    function openReceipt(button, id) {
         const file = attachmentOf(id);
-        if (!file || button.classList.contains('is-busy')) return;
-        const idle = { html: button.innerHTML, title: button.title };
-        const iconOnly = button.classList.contains('frp-clip');
-        const say = (icon, text) => `<i class="fa-solid ${icon}"></i>${iconOnly ? '' : `<span>${esc(text)}</span>`}`;
-        button.classList.add('is-busy');
-        button.innerHTML = say('fa-spinner fa-spin', 'Opening');
-        try {
-            if (!receipts.has(id)) {
-                const blob = await window.InfoniteFlowsManager.downloadAttachment(configObj?.widgetUrl, configObj?.secret, currentSessionData?.session_id, id);
-                // the viewer needs the type to draw the file instead of offering to save it
-                receipts.set(id, blob.type === 'application/pdf' ? blob : new Blob([blob], { type: file.content_type || 'application/pdf' }));
-            }
-            showPdf(receipts.get(id), file.content_name || `${id}.pdf`);
-            button.innerHTML = idle.html;
-            button.classList.remove('is-busy');
-        } catch (error) {
-            button.classList.add('is-error');
-            button.title = error.message;
-            button.innerHTML = say('fa-triangle-exclamation', error.message);
-            setTimeout(() => { button.innerHTML = idle.html; button.title = idle.title; button.classList.remove('is-busy', 'is-error'); }, 4000);
-        }
-    }
-
-    function showPdf(blob, name) {
-        let modal = document.getElementById('frpPdf');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'frpPdf';
-            modal.className = 'frp-pdf';
-            modal.innerHTML = `
-                <div class="frp-pdf-panel" role="dialog" aria-modal="true" aria-label="Receipt">
-                    <header class="frp-pdf-head">
-                        <i class="fa-solid fa-file-pdf"></i>
-                        <b id="frpPdfName"></b>
-                        <button type="button" class="frp-pdf-save" onclick="FRP.saveReceipt()"><i class="fa-solid fa-download"></i><span>Save to disk</span></button>
-                        <button type="button" class="frp-pdf-close" onclick="FRP.closeReceipt()" title="Close"><i class="fa-solid fa-xmark"></i></button>
-                    </header>
-                    <div class="frp-pdf-body"><iframe id="frpPdfFrame" title="Receipt" src="about:blank"></iframe></div>
-                </div>`;
-            modal.addEventListener('click', (event) => { if (event.target === modal) closeReceipt(); });
-            document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && onScreen) closeReceipt(); });
-            document.body.appendChild(modal);
-        }
-        closeReceipt();
-        onScreen = { url: URL.createObjectURL(blob), name };
-        document.getElementById('frpPdfName').textContent = name;
-        document.getElementById('frpPdfFrame').src = onScreen.url;
-        modal.classList.add('is-open');
-        document.body.classList.add('overflow-hidden');
-    }
-
-    function closeReceipt() {
-        const modal = document.getElementById('frpPdf');
-        if (modal) modal.classList.remove('is-open');
-        const frame = document.getElementById('frpPdfFrame');
-        if (frame) frame.src = 'about:blank';
-        if (onScreen) URL.revokeObjectURL(onScreen.url);
-        onScreen = null;
-        document.body.classList.remove('overflow-hidden');
-    }
-
-    /** The receipt on screen, saved under the name the bank gave it (the viewer's own button would name it after the blob). */
-    function saveReceipt() {
-        if (!onScreen) return;
-        const link = Object.assign(document.createElement('a'), { href: onScreen.url, download: onScreen.name });
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        if (!file) return;
+        RK.openDocument(button, {
+            key: id,
+            name: file.content_name || `${id}.pdf`,
+            type: file.content_type,
+            fetch: () => window.InfoniteFlowsManager.downloadAttachment(configObj?.widgetUrl, configObj?.secret, currentSessionData?.session_id, id),
+        });
     }
 
     // ---------------------------------------------------------------- what the page calls
-
-    /** What a view becomes when it cannot be drawn at all: a word about it, never a blank page. */
-    const undrawn = () => `<div class="frp-page">${emptyState('fa-solid fa-triangle-exclamation', 'This view could not be drawn', 'The results came in a shape this demo does not expect. RAW JSON shows them as they are.')}</div>`;
 
     /** Draws a view into the page's root; true when this module drew it. */
     function render(view, root) {
@@ -1287,7 +910,7 @@
             root.innerHTML = view === 'overview' ? renderOverview() : renderFamily(view);
         } catch (error) {
             console.warn(`Financial Rider position: the ${view} view could not be drawn`, error);
-            root.innerHTML = undrawn();
+            root.innerHTML = RK.undrawn();
         }
         renderIdentityBanner();
         return true;
@@ -1301,7 +924,7 @@
             root.innerHTML = draw(id);
         } catch (error) {
             console.warn(`Financial Rider position: a ${familyKey} page could not be drawn`, error);
-            root.innerHTML = undrawn();
+            root.innerHTML = RK.undrawn();
         }
         renderIdentityBanner();
         root.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -1310,7 +933,7 @@
     /** The rail's active entry; when the rail is a strip of tabs, the strip slides to show it. */
     function markNav(view) {
         document.querySelectorAll('.dashboard-nav-btn').forEach(btn => btn.classList.toggle('is-active', btn.id === `nav-${view}`));
-        const rail = document.querySelector('.frp-rail');
+        const rail = document.querySelector('.rk-rail');
         const active = document.getElementById(`nav-${view}`);
         if (rail && active && rail.scrollWidth > rail.clientWidth) {
             rail.scrollTo({ left: Math.max(0, active.offsetLeft - rail.clientWidth / 2 + active.offsetWidth / 2), behavior: 'smooth' });
@@ -1322,17 +945,11 @@
         renderBar,
         renderIdentityBanner,
         openProfile,
-        closeProfile,
         markNav,
         showAccount: (id) => showDetail('accounts', id, renderAccount),
         showCard: (id) => showDetail('cards', id, renderCard),
-        stamp,
-        searchMovements,
-        clearSearch,
         toggleCharges,
         openReceipt,
-        closeReceipt,
-        saveReceipt,
         checkLogo,
         logoFailed,
     };

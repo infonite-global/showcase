@@ -1,0 +1,47 @@
+/*
+ * session-form.css
+ * The pieces every flow's New Lead dialog draws the same way: a switch, a setting a capability holds
+ * (js/session-capabilities.js) with the notice inside its box, a note on a locked choice, and the ways
+ * into the documentation beside a title.
+ */
+
+/* a switch: a hidden checkbox and its track */
+.sf-switch-track { position: relative; width: 36px; height: 20px; flex-shrink: 0; border-radius: 9999px; background: #e2e8f0; border: 2px solid #cbd5e1; transition: all 200ms; }
+.sf-switch-track::after { content: ''; position: absolute; top: 0; left: 0; width: 16px; height: 16px; border-radius: 9999px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 200ms; }
+input:checked + .sf-switch-track { background: var(--primary); border-color: var(--primary); }
+input.sf-switch-amber:checked + .sf-switch-track { background: #f59e0b; border-color: #f59e0b; }
+input:checked + .sf-switch-track::after { transform: translateX(16px); }
+input:disabled + .sf-switch-track { opacity: 0.55; cursor: not-allowed; }
+label:has(input:disabled) { cursor: not-allowed; }
+
+/* what the application holds: a "Sandbox only" tag while a switch is held to sandbox */
+.sf-reach { display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border-radius: 6px; font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; }
+.sf-reach.is-sandbox { background: #fef3c7; color: #b45309; }
+.sf-reach.hidden { display: none; }
+
+/* a setting a capability holds: the switch, and under it why it is held and where that is asked for */
+.sf-cap-box { display: flex; flex-direction: column; border-radius: 12px; background: #f8fafc; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
+.sf-cap-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; cursor: pointer; }
+.sf-cap-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 10px; font-weight: 700; color: #334155; }
+.sf-cap-notice { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px 12px; background: #fffbeb; border-top: 1px solid #fde68a; color: #92400e; }
+.sf-cap-notice.hidden { display: none; }
+.sf-cap-notice > i { margin-top: 3px; font-size: 9px; }
+.sf-cap-notice-body { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.sf-cap-notice-text { font-size: 10px; font-weight: 600; line-height: 1.45; }
+.sf-cap-action { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 5px 10px; border-radius: 9999px; background: #fff; border: 1px solid #fcd34d; color: #92400e; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; transition: all 150ms; }
+.sf-cap-action:hover { background: #fef3c7; border-color: #f59e0b; }
+.sf-cap-action code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; font-weight: 700; text-transform: none; letter-spacing: 0; padding: 1px 6px; border-radius: 6px; background: #fef3c7; }
+.sf-cap-action > i { font-size: 8px; }
+
+/* why a choice is locked */
+.sf-lock-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 10px; font-weight: 600; line-height: 1.4; }
+.sf-lock-note.hidden { display: none; }
+.sf-lock-note > i { margin-top: 2px; font-size: 9px; }
+
+/* a way into the docs: a small book beside a title, or a pill for a guide named in full */
+.sf-crumb { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 9999px; color: #94a3b8; font-size: 9px; transition: all 150ms; }
+.sf-crumb:hover { color: var(--primary); background: var(--primary-container); }
+.sf-doc-link { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 9999px; background: var(--primary-container); color: var(--primary); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; transition: filter 150ms; }
+.sf-doc-link:hover { filter: brightness(0.94); }
+.sf-mini-action { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.1); background: #fff; color: #475569; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; transition: all 150ms; }
+.sf-mini-action:hover { border-color: var(--primary); color: var(--primary); }

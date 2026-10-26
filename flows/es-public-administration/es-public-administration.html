@@ -17,6 +17,7 @@
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
 <link href="../../css/session-ending.css?v=2" rel="stylesheet">
+<link href="../../css/session-form.css?v=1" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
       :root {
@@ -95,13 +96,6 @@
         transition: background-color var(--motion-duration-medium), color var(--motion-duration-medium);
       }
 
-      .animated-gradient-bg {
-        animation: pulseBg 6s infinite alternate ease-in-out;
-      }
-      @keyframes pulseBg {
-        0% { transform: scale(1); opacity: 0.05; }
-        100% { transform: scale(1.5); opacity: 0.15; }
-      }
 
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Outfit', sans-serif;
@@ -113,18 +107,6 @@
         animation: fadeIn 0.8s var(--motion-easing-standard);
       }
 
-      /* Navigation Banner Transitions */
-      .slide-fade-enter-active {
-        transition: all 0.3s ease-out;
-      }
-      .slide-fade-leave-active {
-        transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
-      }
-      .slide-fade-enter-from,
-      .slide-fade-leave-to {
-        transform: translateY(-20px);
-        opacity: 0;
-      }
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -143,30 +125,7 @@
         box-shadow: var(--elevation-1);
       }
 
-      .pulse-ring {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        border-radius: var(--shape-corner-full);
-        background: var(--primary);
-        box-shadow: 0 0 0 0 var(--primary-container);
-        animation: pulse-brand 2s infinite;
-      }
 
-      @keyframes pulse-brand {
-        0% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(var(--brand-dark-rgb), 0.3);
-        }
-        70% {
-          transform: scale(1);
-          box-shadow: 0 0 0 10px rgba(var(--brand-dark-rgb), 0);
-        }
-        100% {
-          transform: scale(0.95);
-          box-shadow: 0 0 0 0 rgba(var(--brand-dark-rgb), 0);
-        }
-      }
 
       /* The user email field when a selected module requires it */
       @keyframes email-required-glow {
@@ -207,230 +166,26 @@
         transform: translateY(0);
       }
 
-      /* Result Cards Styling */
-      .result-card {
-        background: var(--surface);
-        border: 1px solid var(--outline-variant);
-      }
 
-      .status-badge {
-        background: var(--primary-container);
-        color: var(--primary);
-        border: 1px solid var(--primary-container);
-      }
 
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
 
-      @media print {
-          @page {
-              margin: 0;
-              size: auto;
-          }
-          body {
-              background: white !important;
-              padding: 0 !important;
-              margin: 0 !important;
-          }
-          /* Hide non-print elements */
-          .no-print,
-          nav,
-          #mobileMenu,
-          .lg\:col-span-4,
-          #homeView,
-          #placeholderState,
-          #activeSessionState > div:not(#resultsDashboard),
-          #monitoringSection,
-          #settingsModal, 
-          #pdfModal, 
-          #debugModal,
-          .fixed:not(#printHeader) {
-              display: none !important;
-          }
-          
-          /* Ensure the report container and its path are visible */
-          /* Ensure the report container and its path are visible */
-          .max-w-6xl, 
-          .grid, 
-          #sessionMainView, 
-          #sessionMainView > div:not(.no-print),
-          #activeSessionState, 
-          #resultsDashboard {
-              display: block !important;
-              visibility: visible !important;
-              position: static !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-          }
-          
-          #resultsDashboard {
-              display: flex !important;
-              flex-direction: column !important;
-              gap: 32px !important;
-              /* Padding top ensures first page clears the header */
-              padding-top: 35mm !important;
-              padding-left: 15mm !important;
-              padding-right: 15mm !important;
-              padding-bottom: 15mm !important;
-          }
-
-          #printHeader {
-              display: flex !important;
-              position: fixed !important;
-              top: 0;
-              left: 0;
-              right: 0;
-              height: 30mm;
-              z-index: 9999;
-          }
-
-          /* Force full width stacked layout for print - like desktop full cards */
-          #resultsDashboard > .grid {
-              display: flex !important;
-              flex-direction: column !important;
-              gap: 32px !important;
-          }
-          
-          /* Page Break Before Sections */
-          .md\:col-span-2 {
-              break-inside: avoid;
-              page-break-inside: avoid;
-              width: 100% !important;
-          }
-          /* Add page break before all major cards except the first one */
-          .md\:col-span-2:not(:first-child) {
-              break-before: page;
-              page-break-before: always;
-              /* Add margin to clear header on subsequent pages */
-              margin-top: 35mm !important;
-          }
-
-          /* Card Styling Overrides for Print - CLEAN LOOK */
-          .glass-panel {
-              background: transparent !important;
-              box-shadow: none !important;
-              border: none !important;
-              border-radius: 0 !important;
-              overflow: visible !important;
-              backdrop-filter: none !important;
-          }
-          
-          /* Headers of cards */
-          .glass-panel > div:first-child {
-              background: transparent !important;
-              border-bottom: 2px solid #000 !important;
-              padding-left: 0 !important;
-              padding-right: 0 !important;
-              margin-bottom: 12px !important;
-          }
-          
-          .glass-panel > div:first-child h4 {
-              font-size: 14px !important;
-              color: #000 !important;
-          }
-          
-          .glass-panel > div:first-child i {
-               color: #000 !important;
-          }
-          
-          /* Remove badges in headers to clean up */
-          .glass-panel > div:first-child span {
-              border: 1px solid #000 !important;
-              background: transparent !important;
-              color: #000 !important;
-          }
-
-          /* Identity Box Styling for Print */
-          .bg-black\/\[0\.02\] {
-              background: transparent !important;
-              border: 1px solid #ddd !important;
-          }
-
-          * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-          }
-          
-          /* Hide Status Banner in Print - Replace with Title */
-          #statusBanner {
-              border: none !important;
-              background: transparent !important;
-              padding: 0 !important;
-              margin-bottom: 20px !important;
-          }
-          #statusIconBox {
-              display: none !important;
-          }
-          #statusTitle {
-              font-size: 18px !important;
-              text-transform: uppercase !important;
-              letter-spacing: 0.1em !important;
-          }
-          #statusDesc {
-              font-size: 12px !important;
-              color: #666 !important;
-          }
-          
-          /* Features */
-          #featuresSection {
-              display: flex !important;
-              gap: 12px !important;
-              margin-bottom: 24px !important;
-          }
-          #featuresSection > div {
-              border: 1px solid #ddd !important;
-              background: transparent !important;
-              box-shadow: none !important;
-          }
-
-          /* Force internal grids to use 2 columns in print (e.g. Identity Profile) */
-          /* Any grid with md:grid-cols-2 should be 2 cols in print */
-          .grid.md\:grid-cols-2 {
-              display: grid !important;
-              grid-template-columns: repeat(2, 1fr) !important;
-              gap: 20px !important;
-          }
-      }
     </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </link></link>
 </head>
 <body class="bg-slate-50 min-h-screen">
 <div class="flex flex-col min-h-screen w-full">
-<!-- Print-only Header -->
-<div class="hidden print:flex fixed top-0 left-0 right-0 p-6 items-center justify-between z-[9999] border-b-4" id="printHeader">
-<div class="flex flex-col">
-<h1 class="font-black text-xl uppercase tracking-[0.2em] leading-none" data-preset-title>Spain Public Administration</h1>
-<span class="text-[9px] uppercase font-bold tracking-widest mt-1" style="color: var(--c40)">Verification Report</span>
-</div>
-<div class="flex items-center gap-4">
-<div class="text-right">
-<p class="text-[8px] font-bold uppercase tracking-widest" style="color: var(--c60)">Digital Identity Platform</p>
-<p class="text-[7px] font-mono" id="printTimestamp" style="color: var(--c40)"></p>
-</div>
-<img alt="Infonite Logo" class="max-h-8 max-w-[140px] w-auto h-auto object-contain block" id="print-logo" />
-</div>
-</div>
 <!-- The flow head: one white band from the page's very top edge, the navigation floating
      in it and the title row under it. The band sticks as a whole; nothing of the page shows
      above it. -->
 <div class="w-full sticky top-0 z-[40] border-b border-black/5 bg-white/80 backdrop-blur-md" id="flow-head">
 <div class="mx-auto px-0 md:px-8 w-full">
-  <div id="app-nav-container" data-nav-position="static"></div>
+  <div id="app-nav-container" data-nav-position="static" data-nav-width="wide"></div>
 </div>
 
 <!-- The title row, hidden by the New Lead dialog while it shows its outcome -->
 <div class="w-full transition-colors" style="padding-top: 6px; padding-bottom: 20px;" id="nl-header">
-  <div class="max-w-6xl mx-auto px-4 md:px-8 relative">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-8 relative">
     
     <!-- Default Subheader (Visible on Dashboard) -->
     <div id="nl-header-default" class="flex flex-col md:flex-row md:items-center justify-between gap-4 fade-in">
@@ -446,7 +201,7 @@
       </div>
       <!-- Actions -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto mt-2 sm:mt-0">
-        <a href="https://infonite.dev/es-public-administration" target="_blank" class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto">
+        <a href="https://infonite.dev/flows/spain-public-administration/overview" target="_blank" class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto">
           <i class="fa-solid fa-code text-slate-400"></i> Docs
         </a>
         <button class="px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto" data-needs-api onclick="openImportModal();">
@@ -460,13 +215,13 @@
 
   </div>
 </div>
-<div id="offline-slot" class="max-w-6xl mx-auto px-4 md:px-8 pb-4 w-full empty:hidden"></div>
+<div id="offline-slot" class="max-w-[1440px] mx-auto px-4 md:px-8 pb-4 w-full empty:hidden"></div>
 </div>
 
-<div class="max-w-6xl mx-auto p-4 md:p-8 w-full">
+<div class="max-w-[1440px] mx-auto p-4 md:p-8 w-full">
 <!-- Removed legacy config card -->
 <!-- Dashboard View (Table / Empty State) -->
-<div class="fade-in space-y-6 lg:col-span-12 no-print" id="dashboardView">
+<div class="fade-in space-y-6 lg:col-span-12" id="dashboardView">
   <!-- Empty State (Background How-To) -->
   <div id="dashboardEmptyState" class="p-4 md:p-8 pt-0 fade-in">
     <div class="flex flex-col items-start justify-between mb-8 gap-4">
@@ -617,79 +372,16 @@
 </div>
 </div>
 
-<div id="pdfModal" class="fixed inset-0 z-[120] hidden flex-col items-center justify-end md:justify-center glass-layout transition-opacity p-0 pt-6 md:p-4 cursor-pointer" onclick="if(event.target === this) closePdfModal()">
-  <div class="relative w-full max-w-5xl h-[calc(100vh-1.5rem)] md:h-[85vh] flex flex-col bg-white rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden cursor-default" onclick="event.stopPropagation()">
-    
-    <!-- Header -->
-    <div class="p-5 md:p-6 border-b border-black/5 bg-slate-50 flex items-center justify-between shrink-0">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
-          <i class="fa-solid fa-file-pdf text-[var(--primary)] text-sm"></i>
-        </div>
-        <div class="flex flex-col text-left">
-          <h3 class="font-black text-[13px] uppercase tracking-widest text-slate-900 leading-tight">Work Life Report</h3>
-          <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">Secure Document Viewer</p>
-        </div>
-      </div>
-      <button class="w-10 h-10 rounded-xl bg-white/10 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm" onclick="closePdfModal()" title="Close">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    
-    <!-- Content -->
-    <div class="flex-grow relative bg-slate-900">
-      <div class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-center" id="pdfLoading">
-        <div class="w-12 h-12 border-4 border-slate-700 border-t-[var(--primary)] rounded-full animate-spin mb-4"></div>
-        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Retrieving secure document...
-        </p>
-      </div>
-      <iframe class="w-full h-full border-none hidden" id="pdfFrame" src=""></iframe>
-    </div>
-    
-  </div>
-</div>
 
-<div class="fixed inset-0 glass-layout z-[120] hidden flex-col p-4 md:p-8 fade-in" id="debugModal">
-<div class="flex justify-between items-center mb-4 max-w-5xl mx-auto w-full">
-<h3 class="glass-title font-black text-xs uppercase tracking-[0.2em] flex items-center gap-2">
-<i class="fa-solid fa-code text-[var(--primary)]"></i> Identity Data Debug
-        </h3>
-<button class="glass-close w-10 h-10 rounded-xl flex items-center justify-center transition-all" onclick="closeDebugModal()" title="Close">
-<i class="fa-solid fa-xmark"></i>
-</button>
-</div>
-<div class="flex-1 max-w-5xl mx-auto w-full bg-[#1e222a] rounded-2xl overflow-hidden shadow-2xl relative border border-white/10 flex flex-col">
-<div class="flex-1 overflow-auto custom-scrollbar p-0">
-<pre><code class="language-json text-xs" id="debugJsonContent"></code></pre>
-</div>
-<div class="bg-black/20 p-3 border-t border-white/5 flex justify-end gap-2">
-<button class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest transition-colors" onclick="copyDebugJson()">
-<i class="fa-regular fa-copy mr-2"></i> Copy JSON
-            </button>
-</div>
-</div>
-</div>
 
-<div class="fixed inset-0 glass-layout z-[130] hidden flex-col items-center justify-center p-4 fade-in cursor-pointer" id="widgetModal" onclick="if(event.target === this) closeWidgetModal()">
-<div class="w-full max-w-[540px] rounded-3xl overflow-hidden glass-halo relative flex flex-col h-[85vh] max-h-[850px] cursor-default">
-<div class="flex-1 relative">
-<div class="absolute inset-0 flex items-center justify-center" id="widgetLoading">
-<i class="fa-solid fa-circle-notch animate-spin text-2xl text-[var(--primary)] opacity-50"></i>
-</div>
-<iframe class="w-full h-full border-none absolute inset-0 z-10 bg-transparent glass-frame-scaled" id="widgetFrame" src=""></iframe>
-</div>
-</div>
-</div>
 
     </div>
   </div>
-</div>
 <!-- NEW LEAD MODAL -->
 <div class="fixed inset-0 glass-layout z-[200] hidden flex-col" id="newLeadModal">
   <div class="glass-column flex-1 min-h-0 w-full flex flex-col">
     <!-- Header, fixed on the glass: title on the left, the actions on the right -->
-    <div class="shrink-0 w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-4 flex flex-wrap items-center justify-between gap-4">
+    <div class="shrink-0 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 pt-6 md:pt-10 pb-4 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4 text-left min-w-0">
         <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center shrink-0 shadow-inner">
           <i class="fa-solid fa-wand-magic-sparkles text-[var(--primary)] text-lg"></i>
@@ -711,55 +403,43 @@
 
     <!-- Body, the only part that scrolls -->
     <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-    <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10">
+    <div class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 pt-2 pb-10">
 
     <!-- FORM VIEW -->
     <div id="nl-form-view" class="flex flex-col">
      <!-- Two columns on desktop: the modules on the right, everything else stacked on the left.
-          One flat grid, so a phone still reads Customer ID, Fixed Parameters, Modules, Advanced. -->
+          One flat grid, ordered so a phone reads Customer ID, Modules, Fixed Parameters, Advanced. -->
      <div class="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] gap-x-6 gap-y-4 items-start">
       <!-- Customer ID -->
-      <div class="lg:col-start-1 lg:row-start-1 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
+      <div class="order-1 lg:col-start-1 lg:row-start-1 bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 shadow-sm">
         <label for="generate-customer-id" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
            <i class="fa-solid fa-fingerprint text-[var(--primary)]"></i> Customer ID
         </label>
-        <p class="text-[9px] text-slate-500 font-medium leading-tight">Unique identifier for the user initializing this session. Auto-generated if left blank.</p>
-        <input type="text" id="generate-customer-id" placeholder="ES-PUBLIC-ADMINISTRATION-..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono mt-1">
+        <p class="text-[9px] text-slate-500 font-medium leading-tight">Your own identifier for the end user, up to 64 characters. It comes back with every read and every event of the session.</p>
+        <input type="text" id="generate-customer-id" maxlength="64" placeholder="ES-PUBLIC-ADMINISTRATION-..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono mt-1">
         
-        <!-- SANDBOX -->
-        <div class="mt-3 flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-black/5 group cursor-pointer" onclick="const cb = document.getElementById('generate-sandbox-mode'); cb.checked = !cb.checked; if(cb.onchange) cb.onchange();">
-             <div class="flex flex-col">
-               <label class="text-[10px] font-bold text-slate-700 cursor-pointer flex items-center gap-2">
-                 <i class="fa-solid fa-code text-amber-500"></i> Sandbox Execution
-               </label>
-               <span class="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Use mock data for testing</span>
-             </div>
-             <div class="relative inline-flex items-center cursor-pointer">
-               <input type="checkbox" id="generate-sandbox-mode" class="sr-only peer" 
-                      onchange="
-                        const sbg = this.nextElementSibling;
-                        const sdot = sbg.querySelector('div');
-                        if(this.checked) {
-                          sbg.classList.replace('bg-slate-200', 'bg-amber-500');
-                          sbg.classList.add('border-amber-500');
-                          sbg.classList.remove('border-slate-300');
-                          sdot.classList.add('translate-x-4');
-                        } else {
-                          sbg.classList.replace('bg-amber-500', 'bg-slate-200');
-                          sbg.classList.remove('border-amber-500');
-                          sbg.classList.add('border-slate-300');
-                          sdot.classList.remove('translate-x-4');
-                        }
-                      ">
-               <div class="w-9 h-5 bg-slate-200 border-2 border-slate-300 peer-focus:outline-none rounded-full peer transition-colors duration-200 ease-in-out">
-                 <div class="w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out"></div>
-               </div>
-             </div>
+        <!-- SANDBOX: held on while the application cannot run Spain Public Administration in production -->
+        <div class="sf-cap-box mt-3">
+          <label class="sf-cap-row">
+            <span class="flex flex-col min-w-0">
+              <span class="sf-cap-title"><i class="fa-solid fa-code text-amber-500"></i> Sandbox Execution <span id="espa-reach-product" class="sf-reach is-sandbox hidden">Sandbox only</span><a class="sf-crumb" href="https://infonite.dev/flows/spain-public-administration/overview#sandbox-and-production" target="_blank" rel="noopener" title="Sandbox and production, on infonite.dev"><i class="fa-solid fa-book-open"></i></a></span>
+              <span class="text-[8px] text-slate-500 uppercase tracking-widest mt-0.5">Demo identities, no real administration</span>
+            </span>
+            <input type="checkbox" id="generate-sandbox-mode" class="sr-only sf-switch-amber" onchange="syncReach()">
+            <span class="sf-switch-track"></span>
+          </label>
+          <div id="espa-sandbox-notice" class="sf-cap-notice hidden">
+            <i class="fa-solid fa-lock"></i>
+            <div class="sf-cap-notice-body">
+              <p class="sf-cap-notice-text"></p>
+              <a class="sf-cap-action" target="_blank" rel="noopener"></a>
+            </div>
+          </div>
         </div>
       </div>
-      
+
       <!-- FIXED PARAMETERS Accordion -->
-      <div class="lg:col-start-1 lg:row-start-2">
+      <div class="order-3 lg:col-start-1 lg:row-start-2">
         <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-fixed-parameters')">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
@@ -792,7 +472,7 @@
               <p id="generate-fixed-user-email-optional" class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Optional fallback email address for the customer.</p>
               <p id="generate-fixed-user-email-required" class="hidden text-[10px] font-black text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-snug flex items-start gap-2">
                 <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
-                <span>Required: Credit Registry (CIRBE) is selected, and the request to the Bank of Spain is filed with the customer's email.</span>
+                <span>Required: Credit Registry (CIRBE) is selected, and the request to the Bank of Spain is filed with the customer's email. <a class="underline font-black" href="https://infonite.dev/flows/spain-public-administration/sources#the-cirbe-report-and-bde" target="_blank" rel="noopener">Why</a></span>
               </p>
               <input type="email" id="generate-fixed-user-email" oninput="syncEmailRequirement()" class="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-700 focus:outline-none focus:border-indigo-500 transition-colors" placeholder="e.g. demo.person1@example.com" />
               <p id="generate-fixed-user-email-optional-note" class="text-[9px] font-medium text-slate-400 italic mt-1 leading-normal">
@@ -803,14 +483,14 @@
       </div>
 
       <!-- MODULES Accordion: always open on desktop, where there is room for it -->
-      <div class="lg:col-start-2 lg:row-start-1 lg:row-span-3">
+      <div class="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-3">
         <button class="w-full flex items-center justify-between p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 lg:hover:bg-white lg:cursor-default transition-colors shadow-sm group" onclick="toggleAccordion('acc-modules')">
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
               <i class="fa-solid fa-shapes"></i>
             </div>
             <div class="text-left">
-               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest" id="modules-title">Modules</h4>
+               <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest flex items-center gap-1.5"><span id="modules-title">Modules</span><a class="sf-crumb" href="https://infonite.dev/flows/spain-public-administration/overview#what-you-can-ask-for" target="_blank" rel="noopener" title="What you can ask for, on infonite.dev" onclick="event.stopPropagation()"><i class="fa-solid fa-book-open"></i></a></h4>
                <p class="text-[9px] text-slate-500 font-medium" id="modules-subtitle">Select functionality to query</p>
             </div>
           </div>
@@ -822,11 +502,14 @@
         <div id="acc-modules" class="mt-3 transition-all duration-300 lg:!block">
            <!-- Grid injected by JS -->
            <div id="modulesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+           <div class="flex justify-end mt-3">
+             <a class="sf-doc-link" href="https://infonite.dev/flows/spain-public-administration/overview#what-you-can-ask-for" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> What each module reads</a>
+           </div>
         </div>
       </div>
 
       <!-- ADVANCED Accordion -->
-      <div class="lg:col-start-1 lg:row-start-3">
+      <div class="order-4 lg:col-start-1 lg:row-start-3">
         <button class="w-full flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-black/5 rounded-2xl hover:bg-slate-50 transition-colors shadow-sm group" onclick="toggleAccordion('acc-advanced')">
           <div class="flex items-center gap-3 min-w-0 flex-1 basis-56">
             <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-500 shrink-0">
@@ -834,7 +517,7 @@
             </div>
             <div class="text-left min-w-0">
                <h4 class="font-black text-[11px] text-slate-900 uppercase tracking-widest">Advanced Configuration</h4>
-               <p class="text-[9px] text-slate-500 font-medium">Encryption and where the session ends</p>
+               <p class="text-[9px] text-slate-500 font-medium">Deadline, encryption and where the session ends</p>
             </div>
           </div>
           <div class="flex items-center gap-3 shrink-0 ml-auto">
@@ -844,11 +527,31 @@
         </button>
         <div id="acc-advanced" class="mt-3 hidden transition-all duration-300 bg-white border border-black/5 rounded-2xl p-5 shadow-sm flex flex-col gap-5">
            
+           <!-- DEADLINE: one row where there is room — the title and its line, the select beside them -->
+           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+             <div class="flex flex-col min-w-0">
+               <label for="generate-date-limit" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
+                  <i class="fa-solid fa-hourglass-half text-slate-500"></i> Session Deadline
+               </label>
+               <p class="text-[9px] text-slate-500 font-medium leading-tight mt-1">A session still open then closes as timed out.</p>
+             </div>
+             <select id="generate-date-limit" class="w-full sm:w-40 shrink-0 bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-3 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-bold">
+                <option value="">Default (12 hours)</option>
+                <option value="1">1 hour</option>
+                <option value="6">6 hours</option>
+                <option value="24">24 hours</option>
+                <option value="48">48 hours</option>
+             </select>
+           </div>
+
+           <div class="h-px w-full bg-slate-100"></div>
+
            <!-- AES KEY -->
            <div>
              <div class="flex items-center justify-between mb-2">
                  <label for="generate-aes-key" class="text-[10px] font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
                     <i class="fa-solid fa-key text-amber-500"></i> AES-256-GCM Key
+                    <a class="sf-crumb" href="https://infonite.dev/flows/spain-public-administration/overview#payload-decryption-aes-256-gcm" target="_blank" rel="noopener" title="Payload decryption, on infonite.dev"><i class="fa-solid fa-book-open"></i></a>
                  </label>
                  <button class="text-[9px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1 rounded font-bold uppercase tracking-widest transition-colors flex items-center gap-1 border border-slate-200" onclick="
                     const array = new Uint8Array(32);
@@ -858,8 +561,8 @@
                     <i class="fa-solid fa-dice"></i> Randomize
                  </button>
              </div>
-             <p class="text-[9px] text-slate-500 font-medium leading-tight mb-2">32-byte Base64 key. Used to encrypt the session payload. If emptied, results will be stored plainly.</p>
-             <input type="text" id="generate-aes-key" value="MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE=" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono">
+             <p class="text-[9px] text-slate-500 font-medium leading-tight mb-2">Optional 32-byte key, base64. With it, the webhooks carry the results encrypted under it; without it they carry no data, and the results are read from the session API.</p>
+             <input type="text" id="generate-aes-key" placeholder="Empty: webhooks without data" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-[10px] rounded-xl px-4 py-2.5 outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-container)] transition-all font-mono">
            </div>
 
            <div class="h-px w-full bg-slate-100"></div>
@@ -873,12 +576,12 @@
       <!-- END FORM VIEW -->
 
       <!-- SUCCESS VIEW -->
-      <div id="nl-success-view" class="hidden flex-col items-center justify-center text-center py-10 fade-in">
+      <div id="nl-success-view" class="hidden flex-col items-center justify-center text-center py-10 fade-in max-w-xl mx-auto w-full">
         <div class="w-20 h-20 rounded-full bg-green-50 border-[4px] border-green-100 flex items-center justify-center mb-6 shadow-inner">
            <i class="fa-solid fa-check text-4xl text-green-500"></i>
         </div>
         <h4 class="font-black text-slate-900 text-xl tracking-tight mb-2">Session Created</h4>
-        <p class="text-xs text-slate-500 max-w-[280px] leading-relaxed mb-6">The Spain Public Administration session has been initialized. Send the following link to your user to begin the process.</p>
+        <p class="text-xs text-slate-500 max-w-[320px] leading-relaxed mb-6">The Spain Public Administration session is ready. Send this link to your customer to share their official records.</p>
         
         <div class="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center gap-3 shadow-sm mb-4">
            <i class="fa-solid fa-link text-slate-400"></i>
@@ -890,6 +593,12 @@
               this.innerHTML = '<i class=\'fa-solid fa-check\'></i> Copied';
               setTimeout(() => this.innerHTML = 'Copy Link', 2000);
            ">Copy Link</button>
+        </div>
+
+        <!-- LAUNCH: in a dialog only for a session that stays on its final screen -->
+        <div class="w-full flex flex-col items-stretch gap-1.5 mb-4">
+           <button class="btn-brand w-full py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2" onclick="launchCreated()"><i class="fa-solid fa-play"></i> Launch</button>
+           <p id="nl-success-launch-hint" class="text-[10px] text-slate-500 leading-snug"></p>
         </div>
 
         <div class="flex items-center gap-3 w-full">
@@ -938,16 +647,7 @@
         </div>
 
         <div class="flex items-center gap-3 w-full">
-            <button class="flex-1 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-sm" onclick="
-                document.getElementById('nl-error-view').classList.add('hidden');
-                document.getElementById('nl-error-view').classList.remove('flex');
-                document.getElementById('nl-form-view').classList.remove('hidden');
-                document.getElementById('nl-form-view').classList.add('flex');
-                document.getElementById('nl-footer-actions').classList.remove('hidden');
-                document.getElementById('nl-footer-actions').classList.add('flex');
-                document.getElementById('nl-header').classList.remove('hidden');
-                document.getElementById('nl-header').classList.add('flex');
-            ">
+            <button class="flex-1 bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-sm" onclick="showLeadView('form')">
                 <i class="fa-solid fa-arrow-left mr-1"></i> Back to Form
             </button>
             <button class="flex-1 bg-slate-800 text-white hover:bg-slate-900 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-lg" onclick="closeNewLeadModal()">
@@ -958,6 +658,14 @@
       <!-- END ERROR VIEW -->
     </div>
     </div>
+  </div>
+</div>
+
+<!-- THE WIDGET, launched from the demo: in this dialog only for a session that stays on its final
+     screen; one that redirects opens in a tab of its own (js/session-launcher.js) -->
+<div id="widgetLauncher" class="fixed inset-0 z-[400] hidden items-center justify-center glass-layout transition-opacity" onclick="InfoniteLauncher.close()">
+  <div class="relative w-full md:max-w-[540px] h-full md:h-[750px] max-h-full md:max-h-[90vh] rounded-none md:rounded-3xl glass-halo mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
+    <iframe id="widgetLauncherFrame" class="absolute inset-0 w-full h-full border-0 glass-frame-scaled" src="about:blank"></iframe>
   </div>
 </div>
 
@@ -1040,12 +748,13 @@
 <script src="../../js/theme.js?v=6"></script>
 <script src="../../js/config.js?v=17"></script>
 <script src="../../js/features.js?v=6"></script>
-<script src="../../js/nav-banner.js?v=8"></script>
+<script src="../../js/nav-banner.js?v=10"></script>
 <script src="../../js/flows-manager.js?v=7"></script>
-<script src="../../js/enums.js?v=8"></script>
 <script src="../../js/status.js"></script>
 <script src="../../js/es-public-administration-presets.js?v=3"></script>
 <script src="../../js/session-ending.js?v=2"></script>
-<script src="../../js/es-public-administration.js?v=8"></script>
+<script src="../../js/session-capabilities.js?v=1"></script>
+<script src="../../js/session-launcher.js?v=1"></script>
+<script src="../../js/es-public-administration.js?v=9"></script>
 </body>
 </html>

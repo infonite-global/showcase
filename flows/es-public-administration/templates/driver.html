@@ -1,5 +1,5 @@
 <!-- CATEGORY VIEW: DRIVER DATA -->
-<div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in">
+<div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col p-5 md:p-8 fade-in">
     
     <!-- View Header -->
     <div class="flex items-center gap-4 mb-8">
@@ -34,7 +34,7 @@
                 </div>
                 <div class="flex flex-col min-w-0">
                     <span class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight leading-none" id="lblDriverIdValue">------</span>
-                    <span class="text-sm font-bold text-slate-600 mt-1.5 truncate" id="lblDriverName">--</span>
+                    <span class="text-sm font-bold text-slate-600 mt-1.5 break-words" id="lblDriverName">--</span>
                 </div>
             </div>
 
@@ -118,9 +118,10 @@
         <!-- TAB 2: VEHICLES         -->
         <!-- ======================= -->
         <div id="containerDriverVehicles" class="flex flex-col gap-4 pb-8">
-            <h3 class="text-sm font-bold text-slate-700 tracking-tight mb-2 flex items-center gap-2">
-                <i class="fa-solid fa-car text-slate-400"></i> Registered Vehicles
-            </h3>
+            <!-- The heading, with how many and a box to find one when there are several (renderDriverData) -->
+            <div id="vehiclesHead" class="rk-section-head is-search">
+                <span class="rk-section-label"><i class="fa-solid fa-car"></i> Registered Vehicles</span>
+            </div>
             
             <div id="vehiclesGrid" class="grid grid-cols-1 gap-4">
                  <div class="p-6 text-center text-slate-400 text-sm italic border border-dashed rounded-xl border-slate-200">No vehicles registered.</div>

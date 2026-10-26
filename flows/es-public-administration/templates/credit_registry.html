@@ -1,5 +1,5 @@
 <!-- CATEGORY VIEW: CREDIT REGISTRY (CIRBE) -->
-<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-8 fade-in overflow-y-auto">
+<div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-5 md:p-8 fade-in overflow-y-auto">
     <!-- View Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 relative shrink-0">
         <div class="flex items-center gap-4 relative z-10">
@@ -70,6 +70,8 @@
             </div>
         </div>
 
+        <!-- 1b. How much of the credit granted is drawn: one bar from the report's own two totals -->
+        <div id="cirbeUseMeter" class="hidden px-1"></div>
         <!-- 2. Document & Signature Status Card -->
         <div class="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div class="flex flex-col gap-1.5">
@@ -95,11 +97,11 @@
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Full Name</span>
                     <span id="cirbeHolderName" class="text-sm font-bold text-slate-700 mt-1">--</span>
                 </div>
-                <div class="flex flex-col border-l border-slate-200/60 pl-6">
+                <div class="flex flex-col md:border-l md:border-slate-200/60 md:pl-6">
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Holder Registry Code</span>
                     <span id="cirbeHolderCode" class="text-sm font-semibold font-mono text-slate-700 mt-1">--</span>
                 </div>
-                <div class="flex flex-col border-l border-slate-200/60 pl-6">
+                <div class="flex flex-col md:border-l md:border-slate-200/60 md:pl-6">
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Taxpayer ID (Identifier)</span>
                     <span id="cirbeHolderIdentifier" class="text-sm font-semibold font-mono text-slate-700 mt-1">--</span>
                 </div>
@@ -108,12 +110,12 @@
 
         <!-- 4. Operations List Table -->
         <div class="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm flex flex-col">
-            <div class="p-6 border-b border-slate-100 shrink-0">
+            <div id="cirbeOperationsHead" class="p-5 sm:p-6 border-b border-slate-100 shrink-0 flex flex-wrap items-center justify-between gap-3">
                 <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-list-check text-slate-400 mr-1.5"></i> Active Risk Operations</h4>
             </div>
             
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table id="cirbeOperations" class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                             <th id="cirbeEntityHeader" class="p-4 pl-6">Entity</th>
@@ -125,7 +127,7 @@
                         </tr>
                     </thead>
                     <!-- Two rows per operation: the figures, then the terms (nature, maturity, guarantees) -->
-                    <tbody id="cirbeOperationsTable">
+                    <tbody>
                         <!-- JS Injection -->
                         <tr>
                             <td colspan="6" class="p-8 text-center text-slate-400 text-xs italic">Loading active operations...</td>

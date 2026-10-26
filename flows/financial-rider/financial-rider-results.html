@@ -15,16 +15,10 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
-<link href="../../css/financial-rider-position.css?v=15" rel="stylesheet">
-<link href="../../css/results-rail.css?v=2" rel="stylesheet">
+<link href="../../css/results-kit.css?v=3" rel="stylesheet">
+<link href="../../css/financial-rider-position.css?v=16" rel="stylesheet">
+<link href="../../css/results-rail.css?v=4" rel="stylesheet">
 <style>
-      /* JSON Syntax Highlighting */
-      .json-key { color: #9cdcfe; }
-      .json-string { color: #ce9178; }
-      .json-number { color: #b5cea8; }
-      .json-boolean { color: #569cd6; font-weight: bold; }
-      .json-null { color: #c586c0; font-weight: bold; }
-      
       /* Material 3 Design Tokens */
       :root {
         --primary: #00a76f;
@@ -96,18 +90,6 @@
         animation: fadeIn 0.8s var(--motion-easing-standard);
       }
 
-      /* Navigation Banner Transitions */
-      .slide-fade-enter-active {
-        transition: all 0.3s ease-out;
-      }
-      .slide-fade-leave-active {
-        transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
-      }
-      .slide-fade-enter-from,
-      .slide-fade-leave-to {
-        transform: translateY(-20px);
-        opacity: 0;
-      }
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -136,16 +118,6 @@
         animation: heartBeat 2s ease-in-out infinite;
       }
 
-      .btn-brand {
-        background-color: var(--brand-dark);
-        color: var(--brand-dark-contrast);
-        transition: all 0.2s;
-      }
-      .btn-brand:hover {
-        background-color: var(--brand-dark-hover);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(var(--brand-dark-rgb), 0.2);
-      }
       #app-body {
         background-color: #f8fafc;
         background-image: 
@@ -266,29 +238,29 @@
 
   <!-- The results: the rail that steers the views beside the view on a wide screen, a strip of
        tabs over it on a narrow one (css/results-rail.css). Hidden until the session completes. -->
-  <div class="hidden gap-6 fade-in min-h-[600px] frp-shell" id="dashboardContainer">
-      <aside class="frp-rail-wrap">
-          <nav class="frp-rail" aria-label="The session's results">
-              <span class="frp-rail-label">Position</span>
-              <button type="button" onclick="switchDashboardView('overview')" id="nav-overview" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-landmark"></i><span>Global Position</span></button>
-              <button type="button" onclick="switchDashboardView('accounts')" id="nav-accounts" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-piggy-bank"></i><span>Accounts</span><em data-count="accounts"></em></button>
-              <button type="button" onclick="switchDashboardView('cards')" id="nav-cards" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-credit-card"></i><span>Cards</span><em data-count="cards"></em></button>
-              <button type="button" onclick="switchDashboardView('deposits')" id="nav-deposits" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-vault"></i><span>Deposits</span><em data-count="deposits"></em></button>
-              <button type="button" onclick="switchDashboardView('loans')" id="nav-loans" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-hand-holding-dollar"></i><span>Loans</span><em data-count="loans"></em></button>
-              <button type="button" onclick="switchDashboardView('investments')" id="nav-investments" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-chart-line"></i><span>Investments</span><em data-count="investments"></em></button>
-              <button type="button" onclick="switchDashboardView('direct_debits')" id="nav-direct_debits" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-money-bill-transfer"></i><span>Direct Debits</span><em data-count="direct_debits"></em></button>
-              <span class="frp-rail-rule" aria-hidden="true"></span>
-              <span class="frp-rail-label">Session</span>
-              <button type="button" onclick="switchDashboardView('audit')" id="nav-audit" class="dashboard-nav-btn frp-rail-item"><i class="fa-solid fa-shield-halved"></i><span>Consent &amp; Audit</span></button>
+  <div class="hidden gap-6 fade-in min-h-[600px] rk-shell" id="dashboardContainer">
+      <aside class="rk-rail-wrap">
+          <nav class="rk-rail" aria-label="The session's results">
+              <span class="rk-rail-label">Position</span>
+              <button type="button" onclick="switchDashboardView('overview')" id="nav-overview" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-landmark"></i><span>Global Position</span></button>
+              <button type="button" onclick="switchDashboardView('accounts')" id="nav-accounts" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-piggy-bank"></i><span>Accounts</span><em data-count="accounts"></em></button>
+              <button type="button" onclick="switchDashboardView('cards')" id="nav-cards" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-credit-card"></i><span>Cards</span><em data-count="cards"></em></button>
+              <button type="button" onclick="switchDashboardView('deposits')" id="nav-deposits" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-vault"></i><span>Deposits</span><em data-count="deposits"></em></button>
+              <button type="button" onclick="switchDashboardView('loans')" id="nav-loans" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-hand-holding-dollar"></i><span>Loans</span><em data-count="loans"></em></button>
+              <button type="button" onclick="switchDashboardView('investments')" id="nav-investments" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-chart-line"></i><span>Investments</span><em data-count="investments"></em></button>
+              <button type="button" onclick="switchDashboardView('direct_debits')" id="nav-direct_debits" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-money-bill-transfer"></i><span>Direct Debits</span><em data-count="direct_debits"></em></button>
+              <span class="rk-rail-rule" aria-hidden="true"></span>
+              <span class="rk-rail-label">Session</span>
+              <button type="button" onclick="switchDashboardView('audit')" id="nav-audit" class="dashboard-nav-btn rk-rail-item"><i class="fa-solid fa-shield-halved"></i><span>Consent &amp; Audit</span></button>
           </nav>
       </aside>
 
       <!-- The bank filter, then the view -->
       <div class="flex flex-col gap-4 min-w-0">
       <div id="bankFilter" class="hidden flex flex-wrap items-center gap-3"></div>
-      <div id="identityBanner" class="frp-identity hidden" role="status"></div>
+      <div id="identityBanner" class="rk-identity hidden" role="status"></div>
       <div class="relative" id="dashboard-view-root">
-          <!-- Each view is drawn here: js/financial-rider-position.js, the audit from templates/audit.html -->
+          <!-- Each view is drawn here: js/financial-rider-position.js, the audit by the results kit -->
           <div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center text-slate-400">
               <div class="flex flex-col items-center gap-4">
                   <i class="fa-solid fa-circle-notch animate-spin text-2xl text-[var(--primary)]"></i>
@@ -389,7 +361,8 @@
 <script src="../../js/flows-manager.js?v=7"></script>
 <script src="../../js/engine-lists.js?v=1"></script>
 <script src="../../js/financial-rider-entities.js?v=3"></script>
-<script src="../../js/financial-rider-position.js?v=15"></script>
+<script src="../../js/results-kit.js?v=4"></script>
+<script src="../../js/financial-rider-position.js?v=16"></script>
 <script>
     let pollTimer = null;
     let configObj = null;
@@ -699,10 +672,10 @@
         detailHtml += `<br/>
             <div class="flex flex-col items-center gap-1 mt-3">
                 <span class="inline-block font-mono font-bold px-2 py-0.5 rounded tracking-widest text-[11px] shadow-sm bg-white border border-black/5" style="color: ${colorHex};">
-                    ${session.session_id}
+                    ${escapeHtml(session.session_id)}
                 </span>
                 <span class="inline-block font-mono font-medium tracking-wide text-[10px] text-slate-400">
-                    ${session.customer_id || 'Unknown Customer'}
+                    ${escapeHtml(session.customer_id || 'Unknown Customer')}
                 </span>
             </div>`;
             
@@ -800,20 +773,11 @@
         const rootContainer = document.getElementById('dashboard-view-root');
         if (window.currentResultData && FRP.render(categoryId, rootContainer)) return;
 
-        rootContainer.innerHTML = '<div class="frp-empty"><span><i class="fa-solid fa-circle-notch animate-spin"></i></span><b>Loading</b></div>';
-        try {
-            const templateBase = window.location.pathname.includes('/flows/financial-rider/')
-                ? 'templates/'
-                : 'flows/financial-rider/templates/';
-            const result = await fetch(`${templateBase}${categoryId}.html?v=${Date.now()}`);
-            if (!result.ok) throw new Error("Template not found or unreachable");
-            rootContainer.innerHTML = await result.text();
-            if (categoryId === 'audit' && window.currentResultData) renderAuditLog(window.currentResultData);
-            FRP.renderIdentityBanner();
-        } catch (error) {
-            console.error(error);
-            rootContainer.innerHTML = `<div class="frp-empty"><span><i class="fa-solid fa-triangle-exclamation"></i></span><b>Not available</b><p>The view '${escapeHtml(categoryId)}' could not be loaded.</p></div>`;
-        }
+        // The session's own view, the results kit's: this page only names its connections
+        rootContainer.innerHTML = categoryId === 'audit' && window.currentResultData
+            ? InfoniteResults.audit({ results: window.currentResultData, customerId: currentSessionData?.customer_id, describe: describeConnection })
+            : InfoniteResults.undrawn();
+        FRP.renderIdentityBanner();
     }
 
     // --- Actions Handlers ---
@@ -907,128 +871,18 @@
         switchDashboardView(FR_RESULTS.view || 'overview');
     };
 
-    /** What the session has to say about itself, oldest first. */
-    function renderMessages(messages) {
-        const box = document.getElementById('listMessages');
-        if (!box) return;
-        const tone = { error: 'bg-red-50 border-red-200 text-red-700', warning: 'bg-amber-50 border-amber-200 text-amber-700', flag: 'bg-indigo-50 border-indigo-200 text-indigo-700', info: 'bg-slate-50 border-slate-200 text-slate-600' };
-        box.innerHTML = messages.length
-            ? messages.map(m => `
-                <div class="p-3 rounded-2xl border ${tone[m.type] || tone.info} flex flex-col gap-1">
-                    <span class="text-[10px] font-black uppercase tracking-widest">${escapeHtml(m.type)} · <span class="font-mono normal-case">${escapeHtml(m.message_id)}</span></span>
-                    ${m.message ? `<span class="text-xs font-semibold">${escapeHtml(m.message)}</span>` : ''}
-                    ${(m.location || []).length ? `<span class="text-[10px] font-mono opacity-80">${escapeHtml(m.location.join(' › '))}</span>` : ''}
-                </div>`).join('')
-            : '<p class="text-sm text-slate-400 font-medium italic">The session has nothing to say about itself.</p>';
+    /** A connection of the session, as its audit names it: the bank and its entity, when the session knows the engine. */
+    function describeConnection(reference) {
+        const code = String(reference).split('-')[0];
+        const bank = FR_RESULTS.banks.get(entityOfEngine(reference));
+        return {
+            name: bank?.engines.find(e => e.code === code)?.name || code,
+            meta: bank ? `<span class="flex items-center gap-1.5"><img src="${flagUrl(bank.country)}" class="w-3 h-3" alt=""> Entity ${escapeHtml(String(bank.entity).padStart(4, '0'))}</span>` : '',
+        };
     }
 
-    function renderAuditLog(payload) {
-        if (!payload || !payload.connections) return;
-        renderMessages(payload.messages || []);
-        
-        // Connections rendering
-        const listConnections = document.getElementById('listConnections');
-        if (listConnections && Object.keys(payload.connections).length > 0) {
-            let html = '';
-            for (const [sessionId, engineCode] of Object.entries(payload.connections)) {
-                // The engineCode looks like: SANTANDERXXXFIN100ES0049-mobile
-                const baseEngineCode = engineCode.split('-')[0];
-                const logoUrl = engineLogoUrl(baseEngineCode);
-                const bank = FR_RESULTS.banks.get(entityOfEngine(engineCode));
-                
-                // We use an onerror inline handler: if the logo doesn't exist, we hide the img and show the generic plug icon wrapper
-                html += `
-                <div class="flex items-center justify-between p-3 rounded-2xl bg-white border border-slate-100 shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-[var(--primary-container)] border border-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)] shadow-sm shrink-0 relative overflow-hidden group">
-                            <img src="${logoUrl}" class="w-full h-full object-contain p-1 bg-white absolute inset-0 z-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="${baseEngineCode}" title="${baseEngineCode}">
-                            <div class="w-full h-full flex items-center justify-center hidden" style="display: none;">
-                                <i class="fa-solid fa-plug text-xs"></i>
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-1 min-w-0">
-                            <span class="text-sm font-black text-slate-800 leading-none">${escapeHtml(bank?.engines.find(e => e.code === baseEngineCode)?.name || baseEngineCode)}</span>
-                            <span class="text-[11px] font-semibold font-mono text-slate-500 leading-tight break-all">${escapeHtml(engineCode)}</span>
-                            <span class="text-[10px] font-semibold text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1">${bank ? `<span class="flex items-center gap-1.5"><img src="${flagUrl(bank.country)}" class="w-3 h-3" alt=""> Entity ${escapeHtml(String(bank.entity).padStart(4, '0'))}</span>` : ''}<span class="flex items-center gap-1.5" title="The execution that ran this connection"><i class="fa-solid fa-fingerprint"></i> <span class="font-mono">${escapeHtml(sessionId)}</span></span></span>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }
-            listConnections.innerHTML = html;
-        }
-
-        // Consent Metadata — absent when the session showed no consent screen
-        const consent = payload.consent;
-        if (!consent) return;
-        
-        const lblDate = document.getElementById('lblConsentDate');
-        if (lblDate && consent.accepted_date) lblDate.textContent = FRP.stamp(consent.accepted_date);
-
-        const lblIp = document.getElementById('lblConsentIp');
-        if (lblIp && consent.user_ip) lblIp.textContent = consent.user_ip;
-
-        const lblCid = document.getElementById('lblCustomerId');
-        if (lblCid && currentSessionData?.customer_id) lblCid.textContent = currentSessionData.customer_id;
-
-        const lblOrigin = document.getElementById('lblConsentOrigin');
-        if (lblOrigin && consent.origin) lblOrigin.textContent = consent.origin;
-
-        const lblUa = document.getElementById('lblConsentUa');
-        const lblUaType = document.getElementById('lblUaTypeBadge');
-        if (consent.user_agent) {
-            if (lblUa) lblUa.textContent = consent.user_agent;
-            if (lblUaType) {
-                const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(consent.user_agent);
-                lblUaType.textContent = isMobile ? 'MOBILE' : 'DESKTOP';
-                lblUaType.classList.remove('hidden', 'bg-slate-200', 'text-slate-600');
-                if (isMobile) {
-                    lblUaType.classList.add('bg-blue-100', 'text-blue-700', 'border', 'border-blue-200');
-                } else {
-                    lblUaType.classList.add('bg-slate-100', 'text-slate-600', 'border', 'border-slate-200');
-                }
-            }
-        }
-
-        // Features Tags
-        const listFeatures = document.getElementById('listConsentFeatures');
-        if (listFeatures && consent.accepted_features && consent.accepted_features.length > 0) {
-            listFeatures.innerHTML = consent.accepted_features.map(f => {
-                const featureDef = window.INFONITE_FEATURES && window.INFONITE_FEATURES[f] ? window.INFONITE_FEATURES[f] : null;
-                const iconHtml = featureDef ? `<i class="${featureDef.icon} mr-1 opacity-80"></i>` : '';
-                const label = featureDef ? featureDef.name : f.replace(/_/g, ' ');
-                return `<span class="bg-[var(--primary)] text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest whitespace-nowrap shadow-sm flex items-center gap-1">${iconHtml}${label}</span>`;
-            }).join('');
-        }
-    }
-
-    // --- Custom JSON Syntax Highlighter ---
-    function syntaxHighlightJson(json) {
-        if (typeof json != 'string') {
-             json = JSON.stringify(json, undefined, 4);
-        }
-        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-            var cls = 'json-number';
-            if (/^"/.test(match)) {
-                if (/:$/.test(match)) {
-                    cls = 'json-key';
-                } else {
-                    cls = 'json-string';
-                }
-            } else if (/true|false/.test(match)) {
-                cls = 'json-boolean';
-            } else if (/null/.test(match)) {
-                cls = 'json-null';
-            }
-            return '<span class="' + cls + '">' + match + '</span>';
-        });
-    }
-
-    // --- JSON Viewer Modal Logic ---
-    /** The JSON on screen: the final results, or what an open session has gathered so far. */
-    let jsonOnScreen = null;
-
+    // --- The raw JSON, in the results kit's viewer ---
+    /** The final results, or what an open session has gathered so far. */
     window.openJsonModal = async function() {
         let payload = window.currentResultData;
         let note = '';
@@ -1052,43 +906,8 @@
                 if (btn) btn.innerHTML = originalHtml;
             }
         }
-
         if (!payload && !note) return;
-        jsonOnScreen = payload || null;
-        const modal = document.getElementById('jsonModal');
-        const content = document.getElementById('jsonModalContent');
-        if (modal && content) {
-            content.innerHTML = payload ? syntaxHighlightJson(payload) : `<span class="json-null">// ${escapeHtml(note)}</span>`;
-            document.getElementById('btnCopyJson')?.classList.toggle('hidden', !payload);
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-        }
-    };
-
-    window.closeJsonModal = function() {
-        const modal = document.getElementById('jsonModal');
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = '';
-        }
-    };
-
-    window.copyJsonData = function() {
-        if (!jsonOnScreen) return;
-        const btn = document.getElementById('btnCopyJson');
-        if (!btn) return;
-        
-        navigator.clipboard.writeText(JSON.stringify(jsonOnScreen, null, 4)).then(() => {
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED';
-            btn.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30');
-            setTimeout(() => {
-                btn.innerHTML = originalHtml;
-                btn.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30');
-            }, 2000);
-        });
+        InfoniteResults.showJson(payload, { name: 'financial_rider_results.json', note });
     };
 
     function copyWidgetUrl() {
@@ -1157,34 +976,6 @@
     <div class="relative w-full md:max-w-[540px] h-full md:h-[750px] max-h-full md:max-h-[90vh] rounded-none md:rounded-3xl glass-halo mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <!-- Optional skeleton loading could go here, but an empty white screen is fine -->
         <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 glass-frame-scaled" src="about:blank"></iframe>
-    </div>
-</div>
-
-<!-- JSON Data Viewer Modal -->
-<div id="jsonModal" class="fixed inset-0 z-[100] hidden flex-col items-center justify-end md:justify-center glass-layout transition-opacity p-0 pt-6 md:p-4" onclick="closeJsonModal()">
-    <div class="relative w-full max-w-4xl h-[calc(100vh-1.5rem)] md:h-[80vh] flex flex-col bg-[#1e1e1e] rounded-t-3xl md:rounded-3xl rounded-b-none md:rounded-b-3xl shadow-2xl overflow-hidden border border-slate-700/50 border-b-0 md:border-b" onclick="event.stopPropagation()">
-        
-        <!-- Header -->
-        <div class="flex items-center justify-between gap-3 px-4 md:px-6 py-4 border-b border-slate-700/50 bg-[#252526] shrink-0">
-            <div class="flex items-center gap-3 min-w-0">
-                <i class="fa-solid fa-code text-slate-400 shrink-0"></i>
-                <h3 class="text-sm font-bold text-slate-200 tracking-wide font-mono truncate">financial_rider_results.json</h3>
-            </div>
-            <div class="flex items-center gap-3 shrink-0">
-                <button id="btnCopyJson" onclick="copyJsonData()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-600/50 hover:bg-white/10 text-slate-300 text-xs font-bold transition-colors">
-                    <i class="fa-regular fa-copy"></i> COPY
-                </button>
-                <button onclick="closeJsonModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
-                    <i class="fa-solid fa-times text-lg"></i>
-                </button>
-            </div>
-        </div>
-        
-        <!-- Content -->
-        <div class="flex-1 overflow-auto custom-scrollbar p-0 bg-[#1e1e1e]">
-            <pre class="m-0 p-6 text-[13px] leading-snug font-mono text-[#d4d4d4]"><code id="jsonModalContent" class="language-json"></code></pre>
-        </div>
-        
     </div>
 </div>
 

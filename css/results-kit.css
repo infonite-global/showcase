@@ -1,0 +1,262 @@
+/*
+ * results-kit.css
+ * The pieces every flow's results page draws the same way (js/results-kit.js): a page's head and
+ * sections, a card, its facts and its statement, tags, bars, tables, the search over a long list,
+ * the empty state, a document over the page, and the person — the chip with their name, the banner a
+ * crossed identity raises and their profile. Titles and labels sit on the page's own ground; a card
+ * holds one record, one list or one table, never another card. Amounts are set like a statement:
+ * tabular figures, flush right, one size per role. Colours are the page's theme (--primary,
+ * --primary-container, --primary-rgb). A flow's own stylesheet adds what is only its own.
+ */
+
+/* ---- the person: the chip with their name, and their avatar ---- */
+.rk-me { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; margin-left: auto; padding: 4px 12px 4px 4px; border-radius: 9999px; background: #fff; border: 1px solid rgba(0,0,0,0.08); color: #334155; font-size: 12px; font-weight: 800; box-shadow: 0 1px 2px rgba(15,23,42,0.05); transition: all 150ms; }
+.rk-me:hover { border-color: var(--primary); box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.18); }
+.rk-me > i { font-size: 9px; color: #94a3b8; }
+.rk-me-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 9999px; background: var(--primary); color: #fff; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; flex-shrink: 0; }
+.rk-avatar.sm { width: 28px; height: 28px; font-size: 10px; background: var(--primary-container); color: var(--primary); }
+.rk-avatar.lg { width: 64px; height: 64px; font-size: 22px; box-shadow: 0 10px 24px rgba(var(--primary-rgb), 0.3); }
+.rk-avatar.has-photo { overflow: hidden; background: #f1f5f9; }
+.rk-avatar.has-photo img { width: 100%; height: 100%; object-fit: cover; }
+.rk-avatar-alert { position: absolute; right: -3px; top: -3px; width: 15px; height: 15px; border-radius: 9999px; background: #f59e0b; color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
+
+/* ---- the banner a crossed identity raises on every screen ---- */
+.rk-identity { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 18px; background: #fffbeb; border: 1px solid #fcd34d; box-shadow: 0 6px 18px rgba(245, 158, 11, 0.12); }
+.rk-identity.hidden { display: none; }
+.rk-identity-icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 12px; background: #f59e0b; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.rk-identity-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.rk-identity-text strong { font-size: 12px; font-weight: 900; color: #92400e; text-transform: uppercase; letter-spacing: 0.06em; }
+.rk-identity-text span { font-size: 12px; font-weight: 600; color: #78350f; line-height: 1.45; }
+.rk-identity-text small { font-size: 11px; color: #a16207; line-height: 1.4; }
+.rk-identity-link { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9999px; background: #fff; border: 1px solid #fcd34d; color: #92400e; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; transition: all 150ms; }
+.rk-identity-link:hover { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+.rk-identity.is-inline { box-shadow: none; }
+
+/* ---- a page: its head on the ground, then its sections ---- */
+.rk-page { display: flex; flex-direction: column; gap: 18px; animation: rk-in 220ms ease-out; }
+@keyframes rk-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rk-head { display: flex; align-items: center; gap: 14px; padding: 4px 2px 2px; }
+.rk-head-icon { width: 46px; height: 46px; border-radius: 15px; background: var(--primary-container); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.rk-eyebrow { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.12em; color: var(--primary); }
+.rk-title { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; line-height: 1.15; }
+.rk-sub { font-size: 13px; font-weight: 500; color: #64748b; margin-top: 3px; }
+.rk-section { display: flex; flex-direction: column; gap: 10px; }
+.rk-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 2px; margin-top: 4px; }
+.rk-section-label { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #334155; }
+.rk-section-label i { color: var(--primary); }
+.rk-section-label em { font-style: normal; padding: 1px 8px; border-radius: 9999px; background: #e2e8f0; color: #475569; font-size: 10px; letter-spacing: 0; text-transform: none; }
+.rk-link { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: var(--primary); }
+.rk-link i { font-size: 9px; transition: transform 150ms; }
+.rk-link:hover i { transform: translateX(2px); }
+.rk-muted { font-size: 12px; color: #94a3b8; font-weight: 500; }
+
+/* ---- how numbers are set: identifiers in mono, amounts in tabular figures ---- */
+.rk-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; letter-spacing: 0.02em; }
+.rk-dot { display: inline-block; width: 3px; height: 3px; border-radius: 9999px; background: #cbd5e1; flex-shrink: 0; }
+.is-positive { color: #059669 !important; }
+.is-negative { color: #e11d48 !important; }
+
+/* ---- logos ---- */
+.rk-logo { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 11px; background: #fff; border: 1px solid rgba(0,0,0,0.06); overflow: hidden; color: #cbd5e1; }
+.rk-logo img { width: 100%; height: 100%; object-fit: contain; }
+.rk-logo.lg { width: 52px; height: 52px; border-radius: 16px; font-size: 20px; }
+.rk-logo.sm { width: 28px; height: 28px; border-radius: 9px; font-size: 12px; }
+.rk-logo.xs { width: 18px; height: 18px; border-radius: 6px; font-size: 9px; }
+.rk-logo.is-unknown { background: #fffbeb; border-color: #fde68a; color: #d97706; }
+
+/* ---- a card: one record ---- */
+.rk-card { --pad-x: 20px; --pad-y: 18px; position: relative; display: flex; flex-direction: column; gap: 14px; padding: var(--pad-y) var(--pad-x); border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); transition: border-color 150ms, box-shadow 150ms; }
+.rk-card.is-link { cursor: pointer; }
+.rk-card.is-broken { gap: 6px; border-style: dashed; box-shadow: none; }
+/* a card of labelled fields (the consent's evidence): three to a row, one on a phone */
+.rk-card.is-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 24px; }
+.rk-card.is-grid > .is-full { grid-column: 1 / -1; }
+.rk-card.is-link:hover { border-color: rgba(var(--primary-rgb), 0.45); box-shadow: 0 10px 26px rgba(var(--primary-rgb), 0.12); }
+.rk-card-head { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
+.rk-card-id { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
+/* the name gives way, never its tags: a long name ends in an ellipsis and says itself on hover */
+.rk-card-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rk-card-title h3 { flex: 0 1 auto; min-width: 0; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-card-title .rk-tag { flex-shrink: 0; }
+.rk-card-sub { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; overflow: hidden; }
+.rk-card-sub > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rk-card-sub > span:first-child { flex-shrink: 0; max-width: 100%; }
+
+.rk-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 7px; background: #eef2ff; color: #4338ca; font-size: 9px; font-weight: 900; font-style: normal; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+.rk-tag.is-quiet, .rk-tag.is-off { background: #f1f5f9; color: #64748b; }
+.rk-tag.is-ok { background: #ecfdf5; color: #047857; }
+.rk-tag.is-warn { background: #fffbeb; color: #b45309; }
+.rk-tag.is-bad { background: #fff1f2; color: #be123c; }
+
+/* the figure a record is read by: label over amount, flush right */
+.rk-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; text-align: right; }
+.rk-amount small { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+.rk-amount b { font-size: 22px; font-weight: 700; line-height: 1.2; letter-spacing: -0.015em; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rk-amount span { font-size: 11px; font-weight: 600; color: #94a3b8; }
+
+/* the rest of what the source said: one row of facts, one size for every value */
+/* auto-fit: three facts share the row in thirds, five in fifths — never a gap at the end */
+.rk-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px 24px; margin: 0; padding-top: 14px; border-top: 1px solid #f1f5f9; }
+.rk-facts > div { min-width: 0; }
+.rk-facts dt { margin-bottom: 3px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+.rk-facts dd { margin: 0; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rk-facts dd > span { display: block; font-size: 13px; font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-facts dd > small { font-size: 11px; font-weight: 500; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* a statement: label left, value flush right */
+.rk-ledger { display: flex; flex-direction: column; margin: 0; min-width: 0; }
+.rk-ledger > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 8px 0; border-top: 1px solid #f1f5f9; min-width: 0; }
+.rk-ledger > div:first-child { border-top: none; }
+.rk-ledger dt { flex-shrink: 0; font-size: 12px; font-weight: 600; color: #64748b; }
+.rk-ledger dd { margin: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 1px; min-width: 0; text-align: right; }
+.rk-ledger dd > span { max-width: 100%; font-size: 14px; font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-ledger dd > small { font-size: 11px; font-weight: 500; color: #94a3b8; }
+.rk-ledger > div.is-main { padding-bottom: 10px; }
+.rk-ledger > div.rk-ledger-meter { display: block; padding: 0 0 12px; border-top: none; }
+.rk-ledger > div.is-main dt { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #334155; }
+.rk-ledger > div.is-main dd > span { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+
+/* how far along something is, from two figures of one source: a loan's repayment, a limit in use */
+.rk-meter { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.rk-meter-bar { position: relative; height: 8px; border-radius: 9999px; background: #eef2f6; overflow: hidden; }
+.rk-meter-bar span { position: absolute; inset: 0 auto 0 0; min-width: 4px; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 65%, #fff), var(--primary)); transition: width 400ms ease-out; }
+.rk-meter.is-zero .rk-meter-bar span { min-width: 0; }
+.rk-meter.is-mid .rk-meter-bar span { background: linear-gradient(90deg, #fcd34d, #f59e0b); }
+.rk-meter.is-high .rk-meter-bar span { background: linear-gradient(90deg, #fb7185, #e11d48); }
+.rk-meter-legend { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; font-weight: 600; color: #64748b; font-variant-numeric: tabular-nums; }
+.rk-meter-legend b { font-weight: 800; color: #0f172a; }
+.rk-meter-legend span:last-child:not(:first-child) { text-align: right; }
+
+.rk-inline-link { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; color: var(--primary); font-weight: 700; text-align: left; }
+.rk-inline-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk-inline-link i { font-size: 8px; transition: transform 150ms; }
+.rk-inline-link:hover span { text-decoration: underline; }
+.rk-inline-link:hover i { transform: translateX(2px); }
+
+.rk-card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+.rk-facts + .rk-card-foot { padding-top: 0; border-top: none; }
+.rk-card-go { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--primary); }
+.rk-card-go i { font-size: 9px; transition: transform 150ms; }
+.rk-card.is-link:hover .rk-card-go i { transform: translateX(3px); }
+
+/* what a card unfolds */
+.rk-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; font-weight: 700; color: #475569; transition: color 150ms; }
+.rk-toggle i { font-size: 9px; color: #94a3b8; transition: transform 150ms; }
+.rk-toggle:hover { color: var(--primary); }
+.rk-toggle:disabled { cursor: default; color: #94a3b8; }
+.rk-card.is-open .rk-toggle i { transform: rotate(90deg); color: var(--primary); }
+
+/* ---- a table of records ---- */
+.rk-table-card { border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); overflow-x: auto; }
+.rk-table { width: 100%; border-collapse: collapse; }
+.rk-table th { padding: 12px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; text-align: left; background: #f8fafc; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+.rk-table td { padding: 12px 16px; vertical-align: top; border-bottom: 1px solid #f1f5f9; }
+.rk-table tr:last-child td { border-bottom: none; }
+.rk-table tbody tr:hover { background: #fafbfc; }
+.rk-table td b { display: block; font-size: 13px; font-weight: 700; color: #0f172a; }
+.rk-table td small { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.rk-pill { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 9999px; background: #f1f5f9; color: #475569; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; }
+.rk-pill.is-in, .rk-pill.is-ok { background: #ecfdf5; color: #047857; }
+.rk-pill.is-out, .rk-pill.is-bad { background: #fff1f2; color: #be123c; }
+.rk-pill.is-warn { background: #fffbeb; color: #b45309; }
+
+/* ---- the search over a long list ---- */
+.rk-section-head.is-search { flex-wrap: wrap; row-gap: 10px; }
+.rk-search { position: relative; display: flex; align-items: center; flex: 0 1 300px; min-width: 0; }
+.rk-search > i { position: absolute; left: 13px; font-size: 12px; color: #94a3b8; pointer-events: none; }
+.rk-search input { width: 100%; height: 36px; padding: 0 34px; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.08); background: #fff; font-size: 12px; font-weight: 600; color: #0f172a; outline: none; box-shadow: 0 1px 2px rgba(15,23,42,0.04); transition: border-color 150ms, box-shadow 150ms; }
+.rk-search input::placeholder { font-weight: 500; color: #94a3b8; }
+.rk-search input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-container); }
+.rk-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.rk-search-clear { position: absolute; right: 6px; display: none; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 9999px; font-size: 11px; color: #64748b; transition: all 150ms; }
+.rk-search-clear:hover { background: #f1f5f9; color: #0f172a; }
+.rk-search.is-filled .rk-search-clear { display: flex; }
+.rk-search.is-filled > i { color: var(--primary); }
+.rk-search-none td, p.rk-search-none { padding: 28px 16px !important; text-align: center; font-size: 12px; font-weight: 600; color: #94a3b8; }
+.rk-search-none i { margin-right: 8px; }
+/* what the search leaves out stays out, whatever display its own classes give it */
+[data-i][hidden], [data-search-group][hidden], .rk-search-none[hidden] { display: none !important; }
+
+/* ---- an empty, unrequested or undrawable view ---- */
+.rk-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 56px 24px; text-align: center; border-radius: 24px; border: 1px dashed rgba(15,23,42,0.12); }
+.rk-empty > span { width: 54px; height: 54px; border-radius: 18px; background: #f1f5f9; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 4px; }
+.rk-empty b { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: #334155; }
+.rk-empty p { font-size: 13px; color: #64748b; max-width: 360px; }
+
+/* ---- the profile, over the page ---- */
+.rk-modal { position: fixed; inset: 0; z-index: 900; display: none; align-items: flex-start; justify-content: center; padding: 64px 16px 24px; overflow-y: auto; background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(6px); }
+.rk-modal.is-open { display: flex; animation: rk-fade 160ms ease-out; }
+@keyframes rk-fade { from { opacity: 0; } to { opacity: 1; } }
+.rk-modal-panel { position: relative; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 18px; padding: 26px; border-radius: 28px; background: #fff; box-shadow: 0 30px 80px rgba(15,23,42,0.25); animation: rk-in 220ms ease-out; }
+.rk-modal-close { position: absolute; right: 16px; top: 16px; width: 34px; height: 34px; border-radius: 9999px; background: #f1f5f9; color: #475569; display: flex; align-items: center; justify-content: center; transition: all 150ms; }
+.rk-modal-close:hover { background: #0f172a; color: #fff; }
+.rk-profile-head { display: flex; align-items: center; gap: 16px; padding-right: 40px; }
+.rk-profile-head h3 { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+.rk-profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.rk-profile-section { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+.rk-docs { display: flex; flex-wrap: wrap; gap: 8px; }
+.rk-doc { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 12px; border-radius: 12px; background: #f8fafc; border: 1px solid #f1f5f9; }
+.rk-doc span { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+.rk-doc b { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #0f172a; }
+.rk-doc i { color: #10b981; font-size: 12px; }
+.rk-doc small { flex-basis: 100%; font-size: 10px; font-weight: 600; color: #64748b; }
+.rk-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 16px; }
+.rk-fields.is-wide { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.rk-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rk-field span { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; }
+.rk-field b { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
+.rk-field b img { width: 16px; height: 16px; }
+.rk-address { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; font-weight: 600; color: #334155; line-height: 1.45; }
+.rk-address i { color: var(--primary); margin-top: 3px; }
+.rk-address img { width: 16px; height: 16px; margin-left: auto; margin-top: 2px; }
+.rk-address .rk-tag { margin-left: 6px; vertical-align: 1px; }
+
+/* ---- a document, in the browser's own viewer ---- */
+.rk-pdf { position: fixed; inset: 0; z-index: 950; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(6px); }
+.rk-pdf.is-open { display: flex; animation: rk-fade 160ms ease-out; }
+.rk-pdf-panel { position: relative; display: flex; flex-direction: column; width: 100%; max-width: 900px; height: 85vh; border-radius: 24px; overflow: hidden; background: #1e1e1e; border: 1px solid rgba(100, 116, 139, 0.35); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45); animation: rk-in 220ms ease-out; }
+.rk-pdf-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #252526; border-bottom: 1px solid rgba(100, 116, 139, 0.35); }
+.rk-pdf-head > i { font-size: 17px; color: #ef4444; }
+.rk-pdf-head b { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 700; color: #e2e8f0; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-pdf-save { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 6px 12px; border-radius: 9px; border: 1px solid rgba(100, 116, 139, 0.5); color: #cbd5e1; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; transition: background 150ms; }
+.rk-pdf-save:hover { background: rgba(255, 255, 255, 0.1); }
+.rk-pdf-close { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px; color: #94a3b8; font-size: 16px; transition: all 150ms; }
+.rk-pdf-close:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.rk-pdf-body { position: relative; flex: 1; background: #323639; }
+.rk-pdf-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+@media (max-width: 640px) {
+    .rk-title { font-size: 23px; }
+    .rk-card { --pad-x: 16px; --pad-y: 16px; }
+    .rk-card.is-grid { grid-template-columns: minmax(0, 1fr); }
+    .rk-card-head { gap: 12px; }
+    .rk-card-title h3 { font-size: 16px; }
+    /* the headline figure goes under the name, as a statement line: the name keeps the width */
+    .rk-card-head { flex-wrap: wrap; row-gap: 8px; }
+    .rk-card-head > .rk-amount { flex: 1 1 100%; flex-direction: row; align-items: baseline; gap: 8px; text-align: left; }
+    .rk-card-head > .rk-amount small { order: 1; }
+    .rk-card-head > .rk-amount span { order: 2; }
+    .rk-card-head > .rk-amount b { order: 3; margin-left: auto; font-size: 20px; }
+    .rk-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+    .rk-facts > div.is-wide { grid-column: span 2; }
+    .rk-facts dd > span, .rk-facts dd > small, .rk-inline-link span { white-space: normal; overflow-wrap: anywhere; }
+    .rk-pdf { padding: 24px 0 0; align-items: flex-end; }
+    .rk-pdf-panel { height: calc(100vh - 24px); border-radius: 24px 24px 0 0; }
+    .rk-pdf-save span { display: none; }
+    .rk-ledger > div.is-main dd > span { font-size: 24px; }
+    .rk-identity { flex-wrap: wrap; align-items: flex-start; }
+    .rk-identity-text { flex: 1 1 calc(100% - 52px); }
+    .rk-identity-text small { display: none; }
+    .rk-identity-link { margin-left: 52px; }
+    .rk-table td, .rk-table th { padding-left: 14px; padding-right: 14px; }
+    .rk-me-name { display: none; }
+    .rk-search { flex: 1 1 100%; }
+}
+
+/* ---- the raw JSON, as the viewer colours it (js/results-kit.js) ---- */
+.json-key { color: #9cdcfe; }
+.json-string { color: #ce9178; }
+.json-number { color: #b5cea8; }
+.json-boolean { color: #569cd6; font-weight: bold; }
+.json-null { color: #c586c0; font-weight: bold; }

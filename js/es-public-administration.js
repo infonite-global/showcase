@@ -33,11 +33,35 @@ document.addEventListener("DOMContentLoaded", () => {
         event: 'es-public-administration:ended',
     });
 
-    // Try rendering session history on load if available
-    if (typeof renderHistory === 'function') {
-        renderHistory();
-    }
+    // 3. What the application holds (js/session-capabilities.js), and the widget's dialog (js/session-launcher.js)
+    InfoniteCapabilities.load().then(syncReach);
+    InfoniteLauncher.mount({ event: 'es-public-administration:ended', onClosed: () => renderHistory() });
+
+    renderHistory();
 });
+
+/** Offers a production session only when the application may run one: its Sandbox switch, its tag and its notice. */
+function syncReach() {
+    InfoniteCapabilities.holdSandbox({
+        product: 'product:es_public_administration', flow: 'Spain Public Administration', real: 'read the real administrations',
+        tagId: 'espa-reach-product', noticeId: 'espa-sandbox-notice',
+    });
+}
+
+/** What a session was created with: the chips every flow draws, with this flow's own — where it signs in, and how many modules it reads. */
+function setupChips(settings) {
+    if (!settings) return '';
+    const { chip } = InfoniteLauncher;
+    const own = [];
+    if (Array.isArray(settings.allowed_sources) && settings.allowed_sources.length) {
+        own.push(chip(`<i class="fa-solid fa-building-columns"></i> ${escapeHtml(settings.allowed_sources.join(' · ').toUpperCase())}`));
+    }
+    const modules = Array.isArray(settings.executions_features) ? settings.executions_features.length : 0;
+    if (modules) own.push(chip(`${modules} ${modules === 1 ? 'module' : 'modules'}`));
+    return InfoniteLauncher.chips(settings, own);
+}
+
+const escapeHtml = (text) => String(text ?? '').replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
 
 /**
  * Renders the Feature toggles inside the New Lead modal's grid container.
@@ -334,11 +358,15 @@ window.renderHistory = function() {
             `<span style="background-color: ${secBg}; color: ${secText};" class="px-1.5 py-0.5 rounded ml-1 tracking-widest leading-none">${timeData.relStr}</span>` : 
             (timeData.relStr ? `<span class="ml-1 opacity-70">(${timeData.relStr})</span>` : '');
             
-        let copyActionUi = wUrl ? `
-            <button class="bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-600 hover:bg-indigo-50 w-7 h-7 rounded-lg text-[10px] flex items-center justify-center transition-colors shadow-sm ml-1.5 shrink-0" title="Copy URL" onclick="navigator.clipboard.writeText('${wUrl}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)">
-               <i class="fa-regular fa-copy"></i>
+        const copyActionUi = wUrl ? InfoniteLauncher.copyButton(wUrl, 'Copy URL', 'bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-600 hover:bg-indigo-50 w-7 h-7 rounded-lg text-[10px] flex items-center justify-center transition-colors shadow-sm ml-1.5 shrink-0') : '';
+        const launchActionUi = (needsPolling && wUrl) ? `
+            <button class="bg-white border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary-container)] w-7 h-7 rounded-lg text-[10px] flex items-center justify-center transition-colors shadow-sm ml-1.5 shrink-0" title="${InfoniteLauncher.opensInDialog(session.session_settings) ? 'Launch it here' : 'Launch it in a new tab: it redirects when it ends'}" onclick="launchSession('${sid}')">
+               <i class="fa-solid fa-play"></i>
             </button>
         ` : '';
+        const chipsHtml = setupChips(session.session_settings);
+        const copySid = InfoniteLauncher.copyButton(sid, 'Copy Session ID', 'text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors opacity-0 group-hover:opacity-100');
+        const copyCid = cid !== '--' ? InfoniteLauncher.copyButton(cid, 'Copy Customer ID', 'text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors opacity-0 group-hover:opacity-100') : '';
 
         let cancelActionUi = needsPolling ? `
             <button class="bg-white border border-red-200 text-red-500 hover:text-red-700 hover:border-red-600 hover:bg-red-50 w-7 h-7 rounded-lg text-[10px] flex items-center justify-center transition-colors shadow-sm ml-1.5 shrink-0" title="Cancel Session" onclick="cancelActiveSession('${sid}')">
@@ -362,23 +390,20 @@ window.renderHistory = function() {
         html += `
         <tr class="border-b border-black/5 hover:bg-black/[0.02] transition-colors group ${rowBorder}">
             <td class="p-4 pl-4 align-top">
-               <div class="flex items-center gap-3">
+               <div class="flex items-start gap-3">
                    <div class="w-8 h-8 rounded-lg bg-[var(--primary-container)] flex items-center justify-center shrink-0">
                        <i class="fa-solid fa-fingerprint text-[var(--primary)] text-[10px]"></i>
                    </div>
                    <div class="flex-1 min-w-0 pr-4">
                        <div class="flex items-center gap-1.5">
-                           <h4 class="text-xs font-mono font-bold text-slate-900 truncate max-w-[150px] sm:max-w-[200px]" title="${sid}">${sid}</h4>
-                           <button onclick="navigator.clipboard.writeText('${sid}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors opacity-0 group-hover:opacity-100" title="Copy Session ID">
-                               <i class="fa-regular fa-copy"></i>
-                           </button>
+                           <h4 class="text-xs font-mono font-bold text-slate-900 truncate max-w-[150px] sm:max-w-[200px]" title="${escapeHtml(sid)}">${escapeHtml(sid)}</h4>
+                           ${copySid}
                        </div>
                        <div class="flex items-center gap-1.5 mt-0.5">
-                           <p class="text-[10px] text-slate-500 uppercase tracking-widest truncate max-w-[150px] sm:max-w-[200px]" title="${cid}">${cid}</p>
-                           ${cid !== '--' ? `<button onclick="navigator.clipboard.writeText('${cid}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors opacity-0 group-hover:opacity-100" title="Copy Customer ID">
-                               <i class="fa-regular fa-copy"></i>
-                           </button>` : ''}
+                           <p class="text-[10px] text-slate-500 uppercase tracking-widest truncate max-w-[150px] sm:max-w-[200px]" title="${escapeHtml(cid)}">${escapeHtml(cid)}</p>
+                           ${copyCid}
                        </div>
+                       ${chipsHtml}
                    </div>
                </div>
             </td>
@@ -395,6 +420,7 @@ window.renderHistory = function() {
                    ${cancelActionUi}
                    ${deleteActionUi}
                    ${copyActionUi}
+                   ${launchActionUi}
                    <button class="bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center transition-colors shadow-sm ml-1.5 shrink-0" onclick="viewSession('${sid}')">
                        <i class="fa-regular fa-eye mr-1.5"></i> View
                    </button>
@@ -414,10 +440,8 @@ window.renderHistory = function() {
                     <div class="w-7 h-7 rounded-lg bg-[var(--primary-container)] flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-fingerprint text-[var(--primary)] text-[10px]"></i>
                     </div>
-                    <span class="text-xs font-mono font-bold text-slate-900 truncate" title="${sid}">${sid}</span>
-                    <button onclick="navigator.clipboard.writeText('${sid}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors shrink-0">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
+                    <span class="text-xs font-mono font-bold text-slate-900 truncate" title="${escapeHtml(sid)}">${escapeHtml(sid)}</span>
+                    ${InfoniteLauncher.copyButton(sid, 'Copy Session ID', 'text-[10px] text-slate-400 hover:text-[var(--primary)] transition-colors shrink-0')}
                 </div>
                 <div class="shrink-0">
                     <button class="bg-white border border-slate-200 text-slate-600 hover:text-[var(--primary)] hover:border-[var(--primary)] px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors shadow-sm" onclick="viewSession('${sid}')">
@@ -429,16 +453,14 @@ window.renderHistory = function() {
             <div class="flex flex-col gap-1 pl-9">
                 <div class="flex items-center gap-1.5">
                     <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Customer:</span>
-                    <span class="text-[10px] font-bold text-slate-600 truncate" title="${cid}">${cid}</span>
-                    ${cid !== '--' ? `
-                    <button onclick="navigator.clipboard.writeText('${cid}'); const i=this.querySelector('i'); i.className='fa-solid fa-check text-green-500'; setTimeout(()=>i.className='fa-regular fa-copy',2000)" class="text-[9px] text-slate-400 hover:text-[var(--primary)] transition-colors shrink-0">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>` : ''}
+                    <span class="text-[10px] font-bold text-slate-600 truncate" title="${escapeHtml(cid)}">${escapeHtml(cid)}</span>
+                    ${cid !== '--' ? InfoniteLauncher.copyButton(cid, 'Copy Customer ID', 'text-[9px] text-slate-400 hover:text-[var(--primary)] transition-colors shrink-0') : ''}
                 </div>
                 <div class="flex items-center gap-1.5 text-[9px] font-bold text-slate-400">
                     <i class="fa-regular fa-clock"></i>
                     <span>${timeStrFormatted}</span>
                 </div>
+                ${chipsHtml}
             </div>
 
             <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100/60 mt-1">
@@ -448,6 +470,7 @@ window.renderHistory = function() {
                     ${cancelActionUi}
                     ${deleteActionUi}
                     ${copyActionUi}
+                    ${launchActionUi}
                 </div>
                 <!-- Right side status badge -->
                 <div class="shrink-0">
@@ -486,7 +509,6 @@ window.syncActiveSession = async function(sid) {
 };
 
 window.deleteLocalSession = function(sid) {
-    if (typeof showConfirmModal === 'function') {
         showConfirmModal(
             "Delete Session",
             "Are you sure you want to permanently delete this session from your local storage? This action cannot be undone.",
@@ -505,15 +527,10 @@ window.deleteLocalSession = function(sid) {
                     sessions = sessions.filter(s => s.session_id !== sid);
                     window.InfoniteFlowsManager.saveSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, sessions, config.widgetUrl);
                     
-                    if (typeof renderHistory === 'function') {
-                        renderHistory();
-                    }
+                    renderHistory();
                 }
             }
         );
-    } else {
-        alert("Modal system is not available.");
-    }
 };
 
 async function pollLoop(sid, config) {
@@ -525,11 +542,6 @@ async function pollLoop(sid, config) {
             // Re-render immediately to reflect realtime changes (like ping_date updating USER_ONLINE indicator)
             if (typeof renderHistory === 'function') {
                 renderHistory();
-            }
-
-            // Also re-render the Active Session View if we are currently looking at it
-            if (window.currentViewedSession === sid && typeof renderSessionView === 'function') {
-                renderSessionView(state);
             }
 
             if (state && state.is_closed === true) {
@@ -551,7 +563,6 @@ async function pollLoop(sid, config) {
 }
 
 window.cancelActiveSession = function(sid) {
-    if (typeof showConfirmModal === 'function') {
         showConfirmModal(
             "Cancel Session",
             "Are you sure you want to cancel this session? The user will no longer be able to complete the verification process.",
@@ -569,18 +580,14 @@ window.cancelActiveSession = function(sid) {
                     }
                 } catch (e) {
                     console.error("Cancel failed", e);
-                    alert("Failed to cancel session: " + JSON.stringify(e));
+                    alert("Failed to cancel session: " + (e.message || JSON.stringify(e)));
                 }
             },
             "Keep Active"
         );
-    } else {
-        alert("Modal system is not available.");
-    }
 };
 
 window.clearHistory = function() {
-    if (typeof showConfirmModal === 'function') {
         showConfirmModal(
             "Clear Local DB",
             "This will permanently delete all session history from your browser's local storage. This action cannot be undone.",
@@ -595,68 +602,55 @@ window.clearHistory = function() {
                 }
             }
         );
-    } else {
-        if (!confirm("Are you sure you want to delete all local session history? This cannot be undone.")) return;
-        window.activePollers = {};
-        const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
-        if (config && window.InfoniteFlowsManager) {
-            window.InfoniteFlowsManager.saveSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, [], config.widgetUrl);
-            renderHistory();
-        }
-    }
 };
 
 // --------------------------------------------------------------------------------
 // UI Modals
 // --------------------------------------------------------------------------------
 
-/** While the dialog is open, the ending follows the application's details, refreshed every few seconds (js/config.js). */
-let endingWatch = null;
+/** While the dialog is open, its reach and its ending follow the application's details, refreshed every few seconds (js/config.js). */
+let reachWatch = null;
 
 window.openNewLeadModal = function() {
     const modal = document.getElementById('newLeadModal');
-    if (modal) {
-        // Auto-generate Customer ID if empty
-        const cidField = document.getElementById('generate-customer-id');
-        if (cidField && !cidField.value) {
-            const randomDigits = Math.floor(1000000000 + Math.random() * 9000000000).toString().substring(0, 8);
-            cidField.value = `ES-PUBLIC-ADMINISTRATION-${randomDigits}`;
-        }
-
-        // Where the session ends follows the application's redirect URLs, which may arrive late
-        InfoniteSessionEnding.sync();
-        clearInterval(endingWatch);
-        endingWatch = setInterval(() => InfoniteSessionEnding.sync(), 2000);
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+    if (!modal) return;
+    // every lead is another customer: an id is generated when the field is empty
+    const cidField = document.getElementById('generate-customer-id');
+    if (cidField && !cidField.value) {
+        cidField.value = `ES-PUBLIC-ADMINISTRATION-${Math.floor(10000000 + Math.random() * 90000000)}`;
     }
+    syncReach();
+    InfoniteSessionEnding.sync();
+    clearInterval(reachWatch);
+    reachWatch = setInterval(() => { syncReach(); InfoniteSessionEnding.sync(); }, 2000);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 };
+
+/** Shows one of the dialog's three faces: the form, the created session or the failure. */
+function showLeadView(view) {
+    const isForm = view === 'form';
+    document.getElementById('nl-header')?.classList.toggle('hidden', !isForm);
+    document.getElementById('nl-form-view').classList.toggle('hidden', !isForm);
+    document.getElementById('nl-form-view').classList.toggle('flex', isForm);
+    document.getElementById('nl-footer-actions').classList.toggle('hidden', !isForm);
+    document.getElementById('nl-footer-actions').classList.toggle('flex', isForm);
+    ['success', 'error'].forEach(name => {
+        const el = document.getElementById(`nl-${name}-view`);
+        el.classList.toggle('hidden', view !== name);
+        el.classList.toggle('flex', view === name);
+    });
+}
+
+window.showLeadView = showLeadView;
 
 window.closeNewLeadModal = function() {
     const modal = document.getElementById('newLeadModal');
     if (!modal) return;
-    clearInterval(endingWatch);
-    
-    // Explicitly restore header width
-    const header = document.getElementById('nl-header');
-    if (header) {
-        header.classList.remove('hidden');
-    }
-
+    clearInterval(reachWatch);
     modal.classList.add('hidden');
     modal.classList.remove('flex');
-
-    // Reset views for next open immediately
-    document.getElementById('nl-success-view').classList.add('hidden');
-    document.getElementById('nl-success-view').classList.remove('flex');
-    document.getElementById('nl-error-view').classList.add('hidden');
-    document.getElementById('nl-error-view').classList.remove('flex');
-    
-    document.getElementById('nl-form-view').classList.remove('hidden');
-    document.getElementById('nl-form-view').classList.add('flex');
-    document.getElementById('nl-footer-actions').classList.remove('hidden');
-    document.getElementById('nl-footer-actions').classList.add('flex');
+    showLeadView('form');
 };
 
 // Setup simple accordion toggling for Advanced Configuration
@@ -701,6 +695,81 @@ function validateSpanishDocument(doc) {
     return value.charAt(8) === calculatedLetter;
 }
 
+/** Whether a text is a base64 key of exactly 32 bytes. */
+function isAesKey(text) {
+    try { return atob(text).length === 32; } catch (e) { return false; }
+}
+
+/**
+ * The session request, read from the form — what POST /manager/init receives. Anything the form
+ * leaves at its default is not sent, so the application's own defaults apply.
+ */
+function buildLeadPayload() {
+    const value = (id) => (document.getElementById(id)?.value || '').trim();
+
+    const features = Array.from(document.querySelectorAll('#modulesGrid input.feature-checkbox:checked')).map(cb => ({
+        code: cb.value,
+        configurations: window.INFONITE_FEATURES[cb.value]?.defaultConfig || {}
+    }));
+    if (features.length === 0) throw new Error("Select at least one module: a session must read something.");
+
+    const settings = {
+        sandbox: !!document.getElementById('generate-sandbox-mode')?.checked,
+        hooks_extra_data: { session: "{session_id}", customer: "{customer_id}" },
+        ...InfoniteSessionEnding.settings(),
+        executions_features: features,
+    };
+    if (!settings.sandbox && !InfoniteCapabilities.productionAllowed('product:es_public_administration')) {
+        throw new Error("This application runs Spain Public Administration in sandbox only: turn Sandbox on.");
+    }
+    // A product preset decides which administrations its sessions sign in to
+    if (window.ES_PA_PRESET && Array.isArray(window.ES_PA_PRESET.sources)) settings.allowed_sources = window.ES_PA_PRESET.sources;
+
+    const aesKey = value('generate-aes-key');
+    if (aesKey) {
+        if (!isAesKey(aesKey)) throw new Error("The AES key must be 32 bytes, base64-encoded: use Randomize.");
+        settings.aes_key = aesKey;
+    }
+
+    const payload = { customer_id: value('generate-customer-id'), settings };
+    if (!payload.customer_id) throw new Error("The Customer ID is required.");
+
+    const userDoc = value('generate-fixed-user-document').toUpperCase();
+    const userEmail = value('generate-fixed-user-email');
+    if (isEmailRequired() && !userEmail) {
+        syncEmailRequirement();
+        document.getElementById('generate-fixed-user-email')?.focus();
+        throw new Error("Credit Registry (CIRBE) requires the customer's email: fill in User Email under Fixed Parameters.");
+    }
+    if (userDoc) {
+        if (!validateSpanishDocument(userDoc)) throw new Error("The User Document is not a valid Spanish DNI or NIE.");
+        payload.fixed_parameters = { ...(payload.fixed_parameters || {}), user_identification: userDoc };
+    }
+    if (userEmail) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) throw new Error("The User Email is not a valid email address.");
+        payload.fixed_parameters = { ...(payload.fixed_parameters || {}), user_email: userEmail };
+    }
+
+    const hours = Number(value('generate-date-limit'));
+    if (hours) payload.date_limit = new Date(Date.now() + hours * 3600 * 1000).toISOString();
+
+    return payload;
+}
+
+window.buildLeadPayload = buildLeadPayload;
+
+/** The session the New Lead dialog has just created, for its Launch button. */
+let lastCreated = null;
+
+window.launchCreated = () => lastCreated && InfoniteLauncher.launch(lastCreated.widget_url, lastCreated.settings);
+
+window.launchSession = function(sid) {
+    const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
+    const session = (window.InfoniteFlowsManager.getSessions(config?.appId, window.ES_PA_HISTORY_CONTEXT, config?.widgetUrl) || [])
+        .find(s => s.session_id === sid);
+    if (session) InfoniteLauncher.launch(session.widget_url, session.session_settings);
+};
+
 window.generateLeadSession = async function() {
     const btn = document.getElementById('generateLeadBtn');
     const originalContent = btn.innerHTML;
@@ -713,163 +782,39 @@ window.generateLeadSession = async function() {
         if (!config || !config.widgetUrl) throw new Error("No active environment specified.");
         if (!config.secret || !config.appId) throw new Error("Missing App Credentials in environment settings.");
 
-        // 1. Collect Payload Properties
-        const customerId = document.getElementById('generate-customer-id').value.trim();
-        const aesKey = document.getElementById('generate-aes-key').value.trim();
-        const sandboxToggle = document.getElementById('generate-sandbox-mode');
-        const isSandbox = sandboxToggle ? sandboxToggle.checked : false;
+        const payload = buildLeadPayload();
+        const result = await InfoniteFlowsManager.initSession(config.widgetUrl, config.secret, config.appId, window.ES_PA_HISTORY_CONTEXT, payload);
+        if (!result || !result.widget_url) throw new Error("Invalid response received from the server.");
 
-        const userDocInput = document.getElementById('generate-fixed-user-document');
-        const userDoc = userDocInput ? userDocInput.value.trim().toUpperCase() : '';
-        const userEmailInput = document.getElementById('generate-fixed-user-email');
-        const userEmail = userEmailInput ? userEmailInput.value.trim() : '';
-
-        // 2. Collect Features
-        const checkboxes = document.querySelectorAll('#modulesGrid input.feature-checkbox:checked');
-        const selectedFeatures = Array.from(checkboxes).map(cb => {
-            const def = window.INFONITE_FEATURES[cb.value];
-            return {
-                code: cb.value,
-                configurations: def ? def.defaultConfig : {}
-            };
-        });
-
-        if (selectedFeatures.length === 0) {
-            throw new Error("You must select at least one module module to generate a session.");
+        try {
+            await InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, result.session_id, config.appId);
+        } catch (e) {
+            console.error("Initial polling failed:", e);
         }
 
-        if (isEmailRequired() && userEmail === "") {
-            syncEmailRequirement();
-            userEmailInput?.focus();
-            throw new Error("Credit Registry (CIRBE) requires the customer's email: fill in User Email under Fixed Parameters.");
-        }
-
-        // 3. Assemble Strict Payload
-        const payload = {
-            customer_id: customerId,
-            settings: {
-                sandbox: isSandbox,
-                hooks_extra_data: {
-                    "session": "{session_id}",
-                    "customer": "{customer_id}"
-                },
-                ...InfoniteSessionEnding.settings(),
-                executions_features: selectedFeatures
-            }
-        };
-
-        // A product preset decides which administrations its sessions sign in to
-        if (window.ES_PA_PRESET && Array.isArray(window.ES_PA_PRESET.sources)) {
-            payload.settings.allowed_sources = window.ES_PA_PRESET.sources;
-        }
-
-        if (userDoc !== "") {
-            if (!validateSpanishDocument(userDoc)) {
-                throw new Error("The specified User Document is not a valid Spanish DNI or NIE.");
-            }
-            payload.fixed_parameters = payload.fixed_parameters || {};
-            payload.fixed_parameters.user_identification = userDoc;
-        }
-
-        if (userEmail !== "") {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(userEmail)) {
-                throw new Error("The specified User Email is not a valid email address.");
-            }
-            payload.fixed_parameters = payload.fixed_parameters || {};
-            payload.fixed_parameters.user_email = userEmail;
-        }
-
-        if (aesKey !== "") {
-            payload.settings.aes_key = aesKey;
-        }
-
-        // 4. Dispatch using FlowManager
-        const result = await InfoniteFlowsManager.initSession(
-            config.widgetUrl,
-            config.secret,
-            config.appId,
-            window.ES_PA_HISTORY_CONTEXT,
-            payload
-        );
-
-        if (result && result.widget_url) {
-            // Store token actively locally as current
-            localStorage.setItem(`active_session_es-public-administration`, result.session_token);
-            // Where this one ends is remembered: the next lead starts from it
-            InfoniteSessionEnding.remember();
-            
-            // Poll session status once IMMEDIATELY to update the underlying session state from Infonite
-            if(window.InfoniteFlowsManager && window.InfoniteFlowsManager.pollSessionState) {
-               try {
-                    await window.InfoniteFlowsManager.pollSessionState(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, result.session_id, config.appId);
-               } catch (e) {
-                   console.error("Initial polling failed:", e);
-               }
-            }
-            
-            const header = document.getElementById('nl-header');
-            if (header) {
-                header.classList.add('hidden');
-                header.classList.remove('flex');
-            }
-            
-            // Show Success UI
-            document.getElementById('nl-form-view').classList.add('hidden');
-            document.getElementById('nl-form-view').classList.remove('flex');
-            document.getElementById('nl-footer-actions').classList.add('hidden');
-            document.getElementById('nl-footer-actions').classList.remove('flex');
-            
-            document.getElementById('nl-success-url').value = result.widget_url;
-            document.getElementById('nl-success-view').classList.remove('hidden');
-            document.getElementById('nl-success-view').classList.add('flex');
-            
-            // Re-render the history table in the dashboard to show the new lead
-            if (typeof renderHistory === 'function') {
-                renderHistory();
-            }
-            
-            // The User must manually dismiss the Success Modal, no auto-close.
-            
-        } else {
-            throw new Error("Invalid response received from the server.");
-        }
-
+        // The next lead is another customer: its id is generated again when the dialog opens.
+        // Where this one ends is remembered: the next lead starts from it
+        document.getElementById('generate-customer-id').value = '';
+        InfoniteSessionEnding.remember();
+        document.getElementById('nl-success-url').value = result.widget_url;
+        lastCreated = { widget_url: result.widget_url, settings: { completion_mode: payload.settings.completion_mode } };
+        document.getElementById('nl-success-launch-hint').textContent = InfoniteLauncher.hint(lastCreated.settings);
+        showLeadView('success');
+        renderHistory();
     } catch (err) {
         console.error("Session Generation Error:", err);
-        
         let displayMsg = err.message || "An unknown error occurred.";
-        
         if (err.status) {
             displayMsg = `HTTP ${err.status} - ${err.statusText || 'Error'}\n`;
-            
-            if (err.responseBody && err.responseBody.detail) {
-                if (Array.isArray(err.responseBody.detail)) {
-                   displayMsg += "\nValidation Errors:\n";
-                   err.responseBody.detail.forEach(d => {
-                       const loc = d.loc ? d.loc.join('.') : 'unknown';
-                       displayMsg += `- [${loc}]: ${d.msg}\n`;
-                   });
-                } else {
-                   displayMsg += `\nDetail: ${JSON.stringify(err.responseBody.detail, null, 2)}`;
-                }
+            const detail = err.responseBody?.detail;
+            if (Array.isArray(detail)) {
+                displayMsg += "\nValidation Errors:\n" + detail.map(d => `- [${d.loc ? d.loc.join('.') : 'unknown'}]: ${d.msg}`).join('\n');
+            } else if (detail) {
+                displayMsg += `\nDetail: ${JSON.stringify(detail, null, 2)}`;
             } else if (err.responseBody) {
                 displayMsg += `\nResponse: ${JSON.stringify(err.responseBody, null, 2)}`;
             }
         }
-        
-        const header = document.getElementById('nl-header');
-        if (header) {
-            header.classList.add('hidden');
-            header.classList.remove('flex');
-        }
-        
-        // Show Error UI
-        document.getElementById('nl-form-view').classList.add('hidden');
-        document.getElementById('nl-form-view').classList.remove('flex');
-        document.getElementById('nl-footer-actions').classList.add('hidden');
-        document.getElementById('nl-footer-actions').classList.remove('flex');
-        
         document.getElementById('nl-error-msg').textContent = displayMsg;
 
         // A missing capability gets its own explanation instead of the raw answer
@@ -882,9 +827,7 @@ window.generateLeadSession = async function() {
             document.getElementById('nl-error-permission-product').textContent =
                 detail.slice('insufficient_capabilities@'.length).replace(/^product:/, '');
         }
-        document.getElementById('nl-error-view').classList.remove('hidden');
-        document.getElementById('nl-error-view').classList.add('flex');
-        
+        showLeadView('error');
     } finally {
         btn.innerHTML = originalContent;
         btn.disabled = false;
@@ -965,50 +908,27 @@ window.submitImportSession = async function() {
             throw new Error("Invalid or empty response from server.");
         }
 
-        // Customer ID is predefined within the session state
-        let resolvedCustomerId = stateData.customer_id;
-        
-        // If not directly present in stateData, try session settings as a fallback, otherwise default to 'Imported'
-        if (!resolvedCustomerId) {
-            try {
-                const settings = await window.InfoniteFlowsManager.fetchSessionSettings(
-                    config.widgetUrl,
-                    config.secret,
-                    window.ES_PA_HISTORY_CONTEXT,
-                    sessionId
-                );
-                if (settings) {
-                    resolvedCustomerId = settings.customer_id || settings.customer;
-                }
-            } catch (e) {
-                console.warn("Could not retrieve customer settings, using default:", e);
-            }
+        // The session's settings come with it: they draw its chips and decide how it launches
+        let settings = null;
+        try {
+            settings = await window.InfoniteFlowsManager.fetchSessionSettings(config.widgetUrl, config.secret, window.ES_PA_HISTORY_CONTEXT, sessionId);
+        } catch (e) {
+            console.warn("Could not retrieve the session settings:", e);
         }
 
-        if (!resolvedCustomerId) {
-            resolvedCustomerId = 'Imported';
-        }
-
-        // Add to Session History locally
         const sessions = window.InfoniteFlowsManager.getSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, config.widgetUrl) || [];
-        
-        // Remove if duplicate exists (updates with latest)
-        const existingIdx = sessions.findIndex(s => s.session_id === sessionId);
-        const newSession = {
+        const record = {
             session_id: sessionId,
             app_id: config.appId,
-            customer_id: resolvedCustomerId,
-            widget_url: '', // widget URL is unknown as session was not generated here
+            customer_id: stateData.customer_id || 'Imported',
+            widget_url: '',  // unknown: the session was not created here
             infonite_state: stateData,
-            date_created: stateData.date_created || new Date().toISOString()
+            date_created: stateData.date_created || new Date().toISOString(),
+            ...(settings ? { session_settings: settings } : {}),
         };
-
-        if (existingIdx !== -1) {
-            sessions[existingIdx] = newSession;
-        } else {
-            sessions.unshift(newSession);
-        }
-
+        const existing = sessions.findIndex(s => s.session_id === sessionId);
+        if (existing !== -1) sessions[existing] = record;
+        else sessions.unshift(record);
         window.InfoniteFlowsManager.saveSessions(config.appId, window.ES_PA_HISTORY_CONTEXT, sessions, config.widgetUrl);
 
         // Switch to Success View
@@ -1016,11 +936,7 @@ window.submitImportSession = async function() {
         document.getElementById('import-success-view').classList.remove('hidden');
         document.getElementById('import-success-view').classList.add('flex');
 
-        // Re-render table
-        if (typeof renderHistory === 'function') {
-            renderHistory();
-        }
-
+        renderHistory();
     } catch (err) {
         console.error("Import failed:", err);
         let errorMsg = "Could not fetch the session state. Make sure the Session ID is correct and belongs to the active environment.";
