@@ -1,7 +1,7 @@
 /**
  * Centralized definition of Infonite Features and Flows.
  * These orchestrate the behavior, configuration defaults, and semantic UI data
- * for all interactive demos like Bank Reader and Spain Public Administration.
+ * for all interactive demos like Financial Rider and Spain Public Administration.
  */
 
 // -------------------------------------------------------------
@@ -213,20 +213,6 @@ const INFONITE_FEATURES = {
 // Defines the high-level interactive experiences and their paths.
 // -------------------------------------------------------------
 const INFONITE_FLOWS = {
-    bank_reader: {
-        kind: 'bank_reader',
-        name: 'Financial Data Reader',
-        shortName: 'Bank Reader',
-        icon: 'fa-solid fa-building-columns',
-        description: 'Seamless financial data aggregation and identity verification module.',
-        route: '/bank-reader',
-        // Example array of what a standard init could look like
-        defaultFeatures: [
-            'customer_information_read', 
-            'accounts_read', 
-            'cards_read'
-        ]
-    },
     'es-public-administration': {
         kind: 'es-public-administration',
         name: 'Spain Public Administration',

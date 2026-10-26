@@ -15,7 +15,8 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
-<link href="../../css/results-kit.css?v=3" rel="stylesheet">
+<link href="../../css/results-kit.css?v=7" rel="stylesheet">
+<link href="../../css/es-public-administration-records.css?v=5" rel="stylesheet">
 <link href="../../css/results-rail.css?v=4" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
@@ -117,12 +118,6 @@
         animation: heartBeat 2s ease-in-out infinite;
       }
 
-      /* The tabs inside a view: a segmented control (switchWorkLifeTab) */
-      .espa-tab { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #64748b; white-space: nowrap; transition: all 150ms; }
-      .espa-tab:hover { color: #1e293b; background: rgba(226, 232, 240, 0.5); }
-      .espa-tab.is-active { background: #fff; color: #1e293b; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08); }
-      .espa-tab.is-active > i { color: var(--primary); }
-      @media (min-width: 640px) { .espa-tab { padding: 8px 20px; } }
       /* The bar over every view: the administrations the session read (the person's chip is the kit's) */
       .espa-sources { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; flex: 1 1 auto; }
       .espa-sources-label { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-right: 2px; }
@@ -261,13 +256,8 @@
       <div id="personBar" class="hidden flex flex-wrap items-center gap-3"></div>
       <div id="identityBanner" class="rk-identity hidden" role="status"></div>
       <div class="relative min-w-0" id="dashboard-view-root">
-          <!-- Each view is a template of flows/es-public-administration/templates/, filled by its renderer -->
-          <div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center text-slate-400">
-              <div class="flex flex-col items-center gap-4">
-                  <i class="fa-solid fa-circle-notch animate-spin text-2xl text-[var(--primary)]"></i>
-                  <span class="text-sm font-medium tracking-wide">Loading module...</span>
-              </div>
-          </div>
+          <!-- Each view is drawn here: the records by js/es-public-administration-records.js, the audit by the results kit -->
+          <div class="rk-empty"><span><i class="fa-solid fa-circle-notch animate-spin"></i></span><b>Loading</b></div>
       </div>
       </div>
   </div>
@@ -360,9 +350,11 @@
 <script src="../../js/status.js"></script>
 <script src="../../js/features.js?v=6"></script>
 <script src="../../js/nav-banner.js?v=10"></script>
-<script src="../../js/flows-manager.js?v=7"></script>
+<script src="../../js/flows-manager.js?v=8"></script>
 <script src="../../js/es-public-administration-presets.js?v=3"></script>
-<script src="../../js/results-kit.js?v=4"></script>
+<script src="../../js/results-kit.js?v=8"></script>
+<script src="../../js/es-public-administration-records.js?v=5"></script>
+<script src="../../js/session-launcher.js?v=2"></script>
 <script>
     let pollTimer = null;
     let configObj = null;
@@ -463,10 +455,12 @@
             }
 
         } catch (error) {
+            stopLivePolling();
+            // a session the API no longer has is an answer, not a failure
+            if (InfoniteResults.isSessionGone(error)) return renderSessionGone(cachedSession);
             // Hard critical crash - do not mask with cache.
             console.error("Live sync failed critically:", error);
-            stopLivePolling();
-            renderCriticalCrash("Connection Lost", `Live synchronization failed. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Unknown network error'}</span>`);
+            renderCriticalCrash("Connection Lost", `Live synchronization failed. <br/> <span class="text-[10px] text-red-400 font-mono">${escapeHtml(error.message || 'Unknown network error')}</span>`);
         }
     }
 
@@ -515,6 +509,39 @@
         document.getElementById('stateTitle').className = "text-xl font-black text-red-600 tracking-tight transition-colors";
         document.getElementById('stateTitle').textContent = title;
         document.getElementById('stateDesc').innerHTML = description;
+    }
+
+    /**
+     * The API has no such session for this application: the page stops asking, says why that can
+     * be, and the status card stops claiming a state the API no longer vouches for.
+     */
+    function renderSessionGone(session) {
+        stopLivePolling();
+        const dsContainer = document.getElementById('dashboardContainer');
+        dsContainer.classList.add('hidden');
+        dsContainer.classList.remove('flex', 'flex-col', 'md:grid');
+        document.getElementById('stateContainer').classList.remove('hidden');
+        renderNotFound('Session not found', InfoniteResults.sessionGone({ appName: configObj?.appName, expires: session?.infonite_state?.expiration_date || session?.expiration_date }));
+        document.getElementById('stateRingBg').style.backgroundColor = 'rgba(100, 116, 139, 0.12)';
+        document.getElementById('stateRadarPing')?.classList.add('hidden');
+        document.getElementById('stateTitle').className = 'text-xl font-black text-slate-800 tracking-tight transition-colors';
+        document.getElementById('stateDesc').classList.remove('max-w-sm');
+
+        const last = window.InfoniteStatusDict?.[session?.infonite_state?.status_code]?.text;
+        document.getElementById('techStatusCode').textContent = 'Not found';
+        document.getElementById('techStatusDesc').textContent = last ? `Last seen ${String(last).toLowerCase()} in this browser` : 'The API no longer has it';
+        const indicator = document.getElementById('techStatusIndicator');
+        indicator.className = 'fa-solid fa-folder-open text-xs transition-colors';
+        indicator.style.color = '#64748b';
+        const frame = document.getElementById('techStatusIndicatorFrame');
+        frame.style.backgroundColor = 'color-mix(in srgb, #64748b 10%, transparent)';
+        frame.style.borderColor = 'color-mix(in srgb, #64748b 20%, transparent)';
+        document.getElementById('techCursorContainer')?.classList.add('hidden');
+        document.getElementById('techSessionCard')?.classList.remove('active-processing-border');
+        ['btnViewJson', 'subheader-actions'].forEach(id => {
+            document.getElementById(id)?.classList.add('hidden');
+            document.getElementById(id)?.classList.remove('flex');
+        });
     }
 
     function renderSessionState(session) {
@@ -1019,12 +1046,14 @@
             await switchDashboardView(currentActiveCategory);
             
         } catch (error) {
-            console.error("Failed to retrieve dashboard results payload:", error);
             if (isCancelledSession(session)) window.cancelledResultsChecked = true;
+            // a session the API no longer has is an answer, not a failure
+            if (InfoniteResults.isSessionGone(error)) return renderSessionGone(session);
+            console.error("Failed to retrieve dashboard results payload:", error);
             // Re-render the critical crash screen natively over the polling ring
             renderCriticalCrash(
                 "Data Unreachable",
-                `The data payload of this session could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Decryption or Networking Error'}</span>`
+                `The data payload of this session could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${escapeHtml(error.message || 'Decryption or Networking Error')}</span>`
             );
         } finally {
             isFetchingResults = false;
@@ -1032,132 +1061,34 @@
     }
     
     // --- Dashboard View Switching Logic ---
+    /** Draws a view: a record's (js/es-public-administration-records.js), or the session's own (the results kit's). */
     async function switchDashboardView(categoryId) {
         // The person is behind their chip: their profile opens over the view on screen
         if (categoryId === 'customer') return openProfile();
         currentActiveCategory = categoryId;
-        
-        // Render menu buttons to set the active/loading style
         renderSidebarMenu();
-        
-        // Load Template Content Async
         const rootContainer = document.getElementById('dashboard-view-root');
-        
+        if (!window.currentResultData) return;
+        if (categoryId === 'audit') {
+            rootContainer.innerHTML = InfoniteResults.audit({ results: window.currentResultData, customerId: currentSessionData?.customer_id, describe: describeConnection });
+            return;
+        }
         // The CIRBE report may still be on its way
         if (categoryId === 'credit_registry' && cirbeAwaited()) {
-            rootContainer.innerHTML = `
-                <div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center fade-in min-h-[400px]">
-                    <div class="flex flex-col items-center gap-5 max-w-md">
-                        <div class="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/50 flex items-center justify-center mb-2 animate-bounce">
-                            <i class="fa-solid fa-hourglass-half text-3xl text-amber-500"></i>
-                        </div>
-                        <h3 class="text-xl font-black text-slate-800 tracking-tight">CIRBE Data Retrieval In Progress</h3>
-                        <p class="text-sm font-medium text-slate-500 leading-relaxed">
-                            We are currently communicating with the Bank of Spain to retrieve your official Credit Registry files (CIRBE). 
-                            This process is in progress. Please wait for the session synchronization to finish.
-                        </p>
-                        <div class="flex items-center gap-2.5 bg-amber-50/50 border border-amber-200/40 rounded-xl px-4 py-2 text-xs font-semibold text-amber-700 animate-pulse mt-1">
-                            <i class="fa-solid fa-spinner animate-spin text-amber-500"></i>
-                            <span>Retrieving CIRBE financial history...</span>
-                        </div>
-                    </div>
-                </div>
-            `;
+            rootContainer.innerHTML = ESPA.cirbePending();
             return;
         }
-        
-        // The session's own view is the results kit's, the same in every flow, inside this flow's frame
-        if (categoryId === 'audit') {
-            rootContainer.innerHTML = `
-                <div class="h-full w-full rounded-[2rem] bg-white border border-slate-100 shadow-sm flex flex-col p-5 md:p-8 fade-in">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] text-[var(--primary)] flex items-center justify-center text-xl shadow-sm border border-[var(--primary)]/20 shrink-0"><i class="fa-solid fa-shield-halved"></i></div>
-                        <div class="min-w-0">
-                            <h2 class="text-xl font-black text-slate-800 tracking-tight">Consent &amp; Audit</h2>
-                            <p class="text-xs font-medium text-slate-500 mt-1">The connections the session ran, what it has to say, and the evidence of the consent.</p>
-                        </div>
-                    </div>
-                    ${InfoniteResults.audit({ results: window.currentResultData, customerId: currentSessionData?.customer_id, describe: describeConnection, head: false })}
-                </div>`;
+        const item = MENU_MAPPING.find(entry => entry.id === categoryId);
+        if (item && !isRequested(item)) {
+            rootContainer.innerHTML = ESPA.notRequested(categoryId);
             return;
         }
-
-        // Show spinning preloader
-        rootContainer.innerHTML = `
-            <div class="h-full w-full rounded-3xl bg-white border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center text-slate-400 fade-in">
-                <div class="flex flex-col items-center gap-4">
-                    <i class="fa-solid fa-circle-notch animate-spin text-2xl text-[var(--primary)]"></i>
-                    <span class="text-sm font-medium tracking-wide">Loading module...</span>
-                </div>
-            </div>
-        `;
-
-        try {
-            // Support both direct HTML access and root Vue Router SPA access
-            const templateBase = window.location.pathname.includes('/flows/es-public-administration/') 
-                ? 'templates/' 
-                : 'flows/es-public-administration/templates/';
-                
-            const result = await fetch(`${templateBase}${categoryId}.html?v=${Date.now()}`);
-            if (!result.ok) throw new Error("Template not found or unreachable");
-            
-            const html = await result.text();
-            rootContainer.innerHTML = html;
-            
-            // Execute the specific renderer for this category now that the DOM is ready
-            if (window.currentResultData) {
-                const item = MENU_MAPPING.find(entry => entry.id === categoryId);
-                if (item && !isRequested(item)) {
-                    rootContainer.innerHTML = `
-                        <div class="h-full w-full rounded-[2rem] bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center fade-in min-h-[400px]">
-                            <div class="flex flex-col items-center gap-4 max-w-sm">
-                                <div class="w-16 h-16 rounded-full bg-slate-200/50 flex items-center justify-center mb-2">
-                                    <i class="fa-solid fa-lock text-3xl text-slate-400"></i>
-                                </div>
-                                <h3 class="text-xl font-black text-slate-700 tracking-tight">Not Requested</h3>
-                                <p class="text-sm font-medium text-slate-500">The session was not created to read this module, so no administration was asked for it.</p>
-                            </div>
-                        </div>
-                    `;
-                    return;
-                }
-
-                // A cancelled session's results carry the audit but no data: say so instead of an empty module
-                if (categoryId !== 'audit' && !hasResultData(window.currentResultData)) {
-                    rootContainer.innerHTML = `
-                        <div class="h-full w-full rounded-[2rem] bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center p-12 text-center fade-in min-h-[400px]">
-                            <div class="flex flex-col items-center gap-4 max-w-sm">
-                                <div class="w-16 h-16 rounded-full bg-slate-200/50 flex items-center justify-center mb-2">
-                                    <i class="fa-solid fa-ban text-3xl text-slate-400"></i>
-                                </div>
-                                <h3 class="text-xl font-black text-slate-700 tracking-tight">No Data Delivered</h3>
-                                <p class="text-sm font-medium text-slate-500">The session was cancelled, so its results carry no records for this module. The Audit Log shows the consent and the connections made.</p>
-                            </div>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const renderers = {
-                    driver: () => renderDriverData(window.currentResultData),
-                    academic: () => renderAcademicData(window.currentResultData),
-                    work_life: () => { renderEmploymentData(window.currentResultData); renderPensionsData(window.currentResultData); },
-                    taxes: () => renderTaxesData(window.currentResultData),
-                    credit_registry: () => renderCreditRegistryData(window.currentResultData),
-                    properties: () => renderPropertiesData(window.currentResultData),
-                };
-                // A view whose results came in a shape this page does not expect says so, never half drawn
-                try {
-                    renderers[categoryId]?.();
-                } catch (error) {
-                    console.warn(`Spain Public Administration: the ${categoryId} view could not be drawn`, error);
-                    rootContainer.innerHTML = InfoniteResults.undrawn();
-                }
-            }
-        } catch (error) {
-            console.error(error);
-            rootContainer.innerHTML = InfoniteResults.undrawn();
+        // A cancelled session's results carry the audit but no data: say so instead of an empty module
+        if (!hasResultData(window.currentResultData)) {
+            rootContainer.innerHTML = ESPA.noData(categoryId);
+            return;
         }
+        ESPA.render(categoryId, rootContainer);
     }
 
     // --- The person and the administrations, over every view ---
@@ -1198,6 +1129,9 @@
             ${read ? `<div class="espa-sources"><span class="espa-sources-label">Read at</span>${read}</div>` : ''}
             ${InfoniteResults.isRecord(person) ? InfoniteResults.personChip(person, { alert: !!messageOf('crossed_identity'), open: 'openProfile()' }) : ''}`;
         bar.classList.toggle('hidden', !read && !InfoniteResults.isRecord(person));
+        // the DGT's photograph, when the session brought one, takes the place of the initials
+        const photo = window.driverPhotoAttachment(window.currentResultData);
+        if (photo) InfoniteResults.showPhoto(bar.querySelector('.rk-me .rk-avatar'), () => window.fetchDriverPhotoUrl(photo));
     }
 
     /** The banner every view carries while the administrations disagree on who the person is. */
@@ -1220,7 +1154,7 @@
         InfoniteResults.openProfile(person, {
             flag: messageOf('crossed_identity'),
             flagText: "The administrations disagree on who this person is: this profile keeps the first source's.",
-            photo: photo ? () => attachmentBlob(photo) : null,
+            photo: photo ? () => window.fetchDriverPhotoUrl(photo) : null,
         });
     }
 
@@ -1267,21 +1201,7 @@
         }
     }
     
-    // --- Renderers for Data Categories ---
-    function formatDaysToYearsMonthsDays(totalDays) {
-        if (totalDays === undefined || totalDays === null || isNaN(totalDays)) return '--';
-        const years = Math.floor(totalDays / 365);
-        let remaining = totalDays % 365;
-        const months = Math.floor(remaining / 30);
-        const days = remaining % 30;
-        
-        let parts = [];
-        if (years > 0) parts.push(`${years} Year${years > 1 ? 's' : ''}`);
-        if (months > 0) parts.push(`${months} Month${months > 1 ? 's' : ''}`);
-        if (days > 0 || parts.length === 0) parts.push(`${days} Day${days > 1 ? 's' : ''}`);
-        
-        return parts.join(', ');
-    }
+    // --- Documents: every attachment of the session opens in the results kit's viewer ---
 
     /** An attachment the results carry, wherever it sits, by its id. */
     function attachmentById(id) {
@@ -1308,15 +1228,6 @@
         });
     };
 
-    window.formatContentType = function(contentType) {
-        if (!contentType) return 'PDF Document';
-        if (contentType === 'application/pdf') return 'PDF Document';
-        if (contentType.startsWith('image/')) return 'Image File';
-        if (contentType.startsWith('text/')) return 'Text Document';
-        const parts = contentType.split('/');
-        return parts[1] ? parts[1].toUpperCase() + ' Document' : 'Document';
-    };
-
     window.getAttachmentMeta = function(subFamily) {
         const map = {
             'attachment:attachment': { name: 'Attachment', icon: 'fa-file-lines', color: 'slate' },
@@ -1331,1777 +1242,33 @@
         return map[subFamily] || { name: subFamily, icon: 'fa-file', color: 'slate' };
     };
 
-    // The driver's photograph (`attachment:person-certified-photo`): the Driver Data header shows it,
-    // and the profile puts it in place of the initials. Fetched once, through the kit, which keeps
-    // what came and never a failure, so a photograph the API refused once is asked for again.
+    // The driver's photograph (`attachment:person-certified-photo`): the driving licence shows it,
+    // and the person's chip and profile put it in place of the initials. Fetched once — the ones
+    // that ask at the same moment share the download — and a photograph the API refused is asked
+    // for again the next time.
     window.driverPhotoAttachment = function(payload) {
         return InfoniteResults.listOf(payload?.data?.driver?.data?.attachments).find(a => a?.sub_family === 'attachment:person-certified-photo') || null;
     };
     const driverPhotoUrls = new Map();
-    window.fetchDriverPhotoUrl = async function(attachment) {
-        if (!attachment || !currentSessionData) return null;
-        if (driverPhotoUrls.has(attachment.id)) return driverPhotoUrls.get(attachment.id);
-        try {
-            const url = URL.createObjectURL(await attachmentBlob(attachment));
-            driverPhotoUrls.set(attachment.id, url);
-            return url;
-        } catch (error) {
-            console.warn('The driver photograph could not be loaded:', error);
-            return null;
+    window.fetchDriverPhotoUrl = function(attachment) {
+        if (!attachment || !currentSessionData) return Promise.resolve(null);
+        if (!driverPhotoUrls.has(attachment.id)) {
+            driverPhotoUrls.set(attachment.id, attachmentBlob(attachment).then(blob => URL.createObjectURL(blob)).catch(error => {
+                driverPhotoUrls.delete(attachment.id);
+                console.warn('The driver photograph could not be loaded:', error);
+                return null;
+            }));
         }
+        return driverPhotoUrls.get(attachment.id);
     };
 
-    // Driver Data header: the photograph in its frame, the neutral frame otherwise
-    window.loadDriverPhoto = async function(attachment) {
-        const img = document.getElementById('driverPhoto');
-        const placeholder = document.getElementById('driverPhotoPlaceholder');
-        if (!img || !placeholder) return;
-        const showPlaceholder = () => { img.classList.add('hidden'); placeholder.classList.remove('hidden'); };
-        showPlaceholder();
-        const url = await window.fetchDriverPhotoUrl(attachment);
-        if (!url) return;
-        img.onload = () => { img.classList.remove('hidden'); placeholder.classList.add('hidden'); };
-        img.onerror = showPlaceholder;
-        img.src = url;
+    /** A tax return in full, opened from the Taxes view; the rail keeps Taxes marked. */
+    window.showYearlyTaxDetails = function(key) {
+        currentActiveCategory = 'yearly-tax-details';
+        renderSidebarMenu();
+        ESPA.renderYear(key, document.getElementById('dashboard-view-root'));
     };
 
-    window.switchWorkLifeTab = function(tabId) {
-        ['relations', 'bases', 'pensions'].forEach(tab => {
-            document.getElementById(`btnTab-${tab}`)?.classList.toggle('is-active', tab === tabId);
-            const panel = document.getElementById(`container-${tab}`);
-            if (!panel) return;
-            panel.classList.toggle('hidden', tab !== tabId);
-            panel.classList.toggle('flex', tab === tabId);
-        });
-    };
-
-    /** A work relation's type as the vocabulary names it; one it does not know yet, by its code. */
-    const workType = (code) => (window.INFONITE_ENUMS?.WORK_RELATION_TYPES || {})[code] || { label: code ? String(code).replace(/_/g, ' ') : 'Work', icon: 'fa-briefcase' };
-
-    /** A count of days the source gave: a number, never an empty placeholder. */
-    const daysOf = (value) => (value === null || value === undefined || value === '' || !Number.isFinite(Number(value)) ? null : Number(value));
-
-    const ACTIVE_PULSE = '<span class="absolute -top-1 -right-1 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white"></span></span>';
-
-    /** A relation of the timeline: an ordinary job as a card; a period that is not one (vacations, a benefit) as a line. */
-    function workRelationItem(rel, index, count) {
-        const R = InfoniteResults;
-        const special = rel.assimilated || rel.work_type === 'vacations' || rel.work_type === 'unemployment_benefits';
-        const active = !rel.activity_end;
-        const meta = workType(rel.work_type);
-        const days = daysOf(rel.social_security_days);
-        const period = `${rel.activity_start ? R.day(rel.activity_start) : '?'} — ${rel.activity_end ? R.day(rel.activity_end) : 'Present'}${active ? ' (active)' : ''}`;
-        const line = index < count - 1;
-        if (special) {
-            const ring = active ? 'border-emerald-300 shadow-emerald-500/10 text-emerald-600 bg-emerald-50' : 'border-slate-200 text-slate-400 bg-slate-50';
-            return `
-                <div class="flex relative w-full group" data-i="${index}">
-                    ${line ? '<div class="absolute left-5 top-10 bottom-[-16px] w-[2px] bg-slate-200"></div>' : ''}
-                    <div class="w-10 h-10 mt-1 rounded-full border-2 flex items-center justify-center text-sm shrink-0 shadow-sm relative z-10 transition-colors ${ring}">
-                         ${active ? ACTIVE_PULSE : ''}
-                         <i class="fa-solid ${escapeHtml(meta.icon)}"></i>
-                    </div>
-                    <div class="flex flex-col min-w-0 flex-1 ml-4 py-2">
-                        <span class="text-[9px] font-black uppercase tracking-widest ${active ? 'text-emerald-600' : 'text-slate-400'}">${period}</span>
-                        <h5 class="text-xs font-bold text-slate-600 leading-snug truncate mt-0.5" title="${escapeHtml(rel.name || meta.label)}">${escapeHtml(rel.name || meta.label)}</h5>
-                        ${days !== null ? `<span class="text-[10px] font-bold text-slate-400 mt-1">${R.qty(days)} days • ${formatDaysToYearsMonthsDays(days)}</span>` : ''}
-                    </div>
-                </div>`;
-        }
-        const contract = [rel.contract_type, rel.work_schedule].filter(part => part && part !== 'unknown').map(part => escapeHtml(String(part).replace(/_/g, ' ').toUpperCase())).join(' • ');
-        return `
-                <div class="flex relative w-full group" data-i="${index}">
-                    ${line ? '<div class="absolute left-5 top-14 bottom-[-16px] w-[2px] bg-slate-200"></div>' : ''}
-                    <div class="p-4 rounded-2xl bg-white border ${active ? 'border-emerald-300 shadow-emerald-500/10 shadow-lg' : 'border-slate-100 shadow-sm'} flex flex-col md:flex-row gap-4 flex-1 min-w-0 z-10 mb-2 mt-2 transition-shadow">
-                        <div class="w-10 h-10 rounded-xl ${active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-[var(--primary-container)] text-[var(--primary)] border border-[var(--primary)]/20'} flex items-center justify-center text-lg shrink-0 shadow-sm relative">
-                             ${active ? ACTIVE_PULSE : ''}
-                             <i class="fa-solid ${escapeHtml(meta.icon)}"></i>
-                        </div>
-                        <div class="flex flex-col min-w-0 flex-1">
-                            <span class="text-[10px] font-black uppercase tracking-widest ${active ? 'text-emerald-600' : 'text-slate-400'}">${period}</span>
-                            <h5 class="text-sm font-bold text-slate-800 leading-snug truncate mt-1" title="${escapeHtml(rel.name || 'Unknown company')}">${escapeHtml(rel.name || 'Unknown company')}</h5>
-                            ${contract ? `<span class="text-xs font-semibold text-slate-500 mt-1">${contract}</span>` : ''}
-                            <div class="flex flex-wrap items-center gap-2 mt-2">
-                                 <span class="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">${escapeHtml(rel.regime || 'General')}</span>
-                                 ${rel.ccc ? `<span class="bg-slate-100 border border-slate-200 text-slate-500 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest font-mono" title="Employer contribution account (CCC)">CCC ${escapeHtml(rel.ccc)}</span>` : ''}
-                                 ${rel.contribution_group ? `<span class="bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest max-w-[200px] truncate" title="${escapeHtml(rel.contribution_group)}">${escapeHtml(rel.contribution_group)}</span>` : ''}
-                            </div>
-                        </div>
-                        ${days !== null ? `
-                        <div class="flex flex-col md:items-end justify-center shrink-0 border-t md:border-t-0 md:border-l border-slate-100 pt-3 md:pt-0 md:pl-4 mt-2 md:mt-0">
-                            <span class="text-xl font-black text-slate-700 tabular-nums">${R.qty(days)} <span class="text-xs font-semibold text-slate-400 uppercase">days</span></span>
-                            <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">${formatDaysToYearsMonthsDays(days)}</span>
-                        </div>` : ''}
-                    </div>
-                </div>`;
-    }
-
-    /** What a relation can be found by: who, what kind, its accounts and its dates. */
-    function workRelationText(rel) {
-        const R = InfoniteResults;
-        return [rel.name, rel.regime, rel.ccc, rel.contribution_group, rel.contract_type, rel.work_schedule, workType(rel.work_type).label,
-            rel.activity_start, rel.activity_end, rel.activity_start ? R.day(rel.activity_start) : '', rel.activity_end ? R.day(rel.activity_end) : 'present',
-        ].filter(Boolean).map(part => String(part).replace(/_/g, ' ')).join(' ');
-    }
-
-    /** One month of contribution: its base, or the state the month is in. */
-    function contributionMonth(month, index) {
-        const R = InfoniteResults;
-        const status = getContributionMonthMeta(month.status);
-        const amount = month.status === 'registered' && R.has(month.base)
-            ? `<span class="text-sm font-black text-slate-800 font-mono tracking-tight">${R.money(month.base)}</span>
-                ${month.provisional ? '<span class="text-[8px] font-black uppercase tracking-widest text-amber-500 bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded" title="Provisional base — may still be regularized by the TGSS">Provisional</span>' : ''}`
-            : `<span class="text-[10px] font-bold ${status.textClass} ${status.bgClass} px-2 py-1 rounded-md border flex items-center gap-1.5"><i class="fa-solid ${status.icon}"></i> ${escapeHtml(status.label.toUpperCase())}</span>`;
-        return `
-                    <div class="flex items-center justify-between gap-3 px-3 sm:px-4 py-2.5 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0" data-i="${index}">
-                        <span class="text-[10px] font-black tracking-widest text-slate-500 uppercase flex items-center gap-2 whitespace-nowrap">
-                            <i class="fa-regular fa-calendar text-slate-300"></i> ${month.date ? R.day(month.date, { month: true }) : '—'}
-                        </span>
-                        <div class="shrink-0 pl-2 flex items-center gap-2">${amount}</div>
-                    </div>`;
-    }
-
-    /** What a month can be found by: its employer, the month in every spelling and its base. */
-    function contributionMonthText(month, company) {
-        const R = InfoniteResults;
-        return [company?.company_name, company?.ccc, company?.regime, month.date, month.date ? R.day(month.date, { month: true }) : '',
-            getContributionMonthMeta(month.status).label, month.provisional ? 'provisional' : '', ...R.spellings(month.base),
-        ].filter(Boolean).join(' ');
-    }
-
-    function renderEmploymentData(payload) {
-        const R = InfoniteResults;
-        const laborCheck = payload?.data?.employment?.labor_check;
-        if (!R.isRecord(laborCheck)) return;
-
-        // The Social Security number, from the person's documents
-        const ssnElement = document.getElementById('lblSSN');
-        if (ssnElement) {
-            const ssn = R.listOf(payload.data.customer?.profile?.identification_numbers).find(id => id?.type === 'es:ssn');
-            ssnElement.textContent = ssn?.value || '--';
-        }
-
-        // Whether the person works now, and as what
-        const isActive = laborCheck.currently_active;
-        const activeBadge = document.getElementById('lblLaborActiveBadge');
-        const statusIcon = document.getElementById('laborStatusIcon');
-        const badgeContainer = document.getElementById('laborStatusBadge');
-        if (activeBadge) {
-            activeBadge.classList.remove('hidden', 'text-emerald-700', 'border-emerald-200', 'bg-emerald-50', 'text-slate-500', 'border-slate-200', 'bg-slate-100', 'text-amber-600', 'border-amber-200', 'bg-amber-50');
-            if (isActive) {
-                activeBadge.innerHTML = '<i class="fa-solid fa-check-circle mr-1"></i> Currently Working';
-                activeBadge.classList.add('text-emerald-700', 'border-emerald-200', 'bg-emerald-50');
-                if (statusIcon) statusIcon.className = 'fa-solid fa-user-check text-3xl text-emerald-500 mb-1';
-                if (badgeContainer) badgeContainer.className = 'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-50 border border-emerald-100 flex flex-col items-center justify-center shadow-sm shrink-0';
-            } else if (isActive === false) {
-                activeBadge.innerHTML = '<i class="fa-solid fa-pause-circle mr-1"></i> Not Working';
-                activeBadge.classList.add('text-slate-500', 'border-slate-200', 'bg-slate-100');
-                if (statusIcon) statusIcon.className = 'fa-solid fa-user-slash text-3xl text-slate-400 mb-1';
-                if (badgeContainer) badgeContainer.className = 'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center shadow-sm shrink-0 grayscale opacity-80';
-            } else {
-                // currently_active is null: the source did not state it either way
-                activeBadge.innerHTML = '<i class="fa-solid fa-circle-question mr-1"></i> Activity Unknown';
-                activeBadge.classList.add('text-amber-600', 'border-amber-200', 'bg-amber-50');
-                if (statusIcon) statusIcon.className = 'fa-solid fa-user-clock text-3xl text-amber-400 mb-1';
-                if (badgeContainer) badgeContainer.className = 'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-50/50 border border-amber-100 flex flex-col items-center justify-center shadow-sm shrink-0';
-            }
-        }
-        // one chip per ongoing relation (repeats are simultaneous jobs)
-        const workTypesWrap = document.getElementById('lblCurrentWorkTypes');
-        if (workTypesWrap) {
-            const types = R.listOf(laborCheck.current_work_types).filter(type => typeof type === 'string');
-            workTypesWrap.classList.toggle('hidden', !types.length);
-            workTypesWrap.classList.toggle('flex', types.length > 0);
-            workTypesWrap.innerHTML = types.map(type => {
-                const meta = workType(type);
-                return `<span class="px-2 py-0.5 rounded border border-indigo-100 bg-indigo-50 text-indigo-600 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1"><i class="fa-solid ${escapeHtml(meta.icon)}"></i> ${escapeHtml(meta.label)}</span>`;
-            }).join('');
-        }
-
-        const totalDays = daysOf(laborCheck.social_security_days);
-        document.getElementById('lblTotalDays').textContent = totalDays !== null ? R.qty(totalDays) : '--';
-        document.getElementById('lblTotalTimeHuman').textContent = formatDaysToYearsMonthsDays(totalDays);
-
-        // The relations, newest first as the source lists them, and a box to find one
-        const relations = R.listOf(laborCheck.work_relations_history).filter(R.isRecord);
-        const relationsList = document.getElementById('listWorkRelations');
-        const relationsSearch = document.getElementById('relationsSearch');
-        if (relationsList) {
-            R.index('listWorkRelations', relations, workRelationText);
-            relationsList.innerHTML = relations.length
-                ? relations.map((rel, index) => R.safely(workRelationItem, [rel, index, relations.length], () => `<div data-i="${index}">${R.broken(rel.name || 'A work relation')}</div>`)).join('') + R.searchNone('No work relation matches the search.')
-                : '<p class="text-sm text-slate-400 font-medium italic">No work relations data available.</p>';
-        }
-        if (relationsSearch) {
-            relationsSearch.innerHTML = relations.length > 3 ? `
-                <div class="rk-section-head is-search">
-                    <span class="rk-section-label"><i class="fa-solid fa-building-user"></i> Relations<em id="listWorkRelationsCount">${relations.length}</em></span>
-                    ${R.searchBox({ target: 'listWorkRelations', placeholder: 'Search relations', label: 'Search the work relations', title: 'Employer, regime, CCC, contribution group, contract or date — every word must match; quotes keep a phrase together' })}
-                </div>` : '';
-        }
-
-        // The contribution bases, month by month and employer by employer, and a box to find a month
-        const basesGrid = document.getElementById('listContributionBases');
-        const basesSearch = document.getElementById('basesSearch');
-        const byCompany = R.listOf(laborCheck.contribution_base_by_company).filter(R.isRecord);
-        const flat = R.listOf(laborCheck.contribution_base_history).filter(R.isRecord);
-        const months = byCompany.length
-            ? byCompany.flatMap(company => R.listOf(company.months).filter(R.isRecord).map(month => ({ month, company })))
-            : flat.map(month => ({ month, company: null }));
-        if (basesGrid) {
-            R.index('listContributionBases', months, ({ month, company }) => contributionMonthText(month, company));
-            let at = 0;
-            const groups = byCompany.length
-                ? byCompany.map(company => {
-                    const own = R.listOf(company.months).filter(R.isRecord);
-                    const rows = own.map(month => R.safely(contributionMonth, [month, at++], () => '')).join('');
-                    return `
-                <div class="flex flex-col" data-search-group>
-                    <div class="flex flex-wrap items-center gap-2 mb-2 pl-2 border-l-2 border-[var(--primary)]/30">
-                        <h5 class="text-[10px] font-black tracking-widest text-slate-600 uppercase">${escapeHtml(company.company_name || 'Unknown')}</h5>
-                        ${company.ccc ? `<span class="text-[8px] font-bold uppercase tracking-widest text-slate-400 font-mono" title="Employer contribution account (CCC)">CCC ${escapeHtml(company.ccc)}</span>` : ''}
-                        ${company.regime ? `<span class="text-[8px] font-bold uppercase tracking-widest text-indigo-500 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">${escapeHtml(company.regime)}</span>` : ''}
-                        ${company.is_benefit_block ? '<span class="text-[8px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded" title="This block tracks a benefit, not an employer — its bases are not earned income">Benefit — not earned income</span>' : ''}
-                    </div>
-                    <div class="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        ${rows || '<p class="text-sm text-slate-400 font-medium italic p-4">No monthly data.</p>'}
-                    </div>
-                </div>`;
-                }).join('')
-                : flat.length ? `<div class="flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">${flat.map(month => R.safely(contributionMonth, [month, at++], () => '')).join('')}</div>` : '';
-            basesGrid.innerHTML = groups
-                ? groups + R.searchNone('No month matches the search.')
-                : '<p class="text-sm text-slate-400 font-medium italic">No contribution bases data available.</p>';
-        }
-        if (basesSearch) {
-            basesSearch.innerHTML = months.length > 6 ? `
-                <div class="rk-section-head is-search">
-                    <span class="rk-section-label"><i class="fa-solid fa-money-bill-trend-up"></i> Months<em id="listContributionBasesCount">${months.length}</em></span>
-                    ${R.searchBox({ target: 'listContributionBases', placeholder: 'Search months', label: 'Search the contribution months', title: 'Employer, month (Aug 2026, 2026-08), status or amount — every word must match; quotes keep a phrase together' })}
-                </div>` : '';
-        }
-
-        // The guaranteed income floor
-        R.safely(renderIncomeFloor, [laborCheck.income_floor], () => {
-            const card = document.getElementById('incomeFloorCard');
-            if (card) { card.classList.remove('hidden'); card.innerHTML = R.broken('Guaranteed Income Floor'); }
-        });
-
-        // The reports the source signed
-        const btnWrapper = document.getElementById('btnDownloadWorkLifeWrapper');
-        if (btnWrapper) {
-            const attachments = R.listOf(laborCheck.attachments).filter(att => R.isRecord(att) && att.id);
-            btnWrapper.classList.toggle('hidden', !attachments.length);
-            btnWrapper.innerHTML = attachments.length ? `<span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1 xl:text-right">Supporting Documents</span>` + attachments.map((att, idx) => {
-                const meta = window.getAttachmentMeta(att.sub_family);
-                const tone = { red: 'bg-red-50 text-red-500 hover:bg-red-100', blue: 'bg-blue-50 text-blue-500 hover:bg-blue-100', emerald: 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100', indigo: 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100', amber: 'bg-amber-50 text-amber-500 hover:bg-amber-100' }[meta.color] || 'bg-slate-50 text-slate-500 hover:bg-slate-100';
-                return `
-                    <button id="btnDownloadWorkLife-${idx}" onclick="openAttachment(this, ${escapeHtml(JSON.stringify(String(att.id)))})" class="w-full sm:w-auto flex items-center gap-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-4 py-2.5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 active:translate-y-0 group">
-                        <div class="w-8 h-8 rounded-lg ${tone} flex items-center justify-center shrink-0 transition-colors attachment-icon-container">
-                            <i class="fa-solid ${escapeHtml(meta.icon)} text-sm"></i>
-                        </div>
-                        <div class="flex flex-col items-start leading-tight min-w-0">
-                            <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">${escapeHtml(meta.name)}</span>
-                            <span class="text-xs font-bold text-slate-800 text-left truncate max-w-[160px]">${escapeHtml(window.formatContentType(att.content_type))}</span>
-                        </div>
-                    </button>`;
-            }).join('') : '';
-        }
-    }
-
-    function getContributionMonthMeta(status) {
-        const map = {
-            'registered':         { label: 'Registered',        icon: 'fa-circle-check',    textClass: 'text-emerald-600', bgClass: 'bg-emerald-50 border-emerald-100' },
-            'pending_update':     { label: 'Pending update',    icon: 'fa-hourglass-half',  textClass: 'text-amber-500',   bgClass: 'bg-amber-50 border-amber-100' },
-            'not_yet_settled':    { label: 'Not yet settled',   icon: 'fa-clock',           textClass: 'text-sky-500',     bgClass: 'bg-sky-50 border-sky-100' },
-            'not_yet_elapsed':    { label: 'Not yet elapsed',   icon: 'fa-calendar-plus',   textClass: 'text-slate-400',   bgClass: 'bg-slate-50 border-slate-200' },
-            'no_base_registered': { label: 'No base registered',icon: 'fa-circle-minus',    textClass: 'text-slate-400',   bgClass: 'bg-slate-50 border-slate-200' },
-            'no_alta':            { label: 'Not registered',    icon: 'fa-user-slash',      textClass: 'text-slate-400',   bgClass: 'bg-slate-50 border-slate-200' }
-        };
-        return map[status] || { label: status || 'Unknown', icon: 'fa-circle-question', textClass: 'text-slate-400', bgClass: 'bg-slate-50 border-slate-200' };
-    }
-
-    function renderIncomeFloor(floor) {
-        const R = InfoniteResults;
-        const card = document.getElementById('incomeFloorCard');
-        if (!card) return;
-        if (!R.isRecord(floor)) { card.classList.add('hidden'); card.innerHTML = ''; return; }
-        card.classList.remove('hidden');
-
-        const statusMap = {
-            'computed':             { label: 'Floor computed',       desc: 'Certified by the contribution bases — real income can only be equal or higher.', icon: 'fa-shield-halved', color: 'emerald' },
-            'not_currently_active': { label: 'No current employment', desc: 'No ongoing employment, so the current guaranteed floor is zero.',               icon: 'fa-pause-circle',  color: 'slate' },
-            'insufficient_data':    { label: 'Insufficient data',     desc: 'The person is active, but there is no certified window to measure a floor from.', icon: 'fa-hourglass-half', color: 'amber' },
-            'activity_unknown':     { label: 'Activity unknown',      desc: 'No employment evidence either way — no floor is claimed.',                       icon: 'fa-circle-question', color: 'amber' }
-        };
-        const meta = statusMap[floor.status] || statusMap['activity_unknown'];
-        const computed = floor.status === 'computed';
-
-        const companiesHtml = R.listOf(floor.companies).filter(R.isRecord).map(c => {
-            const observed = Number.isFinite(Number(c.observed_months)) ? Number(c.observed_months) : 0;
-            return `
-            <div class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
-                <div class="flex flex-col min-w-0">
-                    <span class="text-xs font-bold text-slate-700 truncate">${escapeHtml(c.company_name || 'Unknown')}</span>
-                    <span class="text-[9px] font-semibold text-slate-400 uppercase tracking-widest">${c.ccc ? `CCC ${escapeHtml(c.ccc)} • ` : ''}${R.plural(observed, 'certified month', 'certified months')}</span>
-                </div>
-                <div class="flex flex-col items-end shrink-0">
-                    <span class="text-sm font-black text-slate-800 font-mono tracking-tight">${R.money(c.monthly_floor)} <span class="text-[9px] font-bold text-slate-400 uppercase">/ mo</span></span>
-                    <span class="text-[9px] font-semibold text-slate-400 font-mono">${R.money(c.annual_floor)} / yr</span>
-                </div>
-            </div>`;
-        }).join('');
-
-        card.innerHTML = `
-            <div class="p-5 sm:p-6 flex flex-col lg:flex-row gap-6 lg:items-center">
-                <div class="flex items-center gap-4 flex-1 min-w-0">
-                    <div class="w-12 h-12 rounded-2xl bg-${meta.color}-50 text-${meta.color}-500 border border-${meta.color}-100 flex items-center justify-center text-xl shrink-0">
-                        <i class="fa-solid ${meta.icon}"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <h3 class="text-sm font-black text-slate-800 tracking-tight flex flex-wrap items-center gap-2">
-                            Guaranteed Income Floor
-                            <span class="text-[8px] font-black uppercase tracking-widest text-${meta.color}-600 bg-${meta.color}-50 border border-${meta.color}-200 px-2 py-0.5 rounded">${meta.label}</span>
-                        </h3>
-                        <p class="text-[10px] font-medium text-slate-400 mt-1">${meta.desc} A certified lower bound — never a salary estimate.</p>
-                    </div>
-                </div>
-                ${computed ? `
-                <div class="flex flex-wrap items-end gap-x-8 gap-y-3 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-8">
-                    <div class="flex flex-col">
-                        <span class="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Monthly (net)</span>
-                        <span class="text-2xl font-black text-emerald-600 font-mono tracking-tight leading-none whitespace-nowrap">≥ ${R.money(floor.monthly_floor)}</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Annual (net)</span>
-                        <span class="text-lg font-black text-slate-700 font-mono tracking-tight leading-none whitespace-nowrap">≥ ${R.money(floor.annual_floor)}</span>
-                    </div>
-                </div>` : ''}
-            </div>
-            ${computed && companiesHtml ? `
-            <div class="border-t border-slate-100">
-                <div class="px-4 sm:px-6 pt-3 pb-1">
-                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">Contributing employers</span>
-                </div>
-                ${companiesHtml}
-            </div>` : ''}
-        `;
-    }
-
-    // Point Movements is temporarily disabled: its tab stays grey and does not open
-    const DRIVER_POINTS_TAB_DISABLED = true;
-
-    window.switchDriverTab = function(tabId) {
-        if (tabId === 'points' && DRIVER_POINTS_TAB_DISABLED) return;
-        const btnPoints = document.getElementById('btnTabPoints');
-        const btnVehicles = document.getElementById('btnTabVehicles');
-        const contPoints = document.getElementById('containerDriverPoints');
-        const contVehicles = document.getElementById('containerDriverVehicles');
-        
-        const activeClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-sm flex items-center gap-2 flex-wrap";
-        const inactiveClass = "px-5 py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 flex items-center gap-2";
-
-        if (tabId === 'points') {
-            if (btnPoints) btnPoints.className = activeClass;
-            if (btnVehicles) btnVehicles.className = inactiveClass;
-            if (contPoints) { contPoints.classList.remove('hidden'); contPoints.classList.add('flex'); }
-            if (contVehicles) { contVehicles.classList.add('hidden'); contVehicles.classList.remove('flex'); }
-        } else {
-            if (btnVehicles) btnVehicles.className = activeClass;
-            if (btnPoints && !DRIVER_POINTS_TAB_DISABLED) btnPoints.className = inactiveClass;
-            if (contVehicles) { contVehicles.classList.remove('hidden'); contVehicles.classList.add('flex'); }
-            if (contPoints) { contPoints.classList.add('hidden'); contPoints.classList.remove('flex'); }
-        }
-    };
-
-    /** A licence as a small chip: its category, and the year it runs to (struck out once it has expired). */
-    function licenceChip(lic) {
-        const R = InfoniteResults;
-        const today = new Date().toISOString().substring(0, 10);
-        const expires = typeof lic.expires === 'string' ? lic.expires : '';
-        const expired = Boolean(expires && expires < today);
-        const title = [lic.date && `Since ${R.day(lic.date)}`, expires ? `${expired ? 'Expired' : 'Until'} ${R.day(expires)}` : 'No expiry'].filter(Boolean).join(' · ');
-        return `
-                    <span title="${escapeHtml(title)}" class="inline-flex items-baseline gap-1.5 rounded-full border px-2.5 py-1 ${expired ? 'border-slate-200 bg-slate-50' : 'border-slate-200 bg-white'}">
-                        <span class="text-xs font-black font-mono leading-none ${expired ? 'text-slate-300 line-through' : 'text-slate-800'}">${escapeHtml(lic.category || '?')}</span>
-                        <span class="text-[9px] font-semibold leading-none ${expired ? 'text-slate-300' : 'text-slate-400'}">${expires ? escapeHtml(expires.substring(0, 4)) : '∞'}</span>
-                    </span>`;
-    }
-
-    /** A movement of the points balance: what it was for, when, the points it moved and the balance it left. */
-    function pointMovementItem(mov, index, count) {
-        const R = InfoniteResults;
-        const delta = Number(mov.points_delta);
-        const up = delta > 0;
-        return `
-                    <div class="relative pl-8 pb-4 group" data-i="${index}">
-                        ${index < count - 1 ? '<div class="absolute left-[11px] top-[30px] bottom-[-16px] w-px bg-slate-200"></div>' : ''}
-                        <div class="absolute left-0 top-3.5 w-6 h-6 rounded-full border-2 border-white ${up ? 'bg-emerald-400' : 'bg-red-400'} shadow-sm z-10 ring-2 ring-slate-100"></div>
-                        <div class="flex items-center justify-between gap-3 bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 hover:shadow-md hover:border-slate-300 transition-all">
-                            <div class="flex flex-col min-w-0">
-                                <span class="text-sm font-bold text-slate-800 break-words leading-tight">${escapeHtml(mov.description || '—')}</span>
-                                <span class="flex items-center gap-2 mt-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider"><i class="fa-regular fa-calendar shrink-0"></i>${mov.date ? R.day(mov.date) : '—'}</span>
-                            </div>
-                            <div class="flex flex-col items-end shrink-0 gap-1.5">
-                                <span class="px-2 py-0.5 rounded border font-bold text-sm shadow-sm ${up ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-red-600 bg-red-50 border-red-200'}">${Number.isFinite(delta) ? `${up ? '+' : ''}${delta}` : '—'}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Result: ${escapeHtml(mov.balance_after ?? '—')}</span>
-                            </div>
-                        </div>
-                    </div>`;
-    }
-
-    /** A vehicle's card: its red flags first, then make, model, plate and mileage, its dates, its report and its insurance. */
-    function vehicleCard(veh, index) {
-        const R = InfoniteResults;
-        const insurance = R.isRecord(veh.insurance) ? veh.insurance : null;
-        const insured = !!insurance?.is_active;
-        const report = R.isRecord(veh.simple_vehicle_report) ? veh.simple_vehicle_report : null;
-        // What the registry flags on the vehicle: red flags, shown on the card and detailed in the report
-        const flagDefs = window.INFONITE_ENUMS?.VEHICLE_INCIDENT_FLAGS || {};
-        const redFlags = R.listOf(report?.flags).filter(flag => typeof flag === 'string').map(flag => ({ code: flag, ...(flagDefs[flag] || { label: flag.replace(/_/g, ' '), icon: 'fa-flag', text: '' }) }));
-        const emission = typeof veh.emission_class === 'string' ? veh.emission_class.replace('ES:', '') : '';
-        // The DGT's environmental badge, from the Carpeta Ciudadana's static images
-        const badge = emission.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const badgeName = badge === '0' || badge === 'zero' ? 'cero' : badge;
-        const emissionHtml = emission ? `
-                        <div class="w-7 h-7 shrink-0 rounded-full flex items-center justify-center shadow-sm relative overflow-hidden bg-white/50 border border-slate-200" title="Distintivo ${escapeHtml(emission)}">
-                            <img src="https://estaticos.redsara.es/carpetaciudadana/3.8-ccfront//img/nuevaCarpeta/imagenes/etiqueta-ambiental-${badgeName}.png" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="DGT ${escapeHtml(emission)}">
-                            <div class="w-full h-full items-center justify-center flex text-[10px] font-black uppercase text-slate-500 hidden" style="display: none;">${escapeHtml(emission)}</div>
-                        </div>` : '';
-        // The make's logo from Simple Icons, the car's silhouette when there is none
-        const make = typeof veh.make === 'string' ? veh.make : '';
-        const makeSlug = make.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const mileage = Number(veh.mileage);
-        const odometer = veh.mileage !== undefined && veh.mileage !== null && Number.isFinite(mileage) && mileage >= 0 ? `
-                                <div class="flex flex-col justify-center xl:border-l border-slate-200 xl:pl-4 xl:ml-2">
-                                    <div class="flex flex-col gap-1">
-                                        ${veh.mileage_date ? `<span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none opacity-80" title="Date recorded"><i class="fa-solid fa-clock mr-0.5"></i>REC: ${R.day(veh.mileage_date)}</span>` : ''}
-                                        <div class="flex items-center gap-[1px] bg-slate-800 p-[2px] rounded overflow-hidden shadow-inner border border-slate-700 w-fit shrink-0" title="Mileage: ${R.qty(mileage)} km">
-                                            ${String(Math.round(mileage)).padStart(6, '0').split('').map((digit, i, all) => `<span class="inline-flex items-center justify-center w-3.5 h-4.5 bg-gradient-to-b from-slate-700 to-slate-900 text-slate-100 font-mono font-bold text-[10px] shadow-sm tracking-tighter rounded-[1px] ${i === all.length - 1 ? 'text-red-400 font-black bg-gradient-to-b from-slate-800 to-slate-900' : ''}">${digit}</span>`).join('')}
-                                            <span class="text-[8px] font-bold text-slate-400 ml-1 mr-1 uppercase">KM</span>
-                                        </div>
-                                    </div>
-                                </div>` : '';
-        return `
-                    <div class="bg-white border ${redFlags.length ? 'border-red-300 ring-1 ring-red-200' : 'border-slate-200/80'} rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden" data-i="${index}">
-                        ${redFlags.length ? `
-                        <div class="-mx-4 sm:-mx-5 -mt-4 sm:-mt-5 mb-4 px-4 sm:px-5 py-2.5 bg-red-600 text-white flex items-center gap-2.5 flex-wrap">
-                            <i class="fa-solid fa-flag text-xs"></i>
-                            <span class="text-[10px] font-black uppercase tracking-widest">${redFlags.length === 1 ? 'Red flag' : `${redFlags.length} red flags`}</span>
-                            <span class="w-px h-3.5 bg-white/30"></span>
-                            ${redFlags.map(flag => `<span class="inline-flex items-center gap-1.5 rounded-full bg-white/15 border border-white/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider"><i class="fa-solid ${escapeHtml(flag.icon)} text-[9px]"></i>${escapeHtml(flag.label)}</span>`).join('')}
-                        </div>` : ''}
-                        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4">
-                            <div class="flex items-center gap-x-4 gap-y-3 flex-wrap min-w-0">
-                                <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden shrink-0 relative flex items-center justify-center">
-                                    ${makeSlug ? `<img src="https://cdn.simpleicons.org/${makeSlug}" class="w-full h-full object-contain p-2 absolute inset-0 z-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" alt="${escapeHtml(make)}" title="${escapeHtml(make)}">` : ''}
-                                    <div class="w-full h-full flex items-center justify-center bg-slate-50" style="display: ${makeSlug ? 'none' : 'flex'};"><i class="fa-solid fa-car-side text-slate-400 text-lg"></i></div>
-                                </div>
-                                <div class="flex flex-col min-w-0">
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">${escapeHtml(make || 'Vehicle')}</span>
-                                    <h4 class="text-base font-bold text-slate-800 leading-tight">${escapeHtml(veh.model || '—')}</h4>
-                                </div>
-                                ${odometer}
-                            </div>
-                            <div class="flex items-center gap-2 sm:gap-4 shrink-0 xl:justify-end">
-                                ${emissionHtml}
-                                <div class="flex items-center bg-white border-2 border-slate-300 rounded overflow-hidden shadow-sm shrink-0">
-                                    <div class="bg-blue-600 text-white flex flex-col items-center justify-center px-1.5 py-0.5">
-                                        <img src="${R.flagUrl('EU')}" class="w-2.5 h-2.5" alt="EU" onerror="this.style.display='none'">
-                                        <span class="text-[6px] font-bold">E</span>
-                                    </div>
-                                    <div class="px-2.5 py-0.5 text-xs font-black font-mono tracking-widest text-slate-800 bg-white">${escapeHtml(veh.license_plate || '—')}</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
-                            <div class="flex flex-col min-w-0">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-calendar-plus opacity-50 mr-1"></i> Registration</span>
-                                <span class="text-xs font-semibold text-slate-700 mt-1">${veh.registration_date ? R.day(veh.registration_date) : '—'}</span>
-                            </div>
-                            <div class="flex flex-col min-w-0 border-l sm:border-l-0 border-slate-100 pl-3 sm:pl-0">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-gas-pump opacity-50 mr-1"></i> Fuel Type</span>
-                                <span class="text-xs font-semibold text-slate-700 mt-1">${escapeHtml(veh.fuel_type || '—')}</span>
-                            </div>
-                            <div class="flex flex-col min-w-0 col-span-2 sm:col-span-1 border-t sm:border-t-0 sm:border-l border-slate-100 pt-3 sm:pt-0 sm:pl-3">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-clipboard-check opacity-50 mr-1"></i> ITV (Inspection)</span>
-                                <span class="text-xs font-semibold text-slate-700 mt-1">${veh.inspection_expiry_date ? `Until ${R.day(veh.inspection_expiry_date)}` : '—'}${veh.inspection_pending ? ' · <span class="text-amber-600">pending</span>' : ''}</span>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-4 border-t border-slate-100">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-file-shield opacity-50 mr-1"></i> Vehicle Report</span>
-                            ${report ? `
-                            <div class="mt-2 rounded-xl border px-3.5 py-2.5 ${report.has_incidents ? 'bg-red-50/60 border-red-200' : 'bg-emerald-50/60 border-emerald-200'}">
-                                <div class="flex items-center justify-between gap-2 flex-wrap">
-                                    <div class="flex items-center gap-1.5">
-                                        <i class="fa-solid ${report.has_incidents ? 'fa-triangle-exclamation text-red-500' : 'fa-circle-check text-emerald-500'} text-xs"></i>
-                                        <span class="text-[10px] font-black uppercase tracking-widest ${report.has_incidents ? 'text-red-700' : 'text-emerald-700'}">${report.has_incidents ? 'With incidents' : 'No incidents'}</span>
-                                    </div>
-                                    ${report.report_date ? `<span class="text-[8px] font-bold ${report.has_incidents ? 'text-red-400' : 'text-emerald-600/70'} uppercase tracking-widest"><i class="fa-regular fa-calendar mr-0.5"></i> Checked: ${R.day(report.report_date)}</span>` : ''}
-                                </div>
-                                <p class="text-[10px] font-medium ${report.has_incidents ? 'text-red-700/80' : 'text-emerald-800/70'} leading-snug mt-1.5">${report.has_incidents
-                                    ? 'The registry holds annotations that prevent administrative processing or the circulation of this vehicle. Request a full vehicle report for the details.'
-                                    : 'No annotations preventing administrative processing or circulation were recorded at the time of the query.'}</p>
-                                ${redFlags.length ? `
-                                <div class="mt-2.5 flex flex-col gap-1.5">
-                                    ${redFlags.map(flag => `
-                                    <div class="flex items-start gap-2.5 rounded-lg bg-white border border-red-200 px-2.5 py-2">
-                                        <div class="w-6 h-6 rounded-md bg-red-600 text-white flex items-center justify-center shrink-0"><i class="fa-solid ${escapeHtml(flag.icon)} text-[10px]"></i></div>
-                                        <div class="min-w-0">
-                                            <span class="block text-[10px] font-black uppercase tracking-wider text-red-700">${escapeHtml(flag.label)}</span>
-                                            ${flag.text ? `<span class="block text-[10px] font-medium text-red-900/70 leading-snug mt-0.5">${escapeHtml(flag.text)}</span>` : ''}
-                                        </div>
-                                    </div>`).join('')}
-                                </div>` : ''}
-                            </div>` : `
-                            <div class="mt-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3.5 py-2.5">
-                                <span class="text-[10px] font-medium text-slate-400 italic">No report available for this vehicle.</span>
-                            </div>`}
-                        </div>
-                        ${insurance ? `
-                        <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between bg-slate-50/50 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 px-4 sm:px-5 py-3 gap-2">
-                            <div class="flex items-center gap-2">
-                                <span class="relative flex h-2 w-2">
-                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${insured ? 'bg-emerald-400' : 'bg-red-400'} opacity-75"></span>
-                                  <span class="relative inline-flex rounded-full h-2 w-2 ${insured ? 'bg-emerald-500' : 'bg-red-500'}"></span>
-                                </span>
-                                <span class="text-[10px] font-bold uppercase tracking-widest ${insured ? 'text-emerald-700' : 'text-red-700'} pb-[1px]">Insurance ${insured ? 'Active' : 'Inactive'}</span>
-                            </div>
-                            <div class="flex flex-col md:items-end text-left md:text-right min-w-0">
-                                <span class="text-[10px] font-black text-slate-700 uppercase tracking-widest truncate max-w-full md:max-w-xs" title="${escapeHtml(insurance.company || '')}">${escapeHtml(insurance.company || '—')}</span>
-                                ${insurance.start_date ? `<span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5"><i class="fa-regular fa-calendar-check mr-0.5"></i> Started: ${R.day(insurance.start_date)}</span>` : ''}
-                            </div>
-                        </div>` : ''}
-                    </div>`;
-    }
-
-    /** What a vehicle can be found by: plate, make, model, fuel, frame number, its flags and its insurer. */
-    function vehicleText(veh) {
-        const flags = InfoniteResults.listOf(veh.simple_vehicle_report?.flags).map(flag => (window.INFONITE_ENUMS?.VEHICLE_INCIDENT_FLAGS?.[flag]?.label || flag));
-        return [veh.license_plate, veh.make, veh.model, veh.fuel_type, veh.vin, veh.emission_class, veh.administrative_situation, veh.insurance?.company, ...flags, veh.registration_date].filter(Boolean).join(' ');
-    }
-
-    function renderDriverData(payload) {
-        const R = InfoniteResults;
-        const driver = payload?.data?.driver?.data;
-        if (!R.isRecord(driver)) return;
-
-        // The person and their points
-        const lblPointBalance = document.getElementById('lblPointBalance');
-        if (lblPointBalance) lblPointBalance.textContent = driver.point_balance ?? '--';
-        const lblDriverIdValue = document.getElementById('lblDriverIdValue');
-        if (lblDriverIdValue) lblDriverIdValue.textContent = driver.identifier?.value || '------';
-        const lblDriverName = document.getElementById('lblDriverName');
-        if (lblDriverName) lblDriverName.textContent = [driver.name, driver.name_extra].filter(Boolean).join(' ') || '--';
-
-        // The DGT's photograph, when the connection brought one; the neutral frame otherwise
-        window.loadDriverPhoto(window.driverPhotoAttachment(payload));
-
-        // Driving licences: small chips on one line — the category, and until when it is valid
-        const licencesList = document.getElementById('driverLicencesList');
-        if (licencesList) {
-            const licences = R.listOf(driver.licences).filter(R.isRecord);
-            licencesList.innerHTML = licences.length
-                ? licences.map(lic => R.safely(licenceChip, [lic], () => '')).join('')
-                : '<span class="text-xs text-slate-400 italic">None</span>';
-        }
-
-        // Special authorizations: shown only when the connection reports them (null is "not known", not "no")
-        const authContainer = document.getElementById('specialAuthContainer');
-        const authList = document.getElementById('specialAuthList');
-        if (authContainer && authList) {
-            const authorizations = [
-                { value: driver.dangerous_goods_authorized, label: 'Dangerous goods', icon: 'fa-triangle-exclamation' },
-                { value: driver.school_transport_authorized, label: 'School transport', icon: 'fa-bus' },
-            ].filter(a => a.value === true || a.value === false);
-            authContainer.classList.toggle('hidden', authorizations.length === 0);
-            authList.innerHTML = authorizations.map(a => `
-                <span title="${a.label}: ${a.value ? 'authorized' : 'not authorized'}" class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${a.value ? 'border-emerald-200 bg-emerald-50/60 text-emerald-700' : 'border-slate-200 bg-white text-slate-400'}">
-                    <i class="fa-solid ${a.icon} text-[9px]"></i>
-                    <span>${a.label}</span>
-                    <i class="fa-solid ${a.value ? 'fa-check' : 'fa-xmark'} text-[9px]"></i>
-                </span>`).join('');
-        }
-
-        // The points balance's movements
-        const pointsList = document.getElementById('pointsList');
-        if (pointsList) {
-            const movements = R.listOf(driver.point_movements).filter(R.isRecord);
-            pointsList.innerHTML = movements.length
-                ? movements.map((mov, index) => R.safely(pointMovementItem, [mov, index, movements.length], () => '')).join('')
-                : '<div class="p-6 text-center text-slate-400 text-sm italic border border-slate-200 border-dashed rounded-xl">No point movements recorded.</div>';
-        }
-
-        // The vehicles, and a box to find one when there are several
-        const vehiclesGrid = document.getElementById('vehiclesGrid');
-        const vehiclesHead = document.getElementById('vehiclesHead');
-        const vehicles = R.listOf(payload.data.driver.vehicles).filter(R.isRecord);
-        if (vehiclesGrid) {
-            R.index('vehiclesGrid', vehicles, vehicleText);
-            vehiclesGrid.innerHTML = vehicles.length
-                ? vehicles.map((veh, index) => R.safely(vehicleCard, [veh, index], () => `<div data-i="${index}">${R.broken(veh.license_plate || 'A vehicle')}</div>`)).join('') + R.searchNone('No vehicle matches the search.')
-                : '<div class="p-8 text-center bg-slate-50 text-slate-400 text-sm italic border border-dashed rounded-2xl border-slate-200">No vehicles registered for this user.</div>';
-        }
-        if (vehiclesHead) {
-            vehiclesHead.innerHTML = `
-                <span class="rk-section-label"><i class="fa-solid fa-car"></i> Registered Vehicles<em id="vehiclesGridCount">${vehicles.length}</em></span>
-                ${vehicles.length > 3 ? R.searchBox({ target: 'vehiclesGrid', placeholder: 'Search vehicles', label: 'Search the vehicles', title: 'Plate, make, model, fuel, frame number, red flag or insurer — every word must match; quotes keep a phrase together' }) : ''}`;
-        }
-    }
-
-    /** A degree or a certificate: what it is, where and when it was earned, its status and its official number. */
-    function degreeCard(degree) {
-        const R = InfoniteResults;
-        const done = degree.completion_status === 'completed';
-        const kind = (window.INFONITE_ENUMS?.ACADEMIC_DATA_TYPES || {})[degree.sub_family] || { label: 'Certification', icon: 'fa-certificate' };
-        const where = [degree.institution_name || 'Unknown institution', degree.institution_code ? `(${degree.institution_code})` : '', degree.institution_country ? `· ${degree.institution_country}` : '', degree.region ? `· ${degree.region}` : ''].filter(Boolean).join(' ');
-        const number = (value) => (value !== undefined && value !== null && value !== '' && Number.isFinite(Number(value)) ? R.qty(value) : '');
-        const facts = [
-            ['Started', degree.start_date ? R.day(degree.start_date) : ''],
-            ['Completed', degree.end_date ? R.day(degree.end_date) : ''],
-            ['Issued', degree.issue_date ? R.day(degree.issue_date) : ''],
-            ['Field', degree.field_of_study ? escapeHtml(degree.field_of_study) : ''],
-            ['Credits', number(degree.total_credits)],
-            ['Grade average', number(degree.grade_average)],
-        ].filter(([, value]) => value);
-        return `
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--primary)] opacity-80"></div>
-                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pl-2">
-                    <div class="flex flex-col flex-1 min-w-0">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-[var(--primary)] mb-1 flex items-center gap-1.5"><i class="fa-solid ${escapeHtml(kind.icon)}"></i> ${escapeHtml(kind.label)}</span>
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-1 flex items-start gap-1.5"><i class="fa-solid fa-building-columns mt-0.5"></i><span>${escapeHtml(where)}</span></span>
-                        <h4 class="text-lg sm:text-xl font-black text-slate-800 leading-tight">${escapeHtml(degree.qualification_name || 'Qualification')}</h4>
-                        ${facts.length ? `<dl class="flex flex-wrap gap-x-6 gap-y-3 mt-4">${facts.map(([label, value]) => `<div class="flex flex-col"><dt class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${label}</dt><dd class="text-xs font-semibold text-slate-700 mt-0.5">${value}</dd></div>`).join('')}</dl>` : ''}
-                    </div>
-                    <div class="flex flex-col items-start sm:items-end shrink-0 gap-2">
-                        <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded flex items-center gap-1.5 border ${done ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-700 bg-slate-50 border-slate-200'}"><i class="fa-solid ${done ? 'fa-check-circle' : 'fa-clock'}"></i> ${escapeHtml(String(degree.completion_status || 'unknown').replace(/_/g, ' '))}</span>
-                        <div class="flex flex-col text-left sm:text-right mt-1">
-                            <span class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Official registration ID</span>
-                            <span class="text-xs font-mono font-bold text-slate-700 select-all break-all">${escapeHtml(degree.official_id || degree.national_registry_id || '—')}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }
-
-    window.renderAcademicData = function(payload) {
-        const R = InfoniteResults;
-        const higherContainer = document.getElementById('higherEducationDegreesList');
-        const secondaryContainer = document.getElementById('secondaryEducationList');
-        const higherWrapper = document.getElementById('higher-education-wrapper');
-        const secondaryWrapper = document.getElementById('secondary-education-wrapper');
-        if (!higherContainer) return;
-
-        const academic = R.isRecord(payload?.data?.academic) ? payload.data.academic : {};
-        const higher = R.listOf(academic.higher_education_degrees).filter(R.isRecord);
-        const secondary = R.listOf(academic.secondary_education).filter(R.isRecord);
-        const show = (wrapper, on) => { if (wrapper) { wrapper.classList.toggle('hidden', !on); wrapper.classList.toggle('flex', on); } };
-        const cards = (list) => list.map(degree => R.safely(degreeCard, [degree], () => R.broken(degree.qualification_name || 'A degree'))).join('');
-
-        if (!higher.length && !secondary.length) {
-            show(higherWrapper, true);
-            show(secondaryWrapper, false);
-            higherContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
-                    <i class="fa-solid fa-file-circle-xmark text-4xl text-slate-300 mb-3"></i>
-                    <h4 class="text-sm font-bold text-slate-600">No Certifications Found</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no academic certifications visible for this user in the analyzed payload.</p>
-                </div>`;
-            return;
-        }
-        higherContainer.innerHTML = cards(higher);
-        show(higherWrapper, higher.length > 0);
-        if (secondaryContainer) secondaryContainer.innerHTML = cards(secondary);
-        show(secondaryWrapper, secondary.length > 0);
-    };
-
-    /** A bare amount in euros, written as the results kit writes money: grouped at every size, a dash where none came. */
-    function formatCurrency(amount) {
-        return InfoniteResults.money({ amount, currency: 'EUR' });
-    }
-
-    /** A row of a tax section that counts something rather than adding it up. */
-    function renderTaxDetailCount(label, count) {
-        return `
-            <div class="px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-colors">
-                <span class="text-sm font-semibold text-slate-600 min-w-0">${label}</span>
-                <span class="text-sm font-bold font-mono text-slate-800 shrink-0">${Number(count) || 0}</span>
-            </div>
-        `;
-    }
-
-    function renderTaxDetailRow(label, amount) {
-        if (amount === undefined || amount === null) return '';
-        return `
-            <div class="px-4 sm:px-6 py-4 flex items-center justify-between gap-4 transition-colors">
-                <span class="text-sm font-semibold text-slate-600 min-w-0">${label}</span>
-                <span class="text-sm font-bold font-mono text-slate-800 whitespace-nowrap shrink-0">${formatCurrency(amount)}</span>
-            </div>
-        `;
-    }
-    /** A public pension: what it is, since when, and its statement — gross, base, revaluation and net, with the share received net. */
-    function pensionCard(pension) {
-        const R = InfoniteResults;
-        const amounts = R.isRecord(pension.amounts) ? pension.amounts : {};
-        const gross = R.has(amounts.total) ? amounts.total : null;
-        const net = R.has(amounts.net_amount) ? amounts.net_amount : null;
-        const kept = gross && net && Number(gross.amount) > 0 && (gross.currency || '') === (net.currency || '') ? Number(net.amount) / Number(gross.amount) : null;
-        const name = pension.product_alias || pension.product_name || 'State pension';
-        return `
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--primary)] opacity-80"></div>
-                <div class="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(240px,320px)] md:items-center pl-2">
-                    <div class="flex flex-col min-w-0">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-[var(--primary)] mb-1 flex items-center gap-1.5"><i class="fa-solid fa-piggy-bank"></i> ${escapeHtml(pension.product_name || 'State pension')}</span>
-                        <h4 class="text-lg sm:text-xl font-black text-slate-800 leading-tight">${escapeHtml(name)}</h4>
-                        <span class="text-xs font-semibold text-slate-500 mt-3"><i class="fa-regular fa-calendar mr-1"></i> Since ${pension.start_date ? R.day(pension.start_date) : '—'}</span>
-                    </div>
-                    ${R.ledger([
-                        gross ? R.fact('Gross', R.money(gross), { main: true }) : net ? R.fact('Net', R.money(net), { main: true }) : null,
-                        kept !== null ? { meter: R.meter(kept, { left: `<b>${R.share(kept)}</b> received net`, right: `${R.money(net)} net` }) } : null,
-                        R.fact('Base', R.has(amounts.base) ? R.money(amounts.base) : ''),
-                        R.fact('Revaluation', R.has(amounts.revaluation) ? R.money(amounts.revaluation, { sign: true }) : ''),
-                    ]) || '<p class="text-xs font-semibold text-slate-400">The source gave no amount for this pension.</p>'}
-                </div>
-            </div>`;
-    }
-
-    window.renderPensionsData = function(payload) {
-        const R = InfoniteResults;
-        const container = document.getElementById('statePensionsList');
-        if (!container) return;
-        const pensions = R.listOf(payload?.data?.employment?.pensions).filter(R.isRecord);
-        if (!pensions.length) {
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
-                    <i class="fa-solid fa-piggy-bank text-4xl text-slate-300 mb-3"></i>
-                    <h4 class="text-sm font-bold text-slate-600">No Pensions Found</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no public pensions registered for this user in the analyzed payload.</p>
-                </div>`;
-            return;
-        }
-        container.innerHTML = pensions.map(pension => R.safely(pensionCard, [pension], () => R.broken(pension.product_alias || pension.product_name || 'A pension'))).join('');
-    };
-
-
-    /** A property: what it is and where, its cadastral reference, its assessed value split into land and construction, and who owns how much. */
-    function propertyCard(prop, index) {
-        const R = InfoniteResults;
-        const reference = prop.cadastral_reference || prop.official_id || '';
-        const referenceLabel = prop.cadastral_reference ? 'Cadastral Reference' : prop.official_id ? 'Official ID' : 'Reference';
-        const land = R.has(prop.land_value) ? Number(prop.land_value.amount) : null;
-        const building = R.has(prop.construction_value) ? Number(prop.construction_value.amount) : null;
-        const split = land !== null && building !== null && land + building > 0 ? land / (land + building) : null;
-        const owners = R.listOf(prop.owners).filter(R.isRecord);
-        const ownersHtml = owners.length ? `
-                <div class="mt-5 pt-4 border-t border-slate-100 pl-2">
-                    <h5 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3"><i class="fa-solid fa-users text-slate-300 mr-1"></i> Ownership</h5>
-                    <div class="flex flex-col gap-3">
-                        ${owners.map(owner => {
-                            const part = Number(owner.percentage);
-                            const known = owner.percentage !== null && owner.percentage !== undefined && owner.percentage !== '' && Number.isFinite(part);
-                            const who = `<b>${escapeHtml(owner.name || 'Unknown')}</b>${owner.identifier ? ` <span class="font-mono text-slate-400">${escapeHtml(owner.identifier)}</span>` : ''}`;
-                            return known
-                                ? R.meter(part, { left: who, right: `<b>${R.share(part)}</b>` })
-                                : `<div class="text-xs font-semibold text-slate-600">${who}</div>`;
-                        }).join('')}
-                    </div>
-                </div>` : '';
-        return `
-            <div class="bg-white border border-slate-200/80 shadow-sm rounded-2xl p-5 sm:p-6 hover:shadow-md transition-shadow relative overflow-hidden" data-i="${index}">
-                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--primary)] opacity-80"></div>
-                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pl-2">
-                    <div class="flex flex-col flex-1 min-w-0">
-                        <span class="text-[10px] font-bold tracking-widest uppercase text-[var(--primary)] mb-2 flex items-center gap-1.5"><i class="fa-solid fa-map-location-dot"></i> ${escapeHtml(prop.property_type || 'Property')} • ${escapeHtml(prop.property_use || 'General use')}</span>
-                        <h4 class="text-lg sm:text-xl font-black text-slate-800 leading-tight flex items-center gap-2 flex-wrap">
-                            <span class="min-w-0 break-words">${escapeHtml(prop.address || 'Unknown address')}</span>
-                            ${prop.country ? `<span class="text-base bg-slate-50 px-2 py-0.5 rounded border border-slate-200 flex items-center gap-1.5 shadow-sm"><img src="${R.flagUrl(prop.country)}" class="w-4 h-4" alt=""> <span class="text-[10px] font-bold text-slate-500 font-mono mt-0.5">${escapeHtml(prop.country)}</span></span>` : ''}
-                        </h4>
-                        <div class="flex items-center gap-4 mt-4 flex-wrap">
-                            <div class="flex flex-col bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 min-w-0 max-w-full">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"><i class="fa-solid fa-file-contract mr-1"></i> ${referenceLabel}</span>
-                                <span class="text-sm font-semibold font-mono tracking-widest text-slate-700 select-all break-all">${escapeHtml(reference || '—')}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex flex-col items-start sm:items-end shrink-0 gap-1">
-                        <span class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Assessment ${escapeHtml(prop.assessment_year || '')}</span>
-                        <span class="text-2xl font-black font-mono text-slate-700 whitespace-nowrap">${R.money(prop.assessed_value)}</span>
-                        <span class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-widest">Assessed value</span>
-                    </div>
-                </div>
-                ${land !== null || building !== null ? `
-                <div class="mt-5 pt-4 border-t border-slate-100 pl-2">
-                    ${split !== null
-                        ? R.meter(split, { left: `Land <b>${R.money(prop.land_value)}</b>`, right: `Construction <b>${R.money(prop.construction_value)}</b>` })
-                        : `<div class="flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-slate-600">${land !== null ? `<span>Land <b>${R.money(prop.land_value)}</b></span>` : ''}${building !== null ? `<span>Construction <b>${R.money(prop.construction_value)}</b></span>` : ''}</div>`}
-                </div>` : ''}
-                ${ownersHtml}
-            </div>`;
-    }
-
-    /** What a property can be found by: its address, its reference, what it is and who owns it. */
-    function propertyText(prop) {
-        return [prop.address, prop.cadastral_reference, prop.official_id, prop.property_type, prop.property_use, prop.assessment_year,
-            ...InfoniteResults.listOf(prop.owners).flatMap(owner => [owner?.name, owner?.identifier])].filter(Boolean).join(' ');
-    }
-
-    window.renderPropertiesData = function(payload) {
-        const R = InfoniteResults;
-        const container = document.getElementById('propertiesList');
-        if (!container) return;
-        const families = R.isRecord(payload?.data?.properties) ? Object.values(payload.data.properties) : [];
-        const entries = families.flatMap(list => R.listOf(list)).filter(R.isRecord);
-        const search = document.getElementById('propertiesSearch');
-        if (!entries.length) {
-            if (search) search.innerHTML = '';
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
-                    <i class="fa-solid fa-house-circle-xmark text-4xl text-slate-300 mb-3"></i>
-                    <h4 class="text-sm font-bold text-slate-600">No Properties Found</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-sm">There are no real estate properties registered for this user in the analyzed payload.</p>
-                </div>`;
-            return;
-        }
-        R.index('propertiesList', entries, propertyText);
-        container.innerHTML = entries.map((prop, index) => R.safely(propertyCard, [prop, index], () => `<div data-i="${index}">${R.broken(prop.address || 'A property')}</div>`)).join('') + R.searchNone('No property matches the search.');
-        if (search) {
-            search.innerHTML = entries.length > 3 ? `
-                <div class="rk-section-head is-search">
-                    <span class="rk-section-label"><i class="fa-solid fa-house"></i> Properties<em id="propertiesListCount">${entries.length}</em></span>
-                    ${R.searchBox({ target: 'propertiesList', placeholder: 'Search properties', label: 'Search the properties', title: 'Address, cadastral reference, type, use or owner — every word must match; quotes keep a phrase together' })}
-                </div>` : '';
-        }
-    };
-
-    // CIRBE vocabularies, as the core publishes them (infonite.enums.engines.products._credit_registry)
-    const CIRBE_PRODUCT_LABELS = {
-        securities_lending: 'Securities lending',
-        trade_credit_with_recourse: 'Trade credit with recourse',
-        trade_credit_without_recourse: 'Trade credit without recourse',
-        trade_receivables: 'Trade receivables',
-        financial_credit: 'Financial credit',
-        financial_lease: 'Financial lease',
-        reverse_repurchase_agreement: 'Reverse repurchase agreement',
-        debt_securities: 'Debt securities',
-        financial_guarantee: 'Financial guarantee',
-        forward_deposit: 'Forward deposit',
-        non_financial_guarantee: 'Non-financial guarantee',
-        irrevocable_documentary_credit: 'Irrevocable documentary credit',
-        available_in_other_commitments: 'Other commitments',
-        overdraft: 'Overdraft',
-        credit_card_debt: 'Credit card debt',
-        deposit: 'Deposit',
-        revolving_credit: 'Revolving credit',
-        credit_line: 'Credit line',
-        other_loans: 'Other loans'
-    };
-    const CIRBE_NATURE_LABELS = {
-        direct_holder: { label: 'Direct holder', icon: 'fa-user' },
-        guarantor: { label: 'Guarantor', icon: 'fa-user-shield' },
-        bill_signatory: { label: 'Bill signatory', icon: 'fa-file-signature' }
-    };
-    const CIRBE_MATURITY_LABELS = {
-        up_to_three_months: 'Up to 3 months',
-        three_months_to_one_year: '3 months to 1 year',
-        one_to_five_years: '1 to 5 years',
-        over_five_years: 'Over 5 years',
-        indeterminate: 'Indeterminate'
-    };
-    const CIRBE_JOINT_LIABILITY_LABELS = {
-        joint_and_several: 'Joint and several',
-        collective: 'Collective',
-        not_joint_and_several: 'Not joint and several'
-    };
-    const CIRBE_REAL_GUARANTEE_LABELS = {
-        financial_assets_pledge: 'Pledge of financial assets',
-        real_estate_mortgage: 'Real estate mortgage',
-        other_real_guarantee: 'Other real guarantee',
-        life_insurance_pledge: 'Pledge of life insurance',
-        other_physical_collateral: 'Other physical collateral',
-        credit_derivatives: 'Credit derivatives',
-        financial_guarantee_other_than_credit_derivatives: 'Financial guarantee',
-        other_protection: 'Other protection',
-        residential_real_estate: 'Residential property',
-        offices_and_commercial_premises: 'Offices and commercial premises',
-        commercial_real_estate: 'Commercial property',
-        debt_securities: 'Debt securities',
-        gold: 'Gold',
-        cash_and_deposits: 'Cash and deposits',
-        loans: 'Loans',
-        trade_receivables: 'Trade receivables',
-        equity_and_investment_fund_shares: 'Shares and fund units'
-    };
-    const CIRBE_PERSONAL_GUARANTEE_LABELS = {
-        public_administration: 'Public administration',
-        other_personal_guarantee: 'Other personal guarantee',
-        reporting_entity: 'Reporting entity',
-        public_credit_insurer: 'Public credit insurer',
-        unspecified: 'Unspecified'
-    };
-    const CIRBE_COVERAGE_LABELS = { total: 'total coverage', partial: 'partial coverage' };
-
-    // A value the vocabulary does not know yet still shows: its label, else its raw code
-    function cirbeLabel(map, value, code) {
-        if (!value) return code || null;
-        const entry = map[value];
-        if (entry) return typeof entry === 'string' ? entry : entry.label;
-        return value.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
-    }
-
-    function cirbeChip(icon, text, tone = 'slate') {
-        const tones = {
-            slate: 'bg-slate-50 text-slate-600 border-slate-200/70',
-            indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-            emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-            amber: 'bg-amber-50 text-amber-700 border-amber-100'
-        };
-        return `<span class="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-md border ${tones[tone] || tones.slate}"><i class="fa-solid ${icon} opacity-60 text-[9px]"></i>${escapeHtml(text)}</span>`;
-    }
-
-    window.renderCreditRegistryData = function(payload) {
-        const totalDrawnEl = document.getElementById('cirbeTotalDrawn');
-        const totalOverdueEl = document.getElementById('cirbeTotalOverdue');
-        const totalArrearsEl = document.getElementById('cirbeTotalArrears');
-        const totalAvailableEl = document.getElementById('cirbeTotalAvailable');
-        const reportMonthEl = document.getElementById('cirbeReportMonth');
-        const holderNameEl = document.getElementById('cirbeHolderName');
-        const holderCodeEl = document.getElementById('cirbeHolderCode');
-        const holderIdentifierEl = document.getElementById('cirbeHolderIdentifier');
-        const signatureVerifiedBadge = document.getElementById('cirbeSignatureBadge');
-        const downloadPdfBtn = document.getElementById('cirbeDownloadPdfBtn');
-        const operationsTable = document.getElementById('cirbeOperations');
-        const R = InfoniteResults;
-        const minorRisksSection = document.getElementById('cirbeMinorRisksSection');
-        const minorRisksList = document.getElementById('cirbeMinorRisksList');
-
-        const registry = payload?.data?.credit?.registry;
-        const creditData = Array.isArray(registry) ? registry.find(InfoniteResults.isRecord) : (InfoniteResults.isRecord(registry) ? registry : null);
-        if (!creditData) {
-            const wrapper = document.getElementById('credit-registry-wrapper');
-            // What the session itself said about Cl@ve, when it said something: the real reason, before the usual ones
-            const reasons = InfoniteResults.listOf(payload?.messages).filter(message => {
-                const at = InfoniteResults.listOf(message?.location).join('.');
-                if (message?.message_id === 'clave_level_insufficient') return at === 'data.credit.registry';
-                return ['clave_not_registered', 'clave_access_unavailable'].includes(message?.message_id);
-            });
-            const said = reasons.length ? `
-                    <div class="mt-5 w-full max-w-md text-left bg-amber-50 border border-amber-200 rounded-xl p-4">
-                        <span class="text-[9px] font-bold text-amber-700 uppercase tracking-widest">What the session says</span>
-                        <ul class="mt-3 space-y-2 text-xs font-medium text-amber-900">
-                            ${reasons.map(message => `<li class="flex gap-3"><i class="fa-solid fa-circle-info text-amber-500 mt-0.5 w-4 text-center"></i><span>${escapeHtml(message.message || message.message_id)}</span></li>`).join('')}
-                        </ul>
-                    </div>` : '';
-            if (wrapper) {
-                wrapper.innerHTML = `<div class="flex flex-col items-center justify-center p-8 text-center bg-slate-50 border border-slate-200 border-dashed rounded-2xl min-h-[300px]">
-                    <i class="fa-solid fa-money-check-dollar text-4xl text-slate-300 mb-3"></i>
-                    <h4 class="text-sm font-bold text-slate-600">CIRBE Report Not Available</h4>
-                    <p class="text-xs text-slate-500 mt-1 max-w-md">The Bank of Spain's Central Credit Registry (CIRBE) report could not be retrieved in this session. This does not mean the person has no debts: the report was simply not obtained.</p>
-                    ${said}
-                    <div class="mt-5 w-full max-w-md text-left bg-white border border-slate-200 rounded-xl p-4">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${reasons.length ? 'Other common reasons' : 'Most common reasons'}</span>
-                        <ul class="mt-3 space-y-3 text-xs text-slate-600">
-                            <li class="flex gap-3">
-                                <i class="fa-solid fa-id-card text-slate-400 mt-0.5 w-4 text-center"></i>
-                                <span><strong class="text-slate-700">Insufficient Cl@ve level.</strong> The Bank of Spain only issues the report to people identified with an electronic certificate, DNIe or Cl@ve registered at the advanced level (in-person registration). A Cl@ve registered only at the basic level is not enough.</span>
-                            </li>
-                            <li class="flex gap-3">
-                                <i class="fa-solid fa-user-lock text-slate-400 mt-0.5 w-4 text-center"></i>
-                                <span><strong class="text-slate-700">No Cl@ve or certificate.</strong> The person does not hold any of the credentials above, so the request to the Bank of Spain could not be made.</span>
-                            </li>
-                            <li class="flex gap-3">
-                                <i class="fa-solid fa-plug-circle-xmark text-slate-400 mt-0.5 w-4 text-center"></i>
-                                <span><strong class="text-slate-700">Source unavailable.</strong> The Bank of Spain's service did not respond, or the consultation did not finish during the session.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>`;
-            }
-            return;
-        }
-
-        // the report's month as the Banco de España writes it (08-2026), read as a month
-        const month = /^(\d{2})-(\d{4})$/.exec(String(creditData.report_month || ''));
-        if (reportMonthEl) reportMonthEl.textContent = month ? R.day(`${month[2]}-${month[1]}-01`, { month: true }) : (creditData.report_month || '--');
-        if (holderNameEl) holderNameEl.textContent = creditData.holder_name || '--';
-        if (holderCodeEl) holderCodeEl.textContent = creditData.holder_code || 'N/A';
-        if (holderIdentifierEl) {
-            holderIdentifierEl.textContent = creditData.identifier?.value || '--';
-        }
-
-        if (totalDrawnEl) totalDrawnEl.textContent = R.money(creditData.total_drawn);
-        if (totalOverdueEl) totalOverdueEl.textContent = R.money(creditData.total_overdue);
-        if (totalArrearsEl) totalArrearsEl.textContent = R.money(creditData.total_arrears);
-        if (totalAvailableEl) totalAvailableEl.textContent = R.money(creditData.total_risk_available);
-
-        // How much of the credit granted is drawn: the report's own two totals, when it gives both
-        const useMeter = document.getElementById('cirbeUseMeter');
-        if (useMeter) {
-            const drawn = R.has(creditData.total_drawn) ? Number(creditData.total_drawn.amount) : null;
-            const available = R.has(creditData.total_risk_available) ? Number(creditData.total_risk_available.amount) : null;
-            const granted = drawn !== null && available !== null ? drawn + available : 0;
-            const part = granted > 0 ? drawn / granted : null;
-            useMeter.classList.toggle('hidden', part === null);
-            useMeter.innerHTML = part === null ? '' : R.meter(part, {
-                left: `<b>${R.share(part)}</b> of the credit granted is drawn`,
-                right: `${R.money({ ...creditData.total_drawn, amount: granted })} granted`,
-                tone: part >= 0.9 ? 'is-high' : part >= 0.7 ? 'is-mid' : '',
-            });
-        }
-
-        const overdueVal = R.has(creditData.total_overdue) ? Number(creditData.total_overdue.amount) : NaN;
-        const arrearsVal = R.has(creditData.total_arrears) ? Number(creditData.total_arrears.amount) : NaN;
-        
-        const overdueCard = document.getElementById('cirbeOverdueCard');
-        const arrearsCard = document.getElementById('cirbeArrearsCard');
-        if (overdueCard) {
-            if (overdueVal > 0) {
-                overdueCard.className = "p-5 rounded-2xl bg-red-50 border border-red-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
-                document.getElementById('cirbeTotalOverdue').className = "text-xl font-black text-red-600 font-mono mt-2 tracking-tight";
-            } else {
-                overdueCard.className = "p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
-                document.getElementById('cirbeTotalOverdue').className = "text-xl font-black text-slate-800 font-mono mt-2 tracking-tight";
-            }
-        }
-        if (arrearsCard) {
-            if (arrearsVal > 0) {
-                arrearsCard.className = "p-5 rounded-2xl bg-red-50 border border-red-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
-                document.getElementById('cirbeTotalArrears').className = "text-xl font-black text-red-600 font-mono mt-2 tracking-tight";
-            } else {
-                arrearsCard.className = "p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col justify-between shadow-sm relative overflow-hidden group";
-                document.getElementById('cirbeTotalArrears').className = "text-xl font-black text-slate-800 font-mono mt-2 tracking-tight";
-            }
-        }
-
-        let isSigned = false;
-        let attachmentId = null;
-        let contentName = 'CIRBE_Report.pdf';
-        
-        const att = R.listOf(creditData.attachments).find(file => R.isRecord(file) && file.id);
-        if (att) {
-            attachmentId = att.id;
-            contentName = att.content_name || 'CIRBE_Report.pdf';
-            isSigned = !!att.metadata?.['signature-verified'];
-        }
-
-        if (signatureVerifiedBadge) {
-            if (isSigned) {
-                signatureVerifiedBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider";
-                signatureVerifiedBadge.innerHTML = '<i class="fa-solid fa-signature"></i> Signature Verified (Banco de España CA)';
-            } else {
-                signatureVerifiedBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-500/20 bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider";
-                signatureVerifiedBadge.innerHTML = '<i class="fa-solid fa-signature-slash"></i> Unsigned / Self-Signed';
-            }
-        }
-
-        if (downloadPdfBtn) {
-            if (attachmentId) {
-                downloadPdfBtn.onclick = () => window.openAttachment(downloadPdfBtn, attachmentId);
-                downloadPdfBtn.disabled = false;
-                downloadPdfBtn.className = "px-4 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 cursor-pointer";
-                downloadPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf text-base"></i> View Original PDF';
-            } else {
-                downloadPdfBtn.disabled = true;
-                downloadPdfBtn.className = "px-4 py-2 border border-slate-200 bg-slate-100 text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 opacity-50 cursor-not-allowed";
-                downloadPdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf text-base"></i> No PDF Available';
-            }
-        }
-
-        if (operationsTable) {
-            const ops = R.listOf(creditData.operations).filter(R.isRecord);
-            const isAggregated = creditData.sub_family === 'credit_registry_data:es_cirbe_aggregated';
-            const entityHeader = document.getElementById('cirbeEntityHeader');
-            if (entityHeader) entityHeader.style.display = isAggregated ? 'none' : '';
-            const columns = isAggregated ? 5 : 6;
-            // A figure that is not zero is shown in its tone; zero plain; one the report did not give, a dash
-            const figure = (money, tone) => {
-                if (!R.has(money)) return '<span class="text-slate-300">—</span>';
-                const value = Number(money.amount);
-                if (value > 0 && tone) return `<span class="${tone}">${R.money(money)}</span>`;
-                return value === 0 ? `<span class="text-slate-400">${R.money(money)}</span>` : R.money(money);
-            };
-            const operation = (op, index) => {
-                const product = cirbeLabel(CIRBE_PRODUCT_LABELS, op.product_type, op.product_type_code) || 'Unknown product';
-                // Second line: the terms of the operation
-                const terms = [];
-                if (op.intervention_nature || op.intervention_nature_code) {
-                    const nature = CIRBE_NATURE_LABELS[op.intervention_nature];
-                    terms.push(cirbeChip(nature?.icon || 'fa-user', cirbeLabel(CIRBE_NATURE_LABELS, op.intervention_nature, op.intervention_nature_code), op.intervention_nature === 'guarantor' ? 'amber' : 'indigo'));
-                }
-                if (op.maturity_type || op.maturity_type_code) {
-                    terms.push(cirbeChip('fa-hourglass-half', `Maturity: ${cirbeLabel(CIRBE_MATURITY_LABELS, op.maturity_type, op.maturity_type_code)}`));
-                }
-                if ((op.real_guarantee_type && op.real_guarantee_type !== 'none') || (!op.real_guarantee_type && op.real_guarantee_type_code)) {
-                    const coverage = op.real_guarantee_coverage ? ` · ${CIRBE_COVERAGE_LABELS[op.real_guarantee_coverage] || op.real_guarantee_coverage}` : '';
-                    terms.push(cirbeChip('fa-house-lock', `${cirbeLabel(CIRBE_REAL_GUARANTEE_LABELS, op.real_guarantee_type, op.real_guarantee_type_code)}${coverage}`, 'emerald'));
-                }
-                if ((op.personal_guarantee_type && op.personal_guarantee_type !== 'none') || (!op.personal_guarantee_type && op.personal_guarantee_type_code)) {
-                    const coverage = op.personal_guarantee_coverage ? ` · ${CIRBE_COVERAGE_LABELS[op.personal_guarantee_coverage] || op.personal_guarantee_coverage}` : '';
-                    terms.push(cirbeChip('fa-handshake', `Personal: ${cirbeLabel(CIRBE_PERSONAL_GUARANTEE_LABELS, op.personal_guarantee_type, op.personal_guarantee_type_code)}${coverage}`, 'emerald'));
-                }
-                if (op.collective_status || op.collective_status_code) {
-                    terms.push(cirbeChip('fa-link', cirbeLabel(CIRBE_JOINT_LIABILITY_LABELS, op.collective_status, op.collective_status_code)));
-                }
-                const participants = Number(op.participants_number);
-                if (Number.isFinite(participants) && participants > 0) terms.push(cirbeChip('fa-users', R.plural(participants, 'participant', 'participants')));
-                return `
-                <tbody data-i="${index}">
-                    <tr class="group">
-                        ${!isAggregated ? `
-                            <td class="px-4 pl-6 pt-4 pb-1.5 align-top">
-                                <div class="flex flex-col">
-                                    <span class="text-xs font-bold text-slate-800">${escapeHtml(op.entity_name || 'Declaring entity')}</span>
-                                    ${op.entity_code ? `<span class="text-[9px] font-mono text-slate-400 mt-0.5">${escapeHtml(op.entity_code)}</span>` : ''}
-                                </div>
-                            </td>` : ''}
-                        <td class="px-4 ${isAggregated ? 'pl-6' : ''} pt-4 pb-1.5 align-top text-xs font-bold text-slate-700">${escapeHtml(product)}</td>
-                        <td class="px-4 pt-4 pb-1.5 align-top font-mono text-xs text-right font-bold text-slate-800 whitespace-nowrap">${figure(op.total_drawn)}</td>
-                        <td class="px-4 pt-4 pb-1.5 align-top font-mono text-xs text-right whitespace-nowrap">${figure(op.overdue, 'text-red-600 font-bold')}</td>
-                        <td class="px-4 pt-4 pb-1.5 align-top font-mono text-xs text-right whitespace-nowrap">${figure(op.arrears, 'text-red-500 font-medium')}</td>
-                        <td class="px-4 pr-6 pt-4 pb-1.5 align-top font-mono text-xs text-right text-slate-500 whitespace-nowrap">${figure(op.risk_available)}</td>
-                    </tr>
-                    <tr class="border-b border-slate-100">
-                        <td colspan="${columns}" class="px-6 pb-4 pt-0.5">
-                            <div class="flex items-center gap-1.5 flex-wrap">${terms.join('') || '<span class="text-[10px] text-slate-300 italic">No terms reported</span>'}</div>
-                        </td>
-                    </tr>
-                </tbody>`;
-            };
-            // One tbody per operation, so the search hides both of its rows
-            operationsTable.querySelectorAll('tbody').forEach(body => body.remove());
-            R.index('cirbeOperations', ops, op => [op.entity_name, op.entity_code, cirbeLabel(CIRBE_PRODUCT_LABELS, op.product_type, op.product_type_code), cirbeLabel(CIRBE_NATURE_LABELS, op.intervention_nature, op.intervention_nature_code), cirbeLabel(CIRBE_MATURITY_LABELS, op.maturity_type, op.maturity_type_code), op.operation_code, ...R.spellings(op.total_drawn)].filter(Boolean).join(' '));
-            operationsTable.insertAdjacentHTML('beforeend', ops.length
-                ? ops.map((op, index) => R.safely(operation, [op, index], () => `<tbody data-i="${index}"><tr><td colspan="${columns}" class="px-6 py-4">${R.broken(op.entity_name || 'An operation')}</td></tr></tbody>`)).join('') + `<tbody>${R.searchNone('No operation matches the search.', columns)}</tbody>`
-                : `<tbody><tr><td colspan="${columns}" class="p-8 text-center text-slate-400 text-xs italic">No active operations reported in the registry.</td></tr></tbody>`);
-            const head = document.getElementById('cirbeOperationsHead');
-            if (head) {
-                head.innerHTML = `
-                    <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-list-check text-slate-400 mr-1.5"></i> Active Risk Operations <em class="not-italic ml-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] tracking-normal" id="cirbeOperationsCount">${ops.length}</em></h4>
-                    ${ops.length > 4 ? R.searchBox({ target: 'cirbeOperations', placeholder: 'Search operations', label: 'Search the operations', title: 'Entity, product, role, maturity, operation code or amount — every word must match; quotes keep a phrase together' }) : ''}`;
-            }
-        }
-
-        const minorRisks = R.listOf(creditData.minor_risks).filter(R.isRecord);
-        if (minorRisksSection) {
-            minorRisksSection.classList.toggle('hidden', !minorRisks.length);
-            if (minorRisksList) {
-                minorRisksList.innerHTML = minorRisks.map(risk => `
-                    <div class="p-4 rounded-xl bg-slate-50/70 border border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-xs shrink-0">
-                                <i class="fa-solid fa-briefcase"></i>
-                            </div>
-                            <div class="flex flex-col min-w-0">
-                                <span class="text-xs font-bold text-slate-700">${escapeHtml(risk.entity_name || 'Declaring entity')}</span>
-                                <span class="text-[9px] font-mono text-slate-400 mt-0.5">Entity Code: ${escapeHtml(risk.entity_code || '—')}</span>
-                            </div>
-                        </div>
-                        ${R.has(risk.limit_amount) ? `
-                        <div class="flex flex-col text-right">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Accumulation Limit</span>
-                            <span class="text-xs font-black text-slate-800 font-mono mt-0.5">${R.money(risk.limit_amount)}</span>
-                        </div>` : ''}
-                    </div>`).join('');
-            }
-        }
-    };
-
-    window.renderTaxesData = function(payload) {
-        const container = document.getElementById('taxesContainer');
-        if (!container) return;
-
-        const taxes = InfoniteResults.listOf(payload?.data?.tax?.individual_yearly).filter(InfoniteResults.isRecord);
-        
-        if (!taxes || taxes.length === 0) {
-            container.innerHTML = `<div class="p-8 text-center bg-slate-50 text-slate-400 text-sm italic border border-dashed rounded-2xl border-slate-200 flex flex-col items-center justify-center min-h-[200px]"><i class="fa-solid fa-file-invoice-dollar text-3xl opacity-50 mb-3"></i>No fiscal data found in this payload.</div>`;
-            return;
-        }
-
-        // a year that came in a shape this page does not expect says so, and the others still draw
-        container.innerHTML = taxes.map((tax, index) => InfoniteResults.safely((tax, index) => {
-            const empIncome = parseFloat(tax.income?.employment?.total_gross?.amount || 0);
-            const busIncome = parseFloat(tax.income?.business?.total_income?.amount || 0);
-            const yearStr = String(tax.fiscal_year_start || '').substring(0, 4) || 'Unknown';
-            // Use index strictly ensuring unique IDs or use fiscal_year_start 
-            const identifier = tax.fiscal_year_start || index;
-
-            let incomeHtml = '';
-            if (empIncome > 0) {
-                incomeHtml += `
-                    <div class="flex flex-col text-right hidden lg:flex">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gross Employment</span>
-                        <span class="text-base font-black text-slate-800 font-mono leading-tight mt-0.5">${formatCurrency(empIncome)}</span>
-                    </div>
-                `;
-            }
-            if (busIncome > 0) {
-                incomeHtml += `
-                    <div class="flex flex-col text-right hidden lg:flex">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Business Income</span>
-                        <span class="text-base font-black text-slate-800 font-mono leading-tight mt-0.5">${formatCurrency(busIncome)}</span>
-                    </div>
-                `;
-            }
-            if (empIncome === 0 && busIncome === 0) {
-                 incomeHtml = `
-                    <div class="flex flex-col text-right hidden lg:flex">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Income</span>
-                        <span class="text-base font-black text-slate-400 font-mono leading-tight mt-0.5">--</span>
-                    </div>
-                `;
-            }
-
-            return `
-                <div onclick="window.showYearlyTaxDetails(${escapeHtml(JSON.stringify(String(identifier)))})" class="bg-slate-50 border border-slate-100/80 rounded-[1.5rem] p-6 shadow-sm hover:shadow-md hover:border-slate-300 transition-all relative overflow-hidden group cursor-pointer flex items-center justify-between">
-                    <!-- Watermark -->
-                    <div class="absolute -right-6 -bottom-6 opacity-[0.02] text-8xl group-hover:scale-110 group-hover:opacity-[0.04] transition-all duration-500 text-slate-900 pointer-events-none z-0">
-                        <i class="fa-solid fa-file-invoice-dollar"></i>
-                    </div>
-
-                    <!-- Content -->
-                    <div class="flex items-center gap-5 relative z-10 w-full justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl bg-[rgba(var(--primary-rgb),0.05)] border border-[rgba(var(--primary-rgb),0.1)] flex items-center justify-center text-xl shadow-inner shrink-0 group-hover:bg-[var(--primary)] group-hover:text-white transition-colors text-[var(--primary)]">
-                                <i class="fa-solid fa-file-signature"></i>
-                            </div>
-                            <div class="flex flex-col items-start">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base font-black text-slate-800 tracking-tight">Fiscal Data ${yearStr}</span>
-                                    <span class="text-[8px] font-bold px-1.5 py-0.5 rounded ${tax.status === 'submitted' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'} uppercase tracking-widest">${escapeHtml(tax.status || 'filed')}</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
-                                    ${InfoniteResults.listOf(tax.attachments).filter(InfoniteResults.isRecord).length ? InfoniteResults.listOf(tax.attachments).filter(InfoniteResults.isRecord).map(att => {
-                                        const meta = window.getAttachmentMeta(att.sub_family);
-                                        return `
-                                        <div class="flex items-center gap-1.5 rounded-md bg-slate-50 border border-slate-200/60 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest" title="${escapeHtml(att.content_name || 'Attachment')}">
-                                            <i class="fa-solid ${meta.icon} text-red-400"></i> ${escapeHtml(meta.name)}
-                                        </div>
-                                        `;
-                                    }).join('') : '<span class="text-[9px] text-slate-300 italic font-medium">No attachments</span>'}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-6">
-                            <div class="flex gap-6 items-center">
-                                ${incomeHtml}
-                            </div>
-                            <div class="w-10 h-10 rounded-full bg-white border border-slate-100 text-slate-400 flex items-center justify-center group-hover:bg-[var(--primary)] group-hover:text-white transition-colors shadow-sm shrink-0">
-                                <i class="fa-solid fa-arrow-right text-sm"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }, [tax, index], () => InfoniteResults.broken(`Fiscal year ${String(tax.fiscal_year_start || '').substring(0, 4) || index + 1}`))).join('');
-    };
-
-    window.showYearlyTaxDetails = async function(identifier) {
-        await switchDashboardView('yearly-tax-details');
-        
-        const container = document.getElementById('yearlyTaxDetailsContainer');
-        const titleYear = document.getElementById('yearlyTaxTitleYear');
-        
-        if (!container || !window.currentResultData) return;
-        const payload = window.currentResultData;
-        const taxes = InfoniteResults.listOf(payload?.data?.tax?.individual_yearly).filter(InfoniteResults.isRecord);
-            
-        // Find using identifier (fiscal_year_start or index if we were passing index, but we pass fiscal_year_start or index as string representation)
-        const tax = taxes.find((t, i) => (t.fiscal_year_start || i.toString()) === identifier);
-
-        if (!tax) {
-            container.innerHTML = `<div class="p-8 text-center bg-red-50 text-red-500 text-sm border border-red-200 rounded-2xl">Tax year details not found.</div>`;
-            return;
-        }
-
-        const yearStr = String(tax.fiscal_year_start || '').substring(0, 4) || 'Unknown';
-        if (titleYear) titleYear.textContent = yearStr;
-
-        const empIncome = parseFloat(tax.income?.employment?.total_gross?.amount || 0);
-        const busIncome = parseFloat(tax.income?.business?.total_income?.amount || 0);
-
-        // Tab header removed in favor of data affinity grouping
-        const tabHeader = '';
-        // Building HTML Tables for Arrays
-        let employmentTable = '';
-        const empLines = InfoniteResults.listOf(tax.income?.employment?.lines).filter(InfoniteResults.isRecord);
-        if (empLines.length > 0) {
-            employmentTable = `
-                <div class="border border-slate-100 rounded-xl overflow-x-auto shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
-                    <table class="w-full min-w-[520px] text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
-                            <tr>
-                                <th class="px-5 py-3">Payer / Employer</th>
-                                <th class="px-5 py-3 text-right">Gross Remun.</th>
-                                <th class="px-5 py-3 text-right">Withholding</th>
-                                <th class="px-5 py-3 text-right">Social Security</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            ${empLines.map(item => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3">
-                                        <div class="font-bold text-slate-800">${escapeHtml(item.employer_name || '—')}</div>
-                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.employer_id || '—')}</div>
-                                    </td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-slate-700">${formatCurrency(item.gross_income?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.tax_withheld?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.social_security_contributions?.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } else {
-             employmentTable = `<div class="p-8 text-center text-slate-400 border border-slate-200 border-dashed rounded-xl italic">No employment income lines reported.</div>`;
-        }
-
-        let capitalTable = '';
-        const capLines = InfoniteResults.listOf(tax.income?.capital?.lines).filter(InfoniteResults.isRecord);
-        if (capLines.length > 0) {
-            capitalTable = `
-                <div class="border border-slate-100 rounded-xl overflow-x-auto shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
-                    <table class="w-full min-w-[520px] text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
-                            <tr>
-                                <th class="px-5 py-3">Provider</th>
-                                <th class="px-5 py-3 text-center">Asset Type</th>
-                                <th class="px-5 py-3 text-right">Gross Income</th>
-                                <th class="px-5 py-3 text-right">Withholding</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            ${capLines.map(item => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3">
-                                        <div class="font-bold text-slate-800">${escapeHtml(item.provider_name || '—')}</div>
-                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.provider_id || '—')} ${item.account_number ? '• ' + escapeHtml(String(item.account_number).slice(-4)) : ''}</div>
-                                    </td>
-                                    <td class="px-5 py-3 text-center font-bold text-[10px] text-slate-500">${escapeHtml(item.asset_type || '—')}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.gross_income?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.tax_withheld?.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } else {
-            capitalTable = `<div class="p-8 text-center text-slate-400 border border-slate-200 border-dashed rounded-xl italic">No capital income lines reported.</div>`;
-        }
-
-        let capitalGainsTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-arrow-trend-up text-2xl mb-2 opacity-50"></i>No capital gains reported for this fiscal year.</div>`;
-        const capGainsLines = InfoniteResults.listOf(tax.income?.capital_gains?.lines).filter(InfoniteResults.isRecord);
-        if (capGainsLines.length > 0) {
-            capitalGainsTable = `
-                <div class="border border-slate-100 rounded-xl overflow-x-auto shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
-                    <table class="w-full min-w-[520px] text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
-                            <tr>
-                                <th class="px-5 py-3">Broker / Asset</th>
-                                <th class="px-5 py-3 text-center">Sale Date</th>
-                                <th class="px-5 py-3 text-right">Sale Value</th>
-                                <th class="px-5 py-3 text-right">Sale Expenses</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            ${capGainsLines.map(item => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3">
-                                        <div class="font-bold text-slate-800">${escapeHtml(item.broker_name || '—')}</div>
-                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.broker_id || '—')} • <span class="font-sans font-medium text-[9px] uppercase">${escapeHtml(item.asset_description || item.asset_type || '—')}</span></div>
-                                    </td>
-                                    <td class="px-5 py-3 text-center font-semibold text-slate-500">${item.sale_date ? InfoniteResults.day(item.sale_date) : '—'}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.sale_value?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.sale_expenses?.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        let businessTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-store text-2xl mb-2 opacity-50"></i>No business activities reported for this fiscal year.</div>`;
-        const bisLines = InfoniteResults.listOf(tax.income?.business?.activities).filter(InfoniteResults.isRecord);
-        if (bisLines.length > 0) {
-             businessTable = `
-                <div class="border border-slate-100 rounded-xl overflow-x-auto shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
-                    <table class="w-full min-w-[520px] text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
-                            <tr>
-                                <th class="px-5 py-3">Activity</th>
-                                <th class="px-5 py-3 text-right">Income</th>
-                                <th class="px-5 py-3 text-right">Withholding</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            ${bisLines.map(item => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3">
-                                        <div class="font-bold text-slate-800">${escapeHtml(item.description || '—')}</div>
-                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.payer_id || '—')} • <span class="font-sans font-medium text-[9px] uppercase">${escapeHtml(item.activity_code || '—')}</span></div>
-                                    </td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.total_income?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.tax_withheld?.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-             `;
-        }
-
-        let realEstateTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-building text-2xl mb-2 opacity-50"></i>No real estate properties reported for this fiscal year.</div>`;
-        const reLines = InfoniteResults.listOf(tax.income?.real_estate?.properties).filter(InfoniteResults.isRecord);
-        if (reLines.length > 0) {
-             realEstateTable = `
-                <div class="border border-slate-100 rounded-xl overflow-x-auto shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
-                    <table class="w-full min-w-[520px] text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
-                            <tr>
-                                <th class="px-5 py-3">Property</th>
-                                <th class="px-5 py-3 text-right">Gross Income</th>
-                                <th class="px-5 py-3 text-right">Deductions</th>
-                                <th class="px-5 py-3 text-right">Net Income</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            ${reLines.map(item => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3">
-                                        <div class="font-bold text-slate-800">${escapeHtml(item.address || '—')}</div>
-                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">Ref: ${escapeHtml(item.cadastral_reference || '—')}</div>
-                                    </td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.gross_income?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-500">${formatCurrency(item.deductible_expenses?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-slate-800">${formatCurrency(item.net_income?.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-             `;
-        }
-
-        const paneEmployment = `
-            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${empLines.length > 0 ? 'open' : ''}>
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
-                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                        <i class="fa-solid fa-briefcase text-[var(--primary)] text-sm"></i> Employment Income
-                    </span>
-                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="flex flex-col gap-4 p-3 sm:p-5 bg-white">
-                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                        ${renderTaxDetailRow('Gross Remuneration', tax.income?.employment?.total_gross?.amount)}
-                        ${renderTaxDetailRow('Withholdings (IRPF)', tax.income?.employment?.total_withheld?.amount)}
-                        ${renderTaxDetailRow('Social Security', tax.income?.employment?.total_social_security?.amount)}
-                    </div>
-                    ${employmentTable}
-                </div>
-            </details>
-        `;
-        
-        const paneCapital = `
-            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${capLines.length > 0 ? 'open' : ''}>
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
-                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                        <i class="fa-solid fa-piggy-bank text-[var(--primary)] text-sm"></i> Capital Income
-                    </span>
-                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="flex flex-col gap-4 p-3 sm:p-5 bg-white">
-                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                        ${renderTaxDetailRow('Total Gross', tax.income?.capital?.total_gross?.amount)}
-                        ${renderTaxDetailRow('Total Withheld', tax.income?.capital?.total_withheld?.amount)}
-                        ${renderTaxDetailRow('Total Deductible Expenses', tax.income?.capital?.total_expenses?.amount)}
-                    </div>
-                    ${capitalTable}
-                </div>
-            </details>
-        `;
-
-        const paneCapitalGains = `
-            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${capGainsLines.length > 0 ? 'open' : ''}>
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
-                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                        <i class="fa-solid fa-arrow-trend-up text-[var(--primary)] text-sm"></i> Capital Gains
-                    </span>
-                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="flex flex-col gap-4 p-3 sm:p-5 bg-white">
-                    ${capitalGainsTable}
-                </div>
-            </details>
-        `;
-
-        const paneBusiness = `
-            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${bisLines.length > 0 ? 'open' : ''}>
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
-                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                        <i class="fa-solid fa-store text-[var(--primary)] text-sm"></i> Business Income
-                    </span>
-                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="flex flex-col gap-4 p-3 sm:p-5 bg-white">
-                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                        ${renderTaxDetailRow('Total Income', tax.income?.business?.total_income?.amount)}
-                        ${renderTaxDetailRow('Total Withheld', tax.income?.business?.total_withheld?.amount)}
-                    </div>
-                    ${businessTable}
-                </div>
-            </details>
-        `;
-
-        const paneRealEstate = `
-            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${reLines.length > 0 ? 'open' : ''}>
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
-                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                        <i class="fa-solid fa-building text-[var(--primary)] text-sm"></i> Real Estate Income
-                    </span>
-                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="flex flex-col gap-4 p-3 sm:p-5 bg-white">
-                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                        ${renderTaxDetailRow('Total Gross Income', tax.income?.real_estate?.total_gross_income?.amount)}
-                        ${renderTaxDetailRow('Total Net Income', tax.income?.real_estate?.total_net_income?.amount)}
-                    </div>
-                    ${realEstateTable}
-                </div>
-            </details>
-        `;
-
-        let donationsTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-hand-holding-heart text-2xl mb-2 opacity-50"></i>No donations reported for this fiscal year.</div>`;
-        const donLines = InfoniteResults.listOf(tax.deductions?.donations).filter(InfoniteResults.isRecord);
-        if (donLines.length > 0) {
-             donationsTable = `
-                <div class="border border-slate-100 rounded-xl overflow-x-auto shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
-                    <table class="w-full min-w-[520px] text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
-                            <tr>
-                                <th class="px-5 py-3">Entity</th>
-                                <th class="px-5 py-3 text-center">Type</th>
-                                <th class="px-5 py-3 text-right">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            ${donLines.map(item => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3">
-                                        <div class="font-bold text-slate-800">${escapeHtml(item.entity_name || '—')}</div>
-                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${escapeHtml(item.entity_id || '—')}</div>
-                                    </td>
-                                    <td class="px-5 py-3 text-center font-bold text-[10px] text-slate-500">${escapeHtml(item.donation_type || '—')} ${item.is_recurring ? '<i class="fa-solid fa-rotate text-[10px] text-[var(--primary)] ml-1" title="Recurring"></i>' : ''}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.amount?.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-             `;
-        }
-
-        const paneDonations = `
-             <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${donLines.length > 0 ? 'open' : ''}>
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
-                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                        <i class="fa-solid fa-hand-holding-heart text-[var(--primary)] text-sm"></i> Donations
-                    </span>
-                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="flex flex-col gap-4 p-3 sm:p-5 bg-white">
-                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                        ${renderTaxDetailRow('Total Donations', tax.deductions?.total_donations?.amount)}
-                        ${renderTaxDetailRow('Total Deductions', tax.deductions?.total_deductions?.amount)}
-                    </div>
-                    ${donationsTable}
-                </div>
-            </details>
-        `;
-
-        let liabilitiesTable = `<div class="text-center p-8 bg-slate-50 border border-slate-100 border-dashed rounded-2xl text-slate-400 text-sm italic flex flex-col items-center w-full min-h-[150px] justify-center"><i class="fa-solid fa-file-invoice text-2xl mb-2 opacity-50"></i>No liabilities or loans reported for this fiscal year.</div>`;
-        const liaLines = InfoniteResults.listOf(tax.liabilities?.real_estate_loans).filter(InfoniteResults.isRecord);
-        if (liaLines.length > 0) {
-             liabilitiesTable = `
-                <div class="border border-slate-100 rounded-xl overflow-x-auto shadow-[0_2px_10px_rgba(0,0,0,0.02)] mt-2">
-                    <table class="w-full min-w-[520px] text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[9px] font-black">
-                            <tr>
-                                <th class="px-5 py-3">Lender / Loan ID</th>
-                                <th class="px-5 py-3 text-center">Formalization</th>
-                                <th class="px-5 py-3 text-right">Amortized Capital</th>
-                                <th class="px-5 py-3 text-right">Interests</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 bg-white">
-                            ${liaLines.map(item => `
-                                <tr class="hover:bg-slate-50/50 transition-colors">
-                                    <td class="px-5 py-3">
-                                        <div class="font-bold text-slate-800">${escapeHtml(item.lender_name || '—')} <span class="text-[10px] text-[var(--primary)] font-mono ml-1 font-bold">${Number.isFinite(Number(item.participation)) ? InfoniteResults.share(Number(item.participation)) : ''}</span></div>
-                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${item.loan_id ? 'Loan: ' + escapeHtml(String(item.loan_id).slice(-6)) : '—'}</div>
-                                    </td>
-                                    <td class="px-5 py-3 text-center font-bold text-[10px] text-slate-500">${item.formalization_date ? InfoniteResults.day(item.formalization_date) : '—'}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-bold text-[var(--primary)]">${formatCurrency(item.amortized_capital?.amount)}</td>
-                                    <td class="px-5 py-3 text-right font-mono font-medium text-slate-700">${formatCurrency(item.interests?.amount)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-             `;
-        }
-
-        const paneLiabilities = `
-            <details class="group bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" ${liaLines.length > 0 ? 'open' : ''}>
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-transparent group-open:border-slate-100">
-                    <span class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
-                        <i class="fa-solid fa-file-invoice text-red-500 text-sm"></i> Real Estate Loans
-                    </span>
-                    <span class="transition-transform group-open:rotate-180 text-slate-400"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="flex flex-col gap-4 p-3 sm:p-5 bg-white">
-                    <div class="flex flex-col gap-0 border border-slate-100 rounded-2xl bg-white overflow-hidden shadow-sm">
-                        <div class="px-6 py-4 bg-slate-50 border-b border-slate-100"><h4 class="text-[10px] font-black text-slate-800 uppercase tracking-widest">Aggregate Totals</h4></div>
-                        ${renderTaxDetailCount('Active Loans', liaLines.length)}
-                    </div>
-                    ${liabilitiesTable}
-                </div>
-            </details>
-        `;
-
-
-        // Check for attachments
-        let taxAttachmentsHtml = '';
-        const attachments = InfoniteResults.listOf(tax.attachments).filter(att => InfoniteResults.isRecord(att) && att.id);
-        if (attachments.length > 0) {
-            taxAttachmentsHtml = attachments.map((att, idx) => {
-                const meta = window.getAttachmentMeta(att.sub_family);
-                const btnId = `btnDownloadTaxModel-${yearStr}-${idx}`;
-                
-                let colorBgClass = 'bg-slate-50 text-slate-500 hover:bg-slate-100';
-                if (meta.color === 'red') colorBgClass = 'bg-red-50 text-red-500 hover:bg-red-100';
-                else if (meta.color === 'blue') colorBgClass = 'bg-blue-50 text-blue-500 hover:bg-blue-100';
-                else if (meta.color === 'emerald') colorBgClass = 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100';
-                else if (meta.color === 'indigo') colorBgClass = 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100';
-                else if (meta.color === 'amber') colorBgClass = 'bg-amber-50 text-amber-500 hover:bg-amber-100';
-
-                return `
-                <button id="${btnId}" onclick="openAttachment(this, ${escapeHtml(JSON.stringify(String(att.id)))})" class="w-full md:w-auto flex items-center justify-center gap-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm text-xs font-bold group mt-1">
-                    <div class="w-6 h-6 rounded ${colorBgClass} flex items-center justify-center shrink-0 transition-colors attachment-icon-container">
-                        <i class="fa-solid ${meta.icon} text-[10px]"></i>
-                    </div>
-                    <div class="flex flex-col items-start leading-tight">
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400">${escapeHtml(meta.name)}</span>
-                        <span class="text-xs font-bold text-slate-800 text-left truncate max-w-[140px]">${escapeHtml(window.formatContentType(att.content_type))}</span>
-                    </div>
-                </button>
-                `;
-            }).join('');
-        } else {
-            taxAttachmentsHtml = `<span class="text-[8px] font-bold uppercase tracking-widest text-slate-400 text-center md:text-right px-2 mt-2">No attachments available</span>`;
-        }
-
-
-        container.innerHTML = `
-            <!-- Compact KPI Header -->
-            <div class="bg-slate-50 border border-slate-100 p-5 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
-                <div class="flex flex-wrap items-center gap-x-6 gap-y-3 min-w-0">
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Tax Filling Status</span>
-                        <span class="text-sm font-bold text-slate-800 flex items-center gap-2"><div class="w-2 h-2 rounded-full ${tax.status === 'submitted' ? 'bg-emerald-500' : 'bg-amber-500'} shadow-sm"></div> ${escapeHtml(tax.status ? String(tax.status).toUpperCase() : 'DATA')}</span>
-                    </div>
-                    ${(() => {
-                        let kpiHtml = '';
-                        if (empIncome > 0) {
-                            kpiHtml += `
-                                <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Gross Employment</span>
-                                    <span class="text-sm font-bold text-[var(--primary)] font-mono leading-tight">${formatCurrency(empIncome)}</span>
-                                </div>
-                            `;
-                        }
-                        if (busIncome > 0) {
-                            kpiHtml += `
-                                <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Business Income</span>
-                                    <span class="text-sm font-bold text-slate-800 font-mono leading-tight">${formatCurrency(busIncome)}</span>
-                                </div>
-                            `;
-                        }
-                        if (empIncome === 0 && busIncome === 0) {
-                             kpiHtml = `
-                                <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Total Income</span>
-                                    <span class="text-sm font-bold text-slate-400 font-mono leading-tight">--</span>
-                                </div>
-                            `;
-                        }
-                        return kpiHtml;
-                    })()}
-                </div>
-                
-                <div class="flex flex-wrap md:flex-nowrap items-center gap-4 border-t md:border-t-0 border-slate-200 pt-5 md:pt-0">
-                    <!-- PDF Download Action -->
-                    <div class="flex flex-col items-center md:items-end gap-1 w-full md:w-auto">
-                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Supporting Documents</span>
-                        <div class="flex flex-col md:flex-row gap-2">
-                            ${taxAttachmentsHtml}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-8 flex flex-col gap-10">
-                
-                <!-- INCOME SECTION -->
-                <div class="flex flex-col gap-6">
-                    <h3 class="text-sm font-black uppercase tracking-[0.1em] text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-3">
-                        <i class="fa-solid fa-money-bill-wave text-[var(--primary)]"></i> Incomes
-                    </h3>
-                    <div class="grid grid-cols-1 gap-8">
-                        ${paneEmployment}
-                        ${paneBusiness}
-                        ${paneCapital}
-                        ${paneCapitalGains}
-                        ${paneRealEstate}
-                    </div>
-                </div>
-
-                <!-- DEDUCTIONS SECTION -->
-                <div class="flex flex-col gap-6">
-                    <h3 class="text-sm font-black uppercase tracking-[0.1em] text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-3">
-                        <i class="fa-solid fa-hand-holding-heart text-[var(--primary)]"></i> Deductions
-                    </h3>
-                    <div class="grid grid-cols-1 gap-8">
-                        ${paneDonations}
-                    </div>
-                </div>
-
-                <!-- LIABILITIES SECTION -->
-                <div class="flex flex-col gap-6">
-                    <h3 class="text-sm font-black uppercase tracking-[0.1em] text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-3">
-                        <i class="fa-solid fa-file-invoice text-red-500"></i> Liabilities
-                    </h3>
-                    <div class="grid grid-cols-1 gap-8">
-                        ${paneLiabilities}
-                    </div>
-                </div>
-
-            </div>
-        `;
-    };
-
-    /** A moment, to the second and in UTC, so a piece of evidence reads the same everywhere: «12 Sep 2026 · 12:16:20 UTC». */
     // --- The raw JSON, in the results kit's viewer ---
     /** The results the page holds, or what an open session has gathered so far. */
     window.openJsonModal = async function() {
@@ -3141,64 +1308,24 @@
         setTimeout(() => icon.className = 'fa-regular fa-copy', 2000);
     }
     
+    /** Opens the session's widget with the shared launcher: a dialog for a session that stays on its final screen, a tab otherwise. */
     function launchWidget() {
-        if (!currentSessionData || !currentSessionData.widget_url) {
-            alert("Widget URL not available yet.");
-            return;
-        }
-        // Only a session that stays on its final screen opens in the dialog: a redirect inside the
-        // dialog's iframe would carry the frame away, and the dialog with it. A redirecting session,
-        // or one whose settings are not known yet, opens in a tab of its own.
-        if (currentSessionData.session_settings?.completion_mode !== 'do_nothing') {
-            window.open(currentSessionData.widget_url, '_blank', 'noopener');
-            return;
-        }
-        const modal = document.getElementById('iframeModalLauncher');
-        const iframe = document.getElementById('widgetIframeTarget');
-        if (modal && iframe) {
-            if (window.glassHaloInk) glassHaloInk(modal.querySelector('.glass-halo'));
-            iframe.src = currentSessionData.widget_url;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
+        if (currentSessionData?.widget_url) InfoniteLauncher.launch(currentSessionData.widget_url, currentSessionData.session_settings);
     }
-    
-    function closeWidget() {
-        const modal = document.getElementById('iframeModalLauncher');
-        const iframe = document.getElementById('widgetIframeTarget');
-        if (modal && iframe) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            iframe.src = 'about:blank'; // Free memory and sound instantly
-            
-            // Immediately Poll After iframe close just in case
-            if (currentSessionData && currentSessionData.infonite_state?.is_closed === false) {
-                 tickSync(currentSessionData);
-            }
-        }
-    }
-    
-    // The widget says when it is done (`es-public-administration:ended`, or the older `engine_completed`)
-    // — from the dialog's own frame, never from anything else on the page. Its final screen stays in
-    // sight a moment; then the dialog closes and the page reads the session again.
-    window.addEventListener('message', (event) => {
-        const frame = document.getElementById('widgetIframeTarget');
-        if (!frame || event.source !== frame.contentWindow) return;
-        if (event.data?.type !== 'engine_completed' && event.data?.event !== 'es-public-administration:ended') return;
-        setTimeout(() => {
-            closeWidget();
-            setTimeout(() => window.location.reload(), 300);
-        }, 2500);
+
+    // When the widget says it is done, its final screen stays in sight a moment, the dialog closes and
+    // the page reads the session again; closed by hand, the session is polled once at once.
+    InfoniteLauncher.mount({
+        event: 'es-public-administration:ended',
+        // the older widget says `engine_completed`
+        accept: (data) => data?.event === 'es-public-administration:ended' || data?.type === 'engine_completed',
+        onClosed: ({ ended } = {}) => {
+            if (ended) setTimeout(() => window.location.reload(), 300);
+            else if (currentSessionData?.infonite_state?.is_closed === false) tickSync(currentSessionData);
+        },
     });
 </script>
 
-<!-- Iframe LAUNCH Modal -->
-<div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center glass-layout transition-opacity" onclick="closeWidget()">
-    <div class="relative w-full md:max-w-[540px] h-full md:h-[750px] max-h-full md:max-h-[90vh] rounded-none md:rounded-3xl glass-halo mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
-        <!-- Optional skeleton loading could go here, but an empty white screen is fine -->
-        <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 glass-frame-scaled" src="about:blank"></iframe>
-    </div>
-</div>
 
 </body>
 </html>

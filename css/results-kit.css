@@ -17,8 +17,10 @@
 .rk-avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 9999px; background: var(--primary); color: #fff; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; flex-shrink: 0; }
 .rk-avatar.sm { width: 28px; height: 28px; font-size: 10px; background: var(--primary-container); color: var(--primary); }
 .rk-avatar.lg { width: 64px; height: 64px; font-size: 22px; box-shadow: 0 10px 24px rgba(var(--primary-rgb), 0.3); }
-.rk-avatar.has-photo { overflow: hidden; background: #f1f5f9; }
-.rk-avatar.has-photo img { width: 100%; height: 100%; object-fit: cover; }
+.rk-avatar.has-photo { background: #f1f5f9; }
+/* the picture is rounded itself, so a badge on the avatar is never cut */
+.rk-avatar.has-photo img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.rk-me .rk-avatar.has-photo { box-shadow: 0 0 0 2px var(--primary-container); }
 .rk-avatar-alert { position: absolute; right: -3px; top: -3px; width: 15px; height: 15px; border-radius: 9999px; background: #f59e0b; color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; }
 
 /* ---- the banner a crossed identity raises on every screen ---- */
@@ -65,6 +67,13 @@
 .rk-logo.xs { width: 18px; height: 18px; border-radius: 6px; font-size: 9px; }
 .rk-logo.is-unknown { background: #fffbeb; border-color: #fde68a; color: #d97706; }
 
+/* ---- the way back from a record's own page: «Accounts / My account» ---- */
+.rk-crumbs { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #94a3b8; min-width: 0; }
+.rk-crumbs button { display: inline-flex; align-items: center; gap: 7px; color: var(--primary); font-weight: 800; flex-shrink: 0; }
+.rk-crumbs button i { font-size: 10px; transition: transform 150ms; }
+.rk-crumbs button:hover i { transform: translateX(-2px); }
+.rk-crumbs b { color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---- a card: one record ---- */
 .rk-card { --pad-x: 20px; --pad-y: 18px; position: relative; display: flex; flex-direction: column; gap: 14px; padding: var(--pad-y) var(--pad-x); border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); transition: border-color 150ms, box-shadow 150ms; }
 .rk-card.is-link { cursor: pointer; }
@@ -79,6 +88,8 @@
 .rk-card-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .rk-card-title h3 { flex: 0 1 auto; min-width: 0; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rk-card-title .rk-tag { flex-shrink: 0; }
+/* or its tags over the name (`above`): always in the same place, however long the name is */
+.rk-card-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
 .rk-card-sub { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; font-weight: 600; color: #64748b; white-space: nowrap; overflow: hidden; }
 .rk-card-sub > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .rk-card-sub > span:first-child { flex-shrink: 0; max-width: 100%; }
@@ -184,6 +195,19 @@
 .rk-empty b { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 800; color: #334155; }
 .rk-empty p { font-size: 13px; color: #64748b; max-width: 360px; }
 
+/* ---- a session the API does not have: why that can be ---- */
+.rk-gone { display: flex; flex-direction: column; gap: 14px; width: min(560px, 100%); margin: 4px auto 0; text-align: left; }
+.rk-gone-lead { display: block; text-align: center; font-size: 13px; font-weight: 500; line-height: 1.55; color: #64748b; }
+.rk-gone-list { display: flex; flex-direction: column; gap: 8px; }
+.rk-gone-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,0.72); border: 1px solid rgba(15,23,42,0.06); font-size: 12px; font-weight: 500; line-height: 1.55; color: #475569; }
+.rk-gone-item > i { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 11px; background: #f1f5f9; color: #64748b; font-size: 13px; }
+.rk-gone-item b { font-weight: 800; color: #0f172a; }
+.rk-gone-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 2px; font-size: 13px; }
+.rk-gone-title em { padding: 1px 8px; border-radius: 9999px; background: var(--primary-container); color: var(--primary); font-style: normal; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; }
+.rk-gone-item.is-likely { background: #fff; border-color: rgba(var(--primary-rgb), 0.35); box-shadow: 0 10px 24px rgba(15,23,42,0.06); }
+.rk-gone-item.is-likely > i { background: var(--primary-container); color: var(--primary); }
+.rk-gone-code { align-self: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: #94a3b8; }
+
 /* ---- the profile, over the page ---- */
 .rk-modal { position: fixed; inset: 0; z-index: 900; display: none; align-items: flex-start; justify-content: center; padding: 64px 16px 24px; overflow-y: auto; background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(6px); }
 .rk-modal.is-open { display: flex; animation: rk-fade 160ms ease-out; }
@@ -211,6 +235,13 @@
 .rk-address i { color: var(--primary); margin-top: 3px; }
 .rk-address img { width: 16px; height: 16px; margin-left: auto; margin-top: 2px; }
 .rk-address .rk-tag { margin-left: 6px; vertical-align: 1px; }
+
+/* ---- a document's button while it opens, or once it could not: the state over its face, so it keeps its size ---- */
+.rk-doc-state { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 12px; border-radius: inherit; background: rgba(255, 255, 255, 0.92); color: #475569; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; pointer-events: none; }
+.rk-doc-state > i { color: var(--primary); }
+.rk-doc-state > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.is-error > .rk-doc-state { background: rgba(255, 241, 242, 0.97); color: #be123c; }
+.is-error > .rk-doc-state > i { color: #e11d48; }
 
 /* ---- a document, in the browser's own viewer ---- */
 .rk-pdf { position: fixed; inset: 0; z-index: 950; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(6px); }
@@ -253,6 +284,19 @@
     .rk-me-name { display: none; }
     .rk-search { flex: 1 1 100%; }
 }
+
+/* ---- the session's own view: the consent's side and the session's side ---- */
+.rk-audit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+.rk-audit-main, .rk-audit-side { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+@media (min-width: 1100px) { .rk-audit { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px 28px; } }
+.rk-stack { display: flex; flex-direction: column; gap: 10px; }
+.rk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.rk-chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 9999px; background: var(--primary-container); color: var(--primary); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.rk-chip i { font-size: 11px; }
+.rk-agent, .rk-hash { margin: 0; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+.rk-agent { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.5; color: #64748b; overflow-wrap: anywhere; }
+.rk-agent > span, .rk-hash > span { display: block; margin-bottom: 4px; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
+.rk-hash code { display: block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.5; color: #475569; overflow-wrap: anywhere; }
 
 /* ---- the raw JSON, as the viewer colours it (js/results-kit.js) ---- */
 .json-key { color: #9cdcfe; }

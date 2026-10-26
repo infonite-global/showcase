@@ -15,8 +15,8 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <link href="../../css/glass.css" rel="stylesheet">
 <link href="../../css/offline.css?v=1" rel="stylesheet">
-<link href="../../css/results-kit.css?v=3" rel="stylesheet">
-<link href="../../css/financial-rider-position.css?v=16" rel="stylesheet">
+<link href="../../css/results-kit.css?v=7" rel="stylesheet">
+<link href="../../css/financial-rider-position.css?v=19" rel="stylesheet">
 <link href="../../css/results-rail.css?v=4" rel="stylesheet">
 <style>
       /* Material 3 Design Tokens */
@@ -358,11 +358,12 @@
 <script src="../../js/status.js"></script>
 <script src="../../js/features.js?v=6"></script>
 <script src="../../js/nav-banner.js?v=10"></script>
-<script src="../../js/flows-manager.js?v=7"></script>
+<script src="../../js/flows-manager.js?v=8"></script>
 <script src="../../js/engine-lists.js?v=1"></script>
 <script src="../../js/financial-rider-entities.js?v=3"></script>
-<script src="../../js/results-kit.js?v=4"></script>
-<script src="../../js/financial-rider-position.js?v=16"></script>
+<script src="../../js/results-kit.js?v=8"></script>
+<script src="../../js/session-launcher.js?v=2"></script>
+<script src="../../js/financial-rider-position.js?v=17"></script>
 <script>
     let pollTimer = null;
     let configObj = null;
@@ -447,10 +448,12 @@
             }
 
         } catch (error) {
+            stopLivePolling();
+            // a session the API no longer has is an answer, not a failure
+            if (InfoniteResults.isSessionGone(error)) return renderSessionGone(cachedSession);
             // Hard critical crash - do not mask with cache.
             console.error("Live sync failed critically:", error);
-            stopLivePolling();
-            renderCriticalCrash("Connection Lost", `Live synchronization failed. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Unknown network error'}</span>`);
+            renderCriticalCrash("Connection Lost", `Live synchronization failed. <br/> <span class="text-[10px] text-red-400 font-mono">${escapeHtml(error.message || 'Unknown network error')}</span>`);
         }
     }
 
@@ -499,6 +502,39 @@
         document.getElementById('stateTitle').className = "text-xl font-black text-red-600 tracking-tight transition-colors";
         document.getElementById('stateTitle').textContent = title;
         document.getElementById('stateDesc').innerHTML = description;
+    }
+
+    /**
+     * The API has no such session for this application: the page stops asking, says why that can
+     * be, and the status card stops claiming a state the API no longer vouches for.
+     */
+    function renderSessionGone(session) {
+        stopLivePolling();
+        const dsContainer = document.getElementById('dashboardContainer');
+        dsContainer.classList.add('hidden');
+        dsContainer.classList.remove('flex', 'flex-col', 'md:grid');
+        document.getElementById('stateContainer').classList.remove('hidden');
+        renderNotFound('Session not found', InfoniteResults.sessionGone({ appName: configObj?.appName, expires: session?.infonite_state?.expiration_date || session?.expiration_date }));
+        document.getElementById('stateRingBg').style.backgroundColor = 'rgba(100, 116, 139, 0.12)';
+        document.getElementById('stateRadarPing')?.classList.add('hidden');
+        document.getElementById('stateTitle').className = 'text-xl font-black text-slate-800 tracking-tight transition-colors';
+        document.getElementById('stateDesc').classList.remove('max-w-sm');
+
+        const last = window.InfoniteStatusDict?.[session?.infonite_state?.status_code]?.text;
+        document.getElementById('techStatusCode').textContent = 'Not found';
+        document.getElementById('techStatusDesc').textContent = last ? `Last seen ${String(last).toLowerCase()} in this browser` : 'The API no longer has it';
+        const indicator = document.getElementById('techStatusIndicator');
+        indicator.className = 'fa-solid fa-folder-open text-xs transition-colors';
+        indicator.style.color = '#64748b';
+        const frame = document.getElementById('techStatusIndicatorFrame');
+        frame.style.backgroundColor = 'color-mix(in srgb, #64748b 10%, transparent)';
+        frame.style.borderColor = 'color-mix(in srgb, #64748b 20%, transparent)';
+        document.getElementById('techCursorContainer')?.classList.add('hidden');
+        document.getElementById('techSessionCard')?.classList.remove('active-processing-border');
+        ['btnViewJson', 'subheader-actions'].forEach(id => {
+            document.getElementById(id)?.classList.add('hidden');
+            document.getElementById(id)?.classList.remove('flex');
+        });
     }
 
     function renderSessionState(session) {
@@ -750,13 +786,15 @@
             
             // Auto-load first category
             switchDashboardView('overview');
-            
+
         } catch (error) {
+            // a session the API no longer has is an answer, not a failure
+            if (InfoniteResults.isSessionGone(error)) return renderSessionGone(session);
             console.error("Failed to retrieve dashboard results payload:", error);
             // Re-render the critical crash screen natively over the polling ring
             renderCriticalCrash(
-                "Data Unreachable", 
-                `The session completed successfully, but the final data payload could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${error.message || 'Decryption or Networking Error'}</span>`
+                "Data Unreachable",
+                `The session completed successfully, but the final data payload could not be retrieved. <br/> <span class="text-[10px] text-red-400 font-mono">${escapeHtml(error.message || 'Decryption or Networking Error')}</span>`
             );
         } finally {
             isFetchingResults = false;
@@ -921,63 +959,22 @@
         setTimeout(() => icon.className = 'fa-regular fa-copy', 2000);
     }
     
+    /** Opens the session's widget with the shared launcher: a dialog for a session that stays on its final screen, a tab otherwise. */
     function launchWidget() {
-        if (!currentSessionData || !currentSessionData.widget_url) {
-            alert("Widget URL not available yet.");
-            return;
-        }
-        // Only a session that stays on its final screen opens in the dialog: a redirect inside the
-        // dialog's iframe would carry the frame away, and the dialog with it. A redirecting session,
-        // or one whose settings are not known yet, opens in a tab of its own.
-        if (currentSessionData.session_settings?.completion_mode !== 'do_nothing') {
-            window.open(currentSessionData.widget_url, '_blank', 'noopener');
-            return;
-        }
-        const modal = document.getElementById('iframeModalLauncher');
-        const iframe = document.getElementById('widgetIframeTarget');
-        if (modal && iframe) {
-            if (window.glassHaloInk) glassHaloInk(modal.querySelector('.glass-halo'));
-            iframe.src = currentSessionData.widget_url;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
+        if (currentSessionData?.widget_url) InfoniteLauncher.launch(currentSessionData.widget_url, currentSessionData.session_settings);
     }
-    
-    function closeWidget() {
-        const modal = document.getElementById('iframeModalLauncher');
-        const iframe = document.getElementById('widgetIframeTarget');
-        if (modal && iframe) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            iframe.src = 'about:blank'; // Free memory and sound instantly
-            
-            // Immediately Poll After iframe close just in case
-            if (currentSessionData && currentSessionData.infonite_state?.is_closed === false) {
-                 tickSync(currentSessionData);
-            }
-        }
-    }
-    
-    // The widget says when it is done, with the `financial-rider:ended` message the docs describe —
-    // from the dialog's own frame, never from anything else on the page. As on the sessions page, the
-    // final screen stays in sight a moment; then the dialog closes and the page reads the session again.
-    window.addEventListener('message', (event) => {
-        const frame = document.getElementById('widgetIframeTarget');
-        if (!frame || event.source !== frame.contentWindow || event.data?.event !== 'financial-rider:ended') return;
-        setTimeout(() => {
-            closeWidget();
-            setTimeout(() => window.location.reload(), 300);
-        }, 2500);
+
+    // When the widget says it is done, its final screen stays in sight a moment, the dialog closes and
+    // the page reads the session again; closed by hand, the session is polled once at once.
+    InfoniteLauncher.mount({
+        event: 'financial-rider:ended',
+        onClosed: ({ ended } = {}) => {
+            if (ended) setTimeout(() => window.location.reload(), 300);
+            else if (currentSessionData?.infonite_state?.is_closed === false) tickSync(currentSessionData);
+        },
     });
 </script>
 
-<!-- Iframe LAUNCH Modal -->
-<div id="iframeModalLauncher" class="fixed inset-0 z-[100] hidden items-center justify-center glass-layout transition-opacity" onclick="closeWidget()">
-    <div class="relative w-full md:max-w-[540px] h-full md:h-[750px] max-h-full md:max-h-[90vh] rounded-none md:rounded-3xl glass-halo mx-0 md:mx-4 overflow-hidden" onclick="event.stopPropagation()">
-        <!-- Optional skeleton loading could go here, but an empty white screen is fine -->
-        <iframe id="widgetIframeTarget" class="absolute inset-0 w-full h-full border-0 glass-frame-scaled" src="about:blank"></iframe>
-    </div>
-</div>
 
 </body>
 </html>

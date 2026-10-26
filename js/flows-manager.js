@@ -248,9 +248,11 @@ class FlowSessionManager {
                     const err = await response.json();
                     errorDetail = err.detail || errorDetail;
                 } catch (e) {}
-                throw new Error(errorDetail);
+                const error = new Error(errorDetail);
+                error.status = response.status;
+                throw error;
             }
-            
+
             return response.json();
         }
     }

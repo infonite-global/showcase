@@ -243,34 +243,59 @@
       /* Financial Rider card: the word that rides (css/rider.css, js/rider.js) */
       .rider-card h3 { align-items: baseline; }
 
-      /* Experimental Bank Reader card: a curved arrow drawn from it up to Financial Rider, which
-         sits directly above it in every layout (both in the right column on two, one after the
-         other on one), so the arrow hangs from the middle of the card's top edge. */
-      .legacy-card { overflow: visible; }
-      .legacy-arrow {
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 84px;
-        height: 96px;
-        transform: translate(-50%, -60%) rotate(-18deg);
-        color: var(--primary);
-        pointer-events: none;
-        z-index: 2;
-        filter: drop-shadow(0 2px 3px rgba(255, 255, 255, 0.9));
+      /* The interactive flows: Financial Rider first and largest; Spain Public Administration beside it,
+         and under it the use cases it is offered as — smaller, joined to it by a branch — so they read
+         as ways of using that flow, not as flows of their own. */
+      .flows-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+      .flow-card { position: relative; display: flex; flex-direction: column; padding: 32px; border-radius: 28px; transition: border-color 150ms, box-shadow 150ms; }
+      .flow-card.is-featured { cursor: pointer; background: linear-gradient(165deg, rgba(255, 255, 255, 0.94) 45%, var(--primary-container) 150%); }
+      .flow-card.is-featured:hover, .flow-card.is-featured:focus-visible { border-color: var(--primary); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08); outline: none; }
+      .flow-badge { position: absolute; top: 24px; right: 24px; padding: 4px 8px; border-radius: 8px; background: var(--primary-container); color: var(--primary); font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.14em; }
+      .flow-icon { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin-bottom: 22px; border-radius: 18px; background: var(--primary-container); color: var(--primary); font-size: 24px; }
+      .flow-title { margin: 0 0 8px; font-size: 22px; font-weight: 700; color: #0f172a; }
+      .flow-text { margin: 0; max-width: 60ch; font-size: 14px; line-height: 1.6; color: #64748b; }
+      .flow-reads { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0; padding: 0; list-style: none; }
+      .flow-reads li { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 9999px; background: #fff; border: 1px solid rgba(15, 23, 42, 0.08); font-size: 12px; font-weight: 700; color: #334155; }
+      .flow-reads i { font-size: 11px; color: var(--primary); }
+      .flow-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: auto; padding-top: 28px; }
+      .flow-link { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--primary); }
+      .flow-link.is-quiet { color: #94a3b8; }
+      .flow-link.is-quiet:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 4px; }
+      .flow-hint { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: #64748b; }
+      .flow-hint i { color: var(--primary); }
+
+      /* The use cases: one under the other on a phone, a rail down their left and a twig into each */
+      .flow-cases { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding-left: 26px; }
+      .usecase { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 22px; transition: border-color 150ms, box-shadow 150ms, transform 150ms; }
+      .usecase:hover, .usecase:focus-visible { border-color: var(--primary); box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08); transform: translateY(-2px); outline: none; }
+      .usecase::before, .usecase::after { content: ''; position: absolute; background: rgba(var(--primary-rgb), 0.28); border-radius: 2px; pointer-events: none; }
+      .usecase::before { left: -16px; top: 35px; width: 16px; height: 2px; }
+      .usecase::after { left: -16px; top: -12px; width: 2px; height: 49px; }
+      .usecase:first-child::after { top: -24px; height: 61px; }
+      .usecase-head { display: flex; align-items: center; gap: 12px; }
+      .usecase-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 12px; background: var(--primary-container); color: var(--primary); font-size: 15px; }
+      .usecase-icon svg { width: 20px; height: 20px; }
+      .usecase-eyebrow { display: block; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.14em; color: var(--primary); }
+      .usecase-title { display: block; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 700; line-height: 1.25; color: #0f172a; }
+      .usecase-text { margin: 0; font-size: 12.5px; line-height: 1.55; color: #64748b; }
+      .usecase-go { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 2px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; color: var(--primary); }
+      .usecase-go i { transition: transform 150ms; }
+      .usecase:hover .usecase-go i { transform: translateX(3px); }
+
+      /* Side by side from a tablet up: the trunk comes down from the flow, a branch runs across their tops and a twig drops into each */
+      @media (min-width: 768px) {
+        .flow-cases { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; padding-left: 0; padding-top: 26px; }
+        .flow-cases::before, .flow-cases::after { content: ''; position: absolute; background: rgba(var(--primary-rgb), 0.28); border-radius: 2px; pointer-events: none; }
+        .flow-cases::before { left: calc((100% - 28px) / 6); right: calc((100% - 28px) / 6); top: 12px; height: 2px; }
+        .flow-cases::after { left: calc(50% - 1px); top: -24px; width: 2px; height: 38px; }
+        .usecase::before { left: calc(50% - 1px); top: -14px; width: 2px; height: 14px; }
+        .usecase::after, .usecase:first-child::after { display: none; }
       }
-      .legacy-arrow path { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-      .legacy-arrow .legacy-arrow-shaft {
-        stroke-dasharray: 6 7;
-        animation: legacy-flow 1.2s linear infinite;
-      }
-      .legacy-arrow .legacy-arrow-head { stroke-width: 3.2; }
-      @keyframes legacy-flow { to { stroke-dashoffset: -13; } }
-      @media (prefers-reduced-motion: reduce) { .legacy-arrow .legacy-arrow-shaft { animation: none; } }
-      /* The target answers: hovering the legacy card lights the Rider card up */
-      .rider-card.is-pointed {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
+      @media (min-width: 1024px) {
+        .flows-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+        .flows-grid > .is-featured { grid-column: 1; grid-row: 1 / span 2; }
+        .flows-grid > .is-group { grid-column: 2; grid-row: 1; }
+        .flows-grid > .flow-cases { grid-column: 2; grid-row: 2; }
       }
 
       .pulse-ring {
@@ -549,7 +574,8 @@
 
 </div>
 <div id="flows" class="w-full pt-12">
-<div class="fade-in space-y-6 max-w-4xl mx-auto py-12 px-4 md:px-8 w-full">
+<div class="fade-in w-full px-4 py-12">
+<div class="max-w-7xl mx-auto">
 <div class="text-center mb-12">
   <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mb-4">
     <i class="fa-solid fa-layer-group text-2xl"></i>
@@ -557,115 +583,72 @@
   <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Interactive Flows</h2>
   <p class="text-sm text-slate-500 mt-2">Select a module to test the integration in the current environment</p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full px-6">
-<a class="glass-panel p-8 rounded-3xl hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md block md:col-start-1 md:row-start-1" href="flows/es-public-administration/es-public-administration.html">
-<div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
-<i class="fa-solid fa-person-shelter text-2xl text-[var(--primary)]"></i>
-</div>
-<h3 class="text-lg font-bold text-slate-900 mb-2">Spain Public Administration</h3>
-<p class="text-sm text-slate-500 mb-6">Official Spanish records, read with your customer's consent in a widget we host: work history and contribution bases, public pensions, the CIRBE credit registry, driving licence and vehicles, tax data, properties and official degrees. For onboarding, underwriting and background checks.</p>
-<div class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2">
-                    Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-</div>
-</a>
-<!-- Spanish Driver Information: not a flow of its own but a configuration of Spain Public
-     Administration, adapted to one use case (the DGT products alone): the same pages with the
-     `driver` preset, its own session history. Below its parent on two columns, right after it on one. -->
-<a class="glass-panel p-8 rounded-3xl hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md block relative md:col-start-1 md:row-start-2" id="driverInformationCard" href="flows/es-public-administration/es-public-administration.html?preset=driver">
-<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-[var(--primary)] bg-[var(--primary-container)] px-2 py-1 rounded-md">Use case</span>
-<div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
-<svg class="w-7 h-7 text-[var(--primary)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-  <circle cx="12" cy="12" r="9"/>
-  <circle cx="12" cy="12" r="2.5"/>
-  <path d="M3.4 10.2 9.6 11.4M14.4 11.4l6.2-1.2M12 14.5V21"/>
-</svg>
-</div>
-<h3 class="text-lg font-bold text-slate-900 mb-2">Spanish Driver Information</h3>
-<p class="text-sm text-slate-500 mb-6">The complete driver profile from the DGT: driving licences and their validity, the points balance, and every vehicle registered to the person, with its inspection, insurance and incidents. A configuration of the Spain Public Administration flow, adapted to this use case.</p>
-<div class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2">
-                    Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-</div>
-</a>
-<!-- Spanish Credit Risk Report: another configuration of Spain Public Administration, the CIRBE
-     report alone, from the Banco de España (the `cirbe` preset). Under Driver Information on two
-     columns, right after it on one. -->
-<a class="glass-panel p-8 rounded-3xl hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md block relative md:col-start-1 md:row-start-3" id="creditRiskReportCard" href="flows/es-public-administration/es-public-administration.html?preset=cirbe">
-<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-[var(--primary)] bg-[var(--primary-container)] px-2 py-1 rounded-md">Use case</span>
-<div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
-<i class="fa-solid fa-file-invoice-dollar text-2xl text-[var(--primary)]"></i>
-</div>
-<h3 class="text-lg font-bold text-slate-900 mb-2">Spanish Credit Risk Report</h3>
-<p class="text-sm text-slate-500 mb-6">The CIRBE report from the Banco de España's own service: every loan, credit and guarantee the Banco de España holds in the person's name, with one sign-in and nothing else read. A configuration of the Spain Public Administration flow, adapted to this use case.</p>
-<div class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2">
-                    Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-</div>
-</a>
+<div class="flows-grid">
 <!-- Financial Rider. The horse is on purpose — the name is Rider, not Reader, and the title says
      so: it reads "Reader" for a beat on arrival, then rides into "Rider"; hovering shows the word
      it is NOT, and leaving brings the rider back. The whole card opens the flow; the docs link
      inside it keeps its own way out. -->
-<div class="glass-panel p-8 rounded-3xl block relative cursor-pointer rider-card hover:border-[var(--primary)] transition-all group shadow-sm hover:shadow-md md:col-start-2 md:row-start-1" id="financialRiderCard" role="link" tabindex="0" data-href="flows/financial-rider/financial-rider.html" data-rider>
-<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-[var(--primary)] bg-[var(--primary-container)] px-2 py-1 rounded-md">New</span>
-<div class="w-12 h-12 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center mb-6">
-<i class="fa-solid fa-building-columns text-2xl text-[var(--primary)]"></i>
-</div>
-<h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2 flex-wrap">
-  <span>Financial</span>
-  <span class="sr-only">Rider</span>
-  <span class="rider-word" aria-hidden="true">R<span class="rider-slot"><span class="rider-glyph rider-glyph-rider">i</span><span class="rider-glyph rider-glyph-reader">ea</span></span>der</span>
-  <span class="rider-horse" aria-hidden="true"><span class="rider-rig"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c7.svg" alt="" draggable="false"></span></span>
-</h3>
-<p class="text-sm text-slate-500 mb-6">Open Banking in a widget we host: your customer connects their banks and you read one financial position. The definitive multi-market solution.</p>
-<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-<a class="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest flex items-center gap-2" href="flows/financial-rider/financial-rider.html">
-                    Open Flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-</a>
-<a class="text-[10px] font-bold text-slate-400 hover:text-[var(--primary)] uppercase tracking-widest flex items-center gap-2 cursor-pointer hover:underline underline-offset-4" href="https://infonite.dev/flows/financial-rider/overview" target="_blank" rel="noopener">
-                    <i class="fa-solid fa-book-open"></i> Docs <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
-</a>
-</div>
+<div class="glass-panel flow-card is-featured rider-card" id="financialRiderCard" role="link" tabindex="0" data-href="flows/financial-rider/financial-rider.html" data-rider>
+  <span class="flow-badge">New</span>
+  <div class="flow-icon"><i class="fa-solid fa-building-columns"></i></div>
+  <h3 class="flow-title flex items-center gap-2 flex-wrap">
+    <span>Financial</span>
+    <span class="sr-only">Rider</span>
+    <span class="rider-word" aria-hidden="true">R<span class="rider-slot"><span class="rider-glyph rider-glyph-rider">i</span><span class="rider-glyph rider-glyph-reader">ea</span></span>der</span>
+    <span class="rider-horse" aria-hidden="true"><span class="rider-rig"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f3c7.svg" alt="" draggable="false"></span></span>
+  </h3>
+  <p class="flow-text">Open Banking in a widget we host: your customer connects their banks and you read one financial position. The definitive multi-market solution.</p>
+  <ul class="flow-reads" aria-label="What it reads">
+    <li><i class="fa-solid fa-piggy-bank"></i>Accounts</li>
+    <li><i class="fa-solid fa-credit-card"></i>Cards</li>
+    <li><i class="fa-solid fa-vault"></i>Deposits</li>
+    <li><i class="fa-solid fa-hand-holding-dollar"></i>Loans</li>
+    <li><i class="fa-solid fa-chart-line"></i>Investments</li>
+    <li><i class="fa-solid fa-money-bill-transfer"></i>Direct debits</li>
+  </ul>
+  <div class="flow-foot">
+    <a class="flow-link" href="flows/financial-rider/financial-rider.html">Open Flow <i class="fa-solid fa-arrow-right"></i></a>
+    <a class="flow-link is-quiet" href="https://infonite.dev/flows/financial-rider/overview" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> Docs <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i></a>
+  </div>
 </div>
 <script>
   (function () {
-    // The card opens the flow, as the other cards do; its links keep their own targets
+    // The card opens the flow, as the use cases do; its links keep their own targets
     const card = document.getElementById('financialRiderCard');
     const open = () => { window.location.href = card.dataset.href; };
     card.addEventListener('click', (event) => { if (!event.target.closest('a')) open(); });
     card.addEventListener('keydown', (event) => { if (event.key === 'Enter') open(); });
   })();
 </script>
-<!-- Bank Reader: the experimental bank flow, kept open until Financial Rider launches on
-     Monday 26 October 2026. Deliberately muted and marked as experimental: it is here to be
-     approved against, not to be chosen over the one that replaces it. Remove this card with
-     the flow when Financial Rider opens. -->
-<a class="glass-panel p-8 rounded-3xl hover:border-amber-400 transition-all group shadow-sm hover:shadow-md block relative md:col-start-2 md:row-start-2 legacy-card border-dashed opacity-90 hover:opacity-100" id="bankReaderLegacyCard" href="flows/bank-reader/bank-reader.html">
-<svg class="legacy-arrow" viewBox="0 0 110 96" aria-hidden="true" focusable="false">
-  <path class="legacy-arrow-shaft" d="M14 86 C 18 48, 48 22, 92 14"/>
-  <path class="legacy-arrow-head" d="M78 6 L 94 13 L 84 27"/>
-</svg>
-<span class="absolute top-6 right-6 text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md flex items-center gap-1.5"><i class="fa-solid fa-flask"></i> Experimental · retires 26 Oct</span>
-<div class="flex flex-col gap-6">
-<div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0">
-<i class="fa-solid fa-building-columns text-2xl text-slate-400"></i>
+<!-- Spain Public Administration: the flow, and under it the use cases it is offered as — each one
+     the same pages with a preset (js/es-public-administration-presets.js), with its own history. -->
+<section class="glass-panel flow-card is-group" aria-labelledby="espaFlowTitle">
+  <div class="flow-icon"><i class="fa-solid fa-person-shelter"></i></div>
+  <h3 class="flow-title" id="espaFlowTitle">Spain Public Administration</h3>
+  <p class="flow-text">Official Spanish records, read with your customer's consent in a widget we host: work history and contribution bases, public pensions, the CIRBE credit registry, driving licence and vehicles, tax data, properties and official degrees. For onboarding, underwriting and background checks.</p>
+  <div class="flow-foot">
+    <span class="flow-hint"><i class="fa-solid fa-arrow-down"></i> Three ways to use it</span>
+    <a class="flow-link is-quiet" href="https://infonite.dev/flows/spain-public-administration/overview" target="_blank" rel="noopener"><i class="fa-solid fa-book-open"></i> Docs <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i></a>
+  </div>
+</section>
+<div class="flow-cases">
+  <a class="glass-panel usecase" id="doItYourselfCard" href="flows/es-public-administration/es-public-administration.html">
+    <span class="usecase-head"><span class="usecase-icon"><i class="fa-solid fa-sliders"></i></span><span><span class="usecase-eyebrow">Use case</span><span class="usecase-title">Do it yourself</span></span></span>
+    <p class="usecase-text">Every module and every administration, chosen session by session: work life, pensions, driving, taxes, CIRBE, properties and degrees.</p>
+    <span class="usecase-go">Open <i class="fa-solid fa-arrow-right"></i></span>
+  </a>
+  <a class="glass-panel usecase" id="driverInformationCard" href="flows/es-public-administration/es-public-administration.html?preset=driver">
+    <span class="usecase-head"><span class="usecase-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M3.4 10.2 9.6 11.4M14.4 11.4l6.2-1.2M12 14.5V21"/></svg></span><span><span class="usecase-eyebrow">Use case</span><span class="usecase-title">Spanish Driver Information</span></span></span>
+    <p class="usecase-text">The DGT alone: driving licences, points and every vehicle in the person's name, with the photograph on their licence as their profile picture.</p>
+    <span class="usecase-go">Open <i class="fa-solid fa-arrow-right"></i></span>
+  </a>
+  <a class="glass-panel usecase" id="creditRiskReportCard" href="flows/es-public-administration/es-public-administration.html?preset=cirbe">
+    <span class="usecase-head"><span class="usecase-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span><span><span class="usecase-eyebrow">Use case</span><span class="usecase-title">Spanish Credit Risk Report</span></span></span>
+    <p class="usecase-text">Connected exclusively to the Banco de España's CIRBE: every loan, credit and guarantee it holds in the person's name, and nothing else read.</p>
+    <span class="usecase-go">Open <i class="fa-solid fa-arrow-right"></i></span>
+  </a>
 </div>
-<div class="min-w-0">
-<h3 class="text-lg font-bold text-slate-700 mb-2">Bank Reader <span class="text-xs font-semibold text-slate-400 uppercase tracking-widest ml-1">experimental</span></h3>
-<p class="text-sm text-slate-500 mb-3">An experimental bank aggregation flow. It stays open until Financial Rider launches on Monday, 26 October 2026, and is retired that day.</p>
-<p class="text-xs text-amber-700/90 bg-amber-50/70 border border-amber-100 rounded-xl px-3 py-2 mb-6 flex items-start gap-2"><i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i><span>Financial Rider is the definitive multi-market solution: far more powerful, configurable and versatile. Treat what you see here as an experiment, not a product: no new integration should be built on it.</span></p>
-<div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                    Open experimental flow <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
 </div>
-</div>
-</div>
-</a>
-<script>
-  (function () {
-    const legacy = document.getElementById('bankReaderLegacyCard');
-    const rider = document.getElementById('financialRiderCard');
-    legacy.addEventListener('mouseenter', () => rider.classList.add('is-pointed'));
-    legacy.addEventListener('mouseleave', () => rider.classList.remove('is-pointed'));
-  })();
-</script>
 </div>
 </div>
 </div></div>

@@ -37,7 +37,7 @@
     /** An engine's logo, from the public assets host, built from its code (a reference's channel is dropped). */
     function logoUrl(reference, shape = 'square') {
         const code = String(reference || '').split('-')[0];
-        return `https://assets.infonite.dev/engine-logos/${code}/light-${shape}.png`;
+        return `https://assets.infonite.dev/engine-logos/${encodeURIComponent(code)}/light-${shape}.png`;
     }
 
     // ---------------------------------------------------------------- how a figure is written
@@ -205,14 +205,16 @@
 
     /**
      * One record, one card: its name and number on the left, the figure it is read by on the right,
-     * and the rest of what the source said in a row of facts underneath.
+     * and the rest of what the source said in a row of facts underneath. Its tags go beside the name,
+     * or over it (`above`) where a name is long and its tags must not move with it.
      */
-    function card({ open = '', title, tags = '', sub = '', main = '', gauge = '', facts: list = [], below = '', foot = '', after = '' }) {
+    function card({ open = '', title, tags = '', above = false, sub = '', main = '', gauge = '', facts: list = [], below = '', foot = '', after = '' }) {
         return `
             <article class="rk-card ${open ? 'is-link' : ''}" ${open ? `onclick="${open}"` : ''}>
                 <header class="rk-card-head">
                     <div class="rk-card-id">
-                        <div class="rk-card-title"><h3 title="${esc(title)}">${esc(title)}</h3>${tags}</div>
+                        ${above && tags ? `<div class="rk-card-tags">${tags}</div>` : ''}
+                        <div class="rk-card-title"><h3 title="${esc(title)}">${esc(title)}</h3>${above ? '' : tags}</div>
                         ${sub ? `<div class="rk-card-sub">${sub}</div>` : ''}
                     </div>
                     ${main}
@@ -224,6 +226,9 @@
                 ${after}
             </article>`;
     }
+
+    /** The way back from a record's own page: «Accounts / My account» (`open` is the handler's code). */
+    const crumbs = ({ label, open, title }) => `<nav class="rk-crumbs"><button type="button" onclick="${open}"><i class="fa-solid fa-chevron-left"></i>${label}</button><span>/</span><b>${esc(title)}</b></nav>`;
 
     /** A labelled value of a card of fields or a profile; a dash when none came. */
     const field = (label, value) => `<div class="rk-field"><span>${label}</span><b>${value || '—'}</b></div>`;
@@ -344,11 +349,16 @@
      */
     async function openDocument(button, { key, name, type = '', fetch }) {
         if (!button || button.classList.contains('is-busy')) return;
-        const idle = { html: button.innerHTML, title: button.title };
+        // how it goes — opening, or why it could not — is laid over the button's face, never in
+        // place of it: the button keeps its size, and the row it sits in never reflows
+        const title = button.title;
         const iconOnly = !button.textContent.trim();
-        const say = (icon, text) => `<i class="fa-solid ${icon}"></i>${iconOnly ? '' : `<span>${esc(text)}</span>`}`;
+        const state = Object.assign(document.createElement('span'), { className: 'rk-doc-state' });
+        const say = (icon, text) => { state.innerHTML = `<i class="fa-solid ${icon}"></i>${iconOnly ? '' : `<span>${esc(text)}</span>`}`; };
+        if (getComputedStyle(button).position === 'static') button.style.position = 'relative';
+        say('fa-spinner fa-spin', 'Opening');
         button.classList.add('is-busy');
-        button.innerHTML = say('fa-spinner fa-spin', 'Opening');
+        button.append(state);
         try {
             if (!documents.has(key)) {
                 const blob = await fetch();
@@ -356,13 +366,13 @@
                 documents.set(key, renderable(blob.type) ? blob : new Blob([blob], { type: renderable(type) ? type : 'application/pdf' }));
             }
             showDocument(documents.get(key), name);
-            button.innerHTML = idle.html;
+            state.remove();
             button.classList.remove('is-busy');
         } catch (error) {
             button.classList.add('is-error');
             button.title = error.message;
-            button.innerHTML = say('fa-triangle-exclamation', error.message);
-            setTimeout(() => { button.innerHTML = idle.html; button.title = idle.title; button.classList.remove('is-busy', 'is-error'); }, 4000);
+            say('fa-triangle-exclamation', error.message);
+            setTimeout(() => { state.remove(); button.title = title; button.classList.remove('is-busy', 'is-error'); }, 4000);
         }
     }
 
@@ -459,24 +469,45 @@
                 `;
     }
 
-    /** The evidence of the consent: when it was accepted, from where and by what, and for which customer. */
+    /** What a device a user agent belongs to, as people say it: a phone, or a computer. */
+    const deviceOf = (agent) => (/Mobi|Android|iPhone|iPad|iPod/i.test(agent || '') ? 'Mobile' : 'Desktop');
+
+    /** The evidence of the consent: when it was given, from where and on what, and for which customer. */
     function consentCard(consent, customerId) {
-        const ua = consent.user_agent ? String(consent.user_agent) : '';
-        const mobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
-        const badge = ua
-            ? `<em id="lblUaTypeBadge" class="not-italic px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest ${mobile ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}">${mobile ? 'MOBILE' : 'DESKTOP'}</em>`
-            : '<em id="lblUaTypeBadge" class="hidden not-italic px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[9px] font-bold uppercase tracking-widest"></em>';
-        return `
-    <div class="rk-card is-grid">
-        <div class="rk-field"><span>Accepted</span><b class="font-mono" id="lblConsentDate">${consent.accepted_date ? esc(stamp(consent.accepted_date)) : '--'}</b></div>
-        <div class="rk-field"><span>User IP</span><b class="font-mono" id="lblConsentIp">${esc(consent.user_ip || '--')}</b></div>
-        <div class="rk-field"><span>Customer ID</span><b class="font-mono" id="lblCustomerId">${esc(customerId || '--')}</b></div>
-        <div class="rk-field is-full"><span>Origin</span><b class="font-mono" id="lblConsentOrigin">${esc(consent.origin || '--')}</b></div>
-        <div class="rk-field is-full">
-            <span class="flex items-center gap-2">User agent ${badge}</span>
-            <b class="font-mono text-xs text-slate-500 break-all" id="lblConsentUa">${esc(ua || '--')}</b>
-        </div>
-    </div>`;
+        const agent = consent.user_agent ? String(consent.user_agent) : '';
+        return card({
+            title: 'Consent given',
+            tags: agent ? `<span class="rk-tag ${deviceOf(agent) === 'Mobile' ? '' : 'is-quiet'}">${deviceOf(agent)}</span>` : '',
+            sub: consent.accepted_date ? `<span class="rk-mono">${esc(stamp(consent.accepted_date))}</span>` : 'The date of the consent did not come',
+            facts: [
+                fact('User IP', consent.user_ip ? `<span class="rk-mono">${esc(consent.user_ip)}</span>` : ''),
+                fact('Origin', consent.origin ? `<span class="rk-mono" title="${esc(consent.origin)}">${esc(consent.origin)}</span>` : ''),
+                fact('Customer ID', customerId ? `<span class="rk-mono" title="${esc(customerId)}">${esc(customerId)}</span>` : ''),
+            ],
+            below: agent ? `<p class="rk-agent"><span>User agent</span>${esc(agent)}</p>` : '',
+        });
+    }
+
+    /** A document slot as people read it: `application_mandate` is «Application mandate». */
+    const documentName = (key) => String(key || 'Document').replace(/_/g, ' ').replace(/^./, letter => letter.toUpperCase());
+
+    /** A document the person accepted: its version, and — when it was signed — who signed it, how and when, and the hash it was signed with. */
+    function acceptedDocument(key, doc) {
+        const signature = isRecord(doc.signature_metadata) ? doc.signature_metadata : {};
+        const identity = isRecord(signature.user_identification) ? signature.user_identification : null;
+        const kind = identity ? String(identity.type || '').split(':').pop().toUpperCase() : '';
+        return card({
+            title: documentName(key),
+            tags: (doc.version ? `<span class="rk-tag is-quiet">v ${esc(doc.version)}</span>` : '') + (doc.sign_date ? '<span class="rk-tag is-ok">signed</span>' : '<span class="rk-tag">read and accepted</span>'),
+            sub: doc.sign_date ? `Signed <span class="rk-mono">${esc(stamp(doc.sign_date))}</span>` : 'Accepted with the consent',
+            facts: [
+                fact('Signed by', signature.user_email ? `<span title="${esc(signature.user_email)}">${esc(signature.user_email)}</span>` : ''),
+                fact('Identity', identity ? `${kind ? `${esc(kind)} ` : ''}<span class="rk-mono">${esc(identity.value)}</span>` : '', { sub: esc([identity?.validated ? 'validated' : '', signature.identifier_source ? String(signature.identifier_source).replace(/[-_]/g, ' ') : ''].filter(Boolean).join(' · ')) }),
+                fact('Signature', doc.signature_provider ? esc(titleCase(doc.signature_provider)) : ''),
+                fact('From', signature.user_ip ? `<span class="rk-mono">${esc(signature.user_ip)}</span>` : '', { sub: esc(signature.origin || '') }),
+            ],
+            below: doc.hash ? `<p class="rk-hash"><span>Hash</span><code title="${esc(doc.hash)}">${esc(doc.hash)}</code></p>` : '',
+        });
     }
 
     /** What the person accepted, one chip each, named as the features' catalogue names them. */
@@ -485,45 +516,41 @@
         if (!list.length) return '<span class="rk-muted">None registered</span>';
         return list.map(code => {
             const known = catalogue && catalogue[code] ? catalogue[code] : null;
-            return `<span class="bg-[var(--primary)] text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest whitespace-nowrap shadow-sm flex items-center gap-1">${known ? `<i class="${known.icon} mr-1 opacity-80"></i>` : ''}${esc(known ? known.name : code.replace(/_/g, ' '))}</span>`;
+            return `<span class="rk-chip">${known ? `<i class="${known.icon}"></i>` : ''}${esc(known ? known.name : code.replace(/_/g, ' '))}</span>`;
         }).join('');
     }
 
     /**
-     * The session's own view: the connections it ran (`describe(reference, executionId)` names each
-     * one), what it has to say about itself, and the evidence of the consent — or why there is none.
-     * A flow that frames its views with a head of its own asks for the view without one (`head: false`).
+     * The session's own view, the same in every flow: the evidence of the consent, the documents the
+     * person accepted and the features they granted on one side; the connections the session ran
+     * (`describe(reference, executionId)` names each one) and what it has to say about itself on the
+     * other. A session without a consent says why there is none.
      */
-    function audit({ results, customerId = '', describe = () => ({}), head = true }) {
+    function audit({ results, customerId = '', describe = () => ({}) }) {
         const connections = isRecord(results?.connections) ? Object.entries(results.connections) : [];
         const consent = isRecord(results?.consent) ? results.consent : null;
+        const documents = isRecord(consent?.accepted_documents) ? Object.entries(consent.accepted_documents).filter(([, doc]) => isRecord(doc)) : [];
+        const features = listOf(consent?.accepted_features);
+        const said = listOf(results?.messages).filter(isRecord);
         const rows = connections.map(([executionId, reference]) => safely(() => connectionRow(executionId, reference, describe(reference, executionId) || {}), [], () => ''));
+        const section = (icon, title, count, body) => `
+        <section class="rk-section">
+            <div class="rk-section-head">${sectionLabel(icon, title, count)}</div>
+            ${body}
+        </section>`;
         return `
-<div class="rk-page">${head ? `
-    <header class="rk-head">
-        <span class="rk-head-icon"><i class="fa-solid fa-shield-halved"></i></span>
-        <div class="min-w-0">
-            <h2 class="rk-title">Consent &amp; Audit</h2>
-            <p class="rk-sub">The connections the session ran, what it has to say, and the evidence of the consent.</p>
+<div class="rk-page">
+    ${head('fa-solid fa-shield-halved', 'Consent &amp; Audit', 'The evidence of the consent, the documents the person accepted, and what the session ran and has to say.')}
+    <div class="rk-audit">
+        <div class="rk-audit-main">
+            ${section('fa-solid fa-file-signature', 'Consent', null, consent ? safely(consentCard, [consent, customerId]) : empty('fa-solid fa-file-circle-xmark', 'No consent recorded', 'The person accepted no consent screen in this session: it was created without one, or it ended before they accepted.'))}
+            ${documents.length ? section('fa-solid fa-file-contract', 'Documents accepted', documents.length, `<div class="rk-stack">${documents.map(([key, doc]) => safely(acceptedDocument, [key, doc], () => broken(documentName(key)))).join('')}</div>`) : ''}
+            ${section('fa-solid fa-circle-check', 'Features granted', features.length || null, `<div class="rk-chips" id="listConsentFeatures">${featureChips(features)}</div>`)}
         </div>
-    </header>` : ''}
-
-    <div class="rk-section-head"><span class="rk-section-label"><i class="fa-solid fa-network-wired"></i> Engine connections</span></div>
-    <div id="listConnections" class="flex flex-col gap-2">
-        ${rows.join('') || '<p class="rk-muted">No engine connections recorded.</p>'}
-    </div>
-
-    <div class="rk-section-head"><span class="rk-section-label"><i class="fa-solid fa-message"></i> Session messages</span></div>
-    <div id="listMessages" class="flex flex-col gap-2">
-        ${messages(results?.messages)}
-    </div>
-
-    <div class="rk-section-head"><span class="rk-section-label"><i class="fa-solid fa-file-signature"></i> Consent</span></div>
-    ${consent ? consentCard(consent, customerId) : empty('fa-solid fa-file-circle-xmark', 'No consent recorded', 'The person accepted no consent screen in this session: it was created without one, or it ended before they accepted.')}
-
-    <div class="rk-section-head"><span class="rk-section-label"><i class="fa-solid fa-circle-check"></i> Features granted</span></div>
-    <div class="flex flex-wrap gap-2" id="listConsentFeatures">
-        ${featureChips(consent?.accepted_features)}
+        <div class="rk-audit-side">
+            ${section('fa-solid fa-network-wired', 'Engine connections', connections.length || null, `<div id="listConnections" class="rk-stack">${rows.join('') || '<p class="rk-muted">No engine connections recorded.</p>'}</div>`)}
+            ${section('fa-solid fa-message', 'Session messages', said.length || null, `<div id="listMessages" class="rk-stack">${messages(said)}</div>`)}
+        </div>
     </div>
 </div>`;
     }
@@ -605,6 +632,50 @@
                 button.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30');
             }, 2000);
         });
+    }
+
+    // ---------------------------------------------------------------- a session the API does not have
+
+    /** Whether an error of the API says it has no such session for this application: a 404, `session_not_found`. */
+    const isSessionGone = (error) => error?.status === 404 || error?.message === 'session_not_found' || error?.responseBody?.detail === 'session_not_found';
+
+    /**
+     * Why the API has no such session, said plainly. It answers the same 404 whether the session
+     * expired, belongs to another application or was deleted — on purpose: whether a session exists
+     * is not something it hands out. What this browser remembers narrows it down: the session's
+     * `expiration_date` (`expires`), when the page saw one, says whether it has passed.
+     */
+    function sessionGone({ appName = '', expires = '' } = {}) {
+        // a moment without a zone is UTC, the way the API keeps them
+        const moment = typeof expires === 'string' && expires && !/(Z|[+-]\d\d:?\d\d)$/i.test(expires) ? `${expires}Z` : expires;
+        const when = moment ? new Date(moment) : null;
+        const known = Boolean(when) && !Number.isNaN(when.getTime());
+        const expired = known && when <= new Date();
+        const reasons = [
+            known && !expired ? null : {
+                icon: 'fa-hourglass-end', title: 'It expired', likely: expired,
+                text: `Sessions, and all the data they retrieved, are deleted automatically when they expire, usually seven days after they were created.${expired ? ` This one expired on ${stamp(moment)}.` : ''}`,
+            },
+            {
+                icon: 'fa-layer-group', title: 'It belongs to another application',
+                text: `An application only sees the sessions it created${appName ? `, and the one selected is <b>${esc(appName)}</b>` : ''}. Check the application selected in Settings.`,
+            },
+            {
+                icon: 'fa-trash-can', title: 'It was deleted',
+                text: 'The application that created it can delete a session, and its data, through the API.',
+            },
+        ].filter(Boolean);
+        return `
+            <span class="rk-gone">
+                <span class="rk-gone-lead">The API has no session with this id for the selected application. It answers the same way in ${reasons.length === 3 ? 'three' : 'two'} cases:</span>
+                <span class="rk-gone-list">${reasons.map(reason => `
+                    <span class="rk-gone-item${reason.likely ? ' is-likely' : ''}">
+                        <i class="fa-solid ${reason.icon}"></i>
+                        <span><b class="rk-gone-title">${reason.title}${reason.likely ? '<em>Most likely</em>' : ''}</b>${reason.text}</span>
+                    </span>`).join('')}
+                </span>
+                <span class="rk-gone-code">404 · session_not_found</span>
+            </span>`;
     }
 
     // ---------------------------------------------------------------- the person the results are about
@@ -716,15 +787,31 @@
             </div>`;
         modal.classList.add('is-open');
         document.body.classList.add('overflow-hidden');
-        if (photo) {
-            Promise.resolve().then(photo).then(blob => {
-                const avatar = document.getElementById('rkProfileAvatar');
-                if (!avatar || !blob || !String(blob.type).startsWith('image/')) return;
-                const img = Object.assign(document.createElement('img'), { src: URL.createObjectURL(blob), alt: '' });
-                avatar.replaceChildren(img);
-                avatar.classList.add('has-photo');
-            }).catch(() => { /* the initials stay */ });
-        }
+        showPhoto(document.getElementById('rkProfileAvatar'), photo);
+    }
+
+    /** A picture of the person, as an address the page can show: one per picture, however often it is shown. */
+    const photoUrls = new WeakMap();
+    function photoUrl(blob) {
+        if (!photoUrls.has(blob)) photoUrls.set(blob, URL.createObjectURL(blob));
+        return photoUrls.get(blob);
+    }
+
+    /**
+     * Puts the person's picture in an avatar in place of the initials, once `photo` (a function that
+     * gives a Promise of an image Blob or of its address) brings one; its alert badge stays. Without
+     * a picture, or when it cannot be had, the initials stay.
+     */
+    function showPhoto(avatar, photo) {
+        if (!avatar || !photo) return;
+        Promise.resolve().then(photo).then(found => {
+            const src = typeof found === 'string' ? found : found instanceof Blob && String(found.type).startsWith('image/') ? photoUrl(found) : '';
+            if (!src || !avatar.isConnected) return;
+            const badge = avatar.querySelector('.rk-avatar-alert');
+            avatar.replaceChildren(Object.assign(document.createElement('img'), { src, alt: '' }));
+            if (badge) avatar.append(badge);
+            avatar.classList.add('has-photo');
+        }).catch(() => { /* the initials stay */ });
     }
 
     function closeProfile() {
@@ -746,8 +833,8 @@
         // documents
         openDocument, documentOf, showDocument, closeDocument, saveDocument,
         // the session and its raw JSON
-        messages, audit, showJson, closeJson, copyJson,
+        messages, audit, showJson, closeJson, copyJson, isSessionGone, sessionGone,
         // the person
-        initials, identityBanner, personChip, addressLine, documentChip, openProfile, closeProfile,
+        initials, identityBanner, personChip, showPhoto, addressLine, documentChip, openProfile, closeProfile, crumbs,
     };
 })();

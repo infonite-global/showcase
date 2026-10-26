@@ -28,6 +28,15 @@
 .frp-count i { font-size: 10px; }
 .frp-bank-action { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; background: #f1f5f9; color: #475569; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; transition: all 150ms; }
 .frp-bank-action:hover { background: var(--primary); color: #fff; }
+/* a bank alone takes the whole row, laid out as one line: who it is, then what it holds; its filter would change nothing */
+.frp-bank:only-child { grid-column: 1 / -1; }
+.frp-bank:only-child:not(.is-on) .frp-bank-action { display: none; }
+@media (min-width: 641px) {
+    .frp-bank:only-child { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 14px 28px; padding: 18px 22px; }
+    .frp-bank:only-child .frp-bank-head { flex: 0 1 auto; min-width: 0; }
+    .frp-bank:only-child .frp-bank-counts { flex: 1 1 260px; justify-content: flex-end; }
+    .frp-bank:only-child .frp-bank-action { align-self: center; }
+}
 
 .frp-list { display: flex; flex-direction: column; border-radius: 20px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 6px 18px rgba(15,23,42,0.04); overflow: hidden; }
 .frp-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 18px; text-align: left; transition: background 150ms; }
@@ -66,7 +75,7 @@
 .frp-receipt { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 9999px; border: 1px solid rgba(var(--primary-rgb), 0.35); background: #fff; color: var(--primary); font-size: 11px; font-weight: 800; white-space: nowrap; transition: all 150ms; }
 .frp-receipt:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
 .frp-receipt .fa-download { font-size: 10px; opacity: 0.8; }
-.frp-receipt.is-busy, .frp-clip.is-busy { opacity: 0.7; pointer-events: none; }
+.frp-receipt.is-busy, .frp-clip.is-busy { pointer-events: none; }
 .frp-receipt.is-error { background: #fff1f2; border-color: #fda4af; color: #be123c; }
 .frp-charges { display: none; margin: 0 calc(-1 * var(--pad-x)) calc(-1 * var(--pad-y)); border-top: 1px solid #f1f5f9; border-radius: 0 0 20px 20px; overflow-x: auto; }
 .rk-card.is-open .frp-charges { display: block; }
@@ -114,11 +123,6 @@
 .frp-kind-row td b { font-size: 12px; font-weight: 700; color: #334155; }
 
 /* ---- an account's or a card's own page ---- */
-.frp-crumbs { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #94a3b8; min-width: 0; }
-.frp-crumbs button { display: inline-flex; align-items: center; gap: 7px; color: var(--primary); font-weight: 800; flex-shrink: 0; }
-.frp-crumbs button i { font-size: 10px; transition: transform 150ms; }
-.frp-crumbs button:hover i { transform: translateX(-2px); }
-.frp-crumbs b { color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .frp-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); align-items: center; gap: 20px 40px; padding: 24px 26px; border-radius: 24px; background: #fff; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 10px 28px rgba(15,23,42,0.06); }
 .frp-hero.is-card { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
 .frp-hero-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }

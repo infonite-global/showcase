@@ -659,10 +659,7 @@
 
     // ---------------------------------------------------------------- an account's or a card's own page
 
-    function crumbs(familyKey, title) {
-        const family = FAMILIES.find(f => f.key === familyKey);
-        return `<nav class="frp-crumbs"><button type="button" onclick="switchDashboardView('${familyKey}')"><i class="fa-solid fa-chevron-left"></i>${family.title}</button><span>/</span><b>${esc(title)}</b></nav>`;
-    }
+    const crumbs = (familyKey, title) => RK.crumbs({ label: FAMILIES.find(f => f.key === familyKey).title, open: `switchDashboardView('${familyKey}')`, title });
 
     /** Who a movement went to or came from, when the bank named them and the descriptions do not. */
     function counterpart(tx) {

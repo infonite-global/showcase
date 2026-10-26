@@ -103,7 +103,8 @@ function renderModulesGrid() {
                     <h4 class="font-black text-slate-900 text-[10px] uppercase tracking-wider leading-tight">
                       ${featureDef.name}
                     </h4>
-                    <p class="text-[9px] text-slate-500 font-medium leading-tight mt-0.5 truncate">${featureDef.workMessage.replace('Consulting your', '').replace('Retrieving your', '').trim()}</p>
+                    <p class="espa-mod-desc text-[9px] text-slate-500 font-medium leading-tight mt-0.5 truncate">${featureDef.workMessage.replace('Consulting your', '').replace('Retrieving your', '').trim()}</p>
+                    <p class="espa-mod-off"><i class="fa-solid fa-ban"></i> No administration chosen returns it</p>
                 </div>
                 ${isSoon ? '' : `
                     <div class="indicator w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${bgc}">
@@ -130,6 +131,9 @@ function renderModulesGrid() {
     gridContainer.innerHTML = htmlContent;
     syncEmailRequirement();
     syncSelectedCount();
+    renderModuleOptions();
+    renderSources();
+    syncOptionsLine();
 }
 
 /**
@@ -162,14 +166,308 @@ function renderPresetModules(gridContainer, preset) {
     }).join('');
     syncEmailRequirement();
     syncSelectedCount();
+    renderModuleOptions();
+    renderSources();
+    syncOptionsLine();
 }
 
+/**
+ * The count on the Modules header, and what its button does next: select every module the demo
+ * enables, or clear them. A product preset's modules are fixed, so it has no button.
+ */
 function syncSelectedCount() {
     const badge = document.getElementById('modules-selected-count');
-    if (!badge) return;
     const n = document.querySelectorAll('#modulesGrid input.feature-checkbox:checked').length;
-    badge.textContent = window.ES_PA_PRESET ? `${n} included` : `${n} selected`;
+    if (badge) badge.textContent = window.ES_PA_PRESET ? `${n} included` : `${n} selected`;
+    const toggle = document.getElementById('modules-select-all');
+    if (!toggle) return;
+    const open = Array.from(document.querySelectorAll('#modulesGrid input.feature-checkbox:not(:disabled)'));
+    toggle.style.display = window.ES_PA_PRESET || !open.length ? 'none' : '';
+    toggle.innerHTML = open.length && open.every(box => box.checked)
+        ? '<i class="fa-solid fa-xmark"></i> <span>Clear</span>'
+        : '<i class="fa-solid fa-check-double"></i> <span>Select all</span>';
 }
+
+window.toggleAllModules = function() {
+    const boxes = Array.from(document.querySelectorAll('#modulesGrid input.feature-checkbox:not(:disabled)'));
+    const selectAll = boxes.some(box => !box.checked);
+    boxes.forEach(box => {
+        box.checked = selectAll;
+        toggleFeatureVisual(box);
+    });
+};
+
+// --------------------------------------------------------------------------------
+// Module options: what a module can be asked for besides itself
+// --------------------------------------------------------------------------------
+
+/**
+ * What each module accepts besides itself (the `configurations` of its feature, as the API takes
+ * them). Every option starts at what this demo has always sent; `api` is the API's own default, so
+ * an option left there is not sent — unless the demo always sent it (features.js `defaultConfig`).
+ */
+const MODULE_OPTIONS = {
+    labor_check: [
+        { key: 'from_date', kind: 'select', title: 'Contribution history from', api: '5 years ago', value: '5 years ago',
+          choices: [['1 year ago', '1 year'], ['3 years ago', '3 years'], ['5 years ago', '5 years'], ['10 years ago', '10 years'], ['20 years ago', '20 years'], ['80 years ago', 'The whole career']],
+          help: 'How far back the contribution bases go. One year at least: the income floor reads the last twelve months.' },
+        { key: 'work_life_report', kind: 'switch', title: 'Work life report (PDF)', api: true, value: true,
+          help: "The Seguridad Social's signed report, attached. The labor check reads it either way." },
+        { key: 'contribution_base_report', kind: 'switch', title: 'Contribution base report (PDF)', api: false, value: true,
+          help: 'The signed report of the bases, attached. The bases are read either way.' },
+    ],
+    yearly_individual_tax: [
+        { key: 'last_n_years', kind: 'select', title: 'Fiscal years', api: 3, value: 3, number: true,
+          choices: [[1, '1 year'], [2, '2 years'], [3, '3 years'], [4, '4 years'], [5, '5 years']],
+          help: 'How many closed fiscal years to read, counting back from last year.' },
+    ],
+    driver_data: [
+        { key: 'read_point_movements', kind: 'switch', title: 'Points history', api: false, value: true,
+          help: "Every movement of the licence's points, not only its balance." },
+    ],
+    vehicles_data: [
+        { key: 'simple_vehicle_report', kind: 'switch', title: 'Incidents check', api: false, value: true,
+          help: "The DGT's report on each vehicle: whether the registry holds anything against it, such as a seizure, a charge or a deregistration." },
+    ],
+    credit_registry_data: [
+        { key: 'preferred_type', kind: 'segment', title: 'Report', api: 'credit_registry_data:es_cirbe_detailed', value: 'credit_registry_data:es_cirbe_detailed',
+          choices: [['credit_registry_data:es_cirbe_detailed', 'Detailed'], ['credit_registry_data:es_cirbe_aggregated', 'Aggregated']],
+          help: 'Detailed: every operation, with the entity that declared it, in euros. Aggregated: the risks without entities or operation codes, in thousands of euros. A person with nothing declared only ever gets the aggregated one.' },
+    ],
+};
+
+/** What the person setting up the session chose for each option, by module. */
+const moduleOptions = {};
+
+const optionValue = (code, option) => (moduleOptions[code] && option.key in moduleOptions[code] ? moduleOptions[code][option.key] : option.value);
+
+window.setModuleOption = function(code, key, raw) {
+    const option = (MODULE_OPTIONS[code] || []).find(item => item.key === key);
+    if (!option) return;
+    moduleOptions[code] = { ...(moduleOptions[code] || {}), [key]: option.number ? Number(raw) : raw };
+    syncOptionsLine();
+};
+
+/** The `configurations` a module is requested with: what the demo always sent, with the options as they stand. */
+function configurationsOf(code) {
+    const config = { ...(window.INFONITE_FEATURES[code]?.defaultConfig || {}) };
+    (MODULE_OPTIONS[code] || []).forEach(option => {
+        const value = optionValue(code, option);
+        if (option.key in config || value !== option.api) config[option.key] = value;
+        else delete config[option.key];
+    });
+    return config;
+}
+
+/** One option: what it is and what it changes, and its control — a switch, a list or a choice of two. */
+function optionRow(code, option) {
+    const value = optionValue(code, option);
+    const id = `opt-${code}-${option.key}`;
+    const text = (label) => `<span class="min-w-0">${label}<span class="espa-opt-help">${escapeHtml(option.help)}</span></span>`;
+    if (option.kind === 'switch') {
+        return `
+            <label class="espa-opt-row">
+                ${text(`<span class="espa-opt-title">${escapeHtml(option.title)}</span>`)}
+                <input type="checkbox" class="sr-only" ${value ? 'checked' : ''} onchange="setModuleOption('${code}', '${option.key}', this.checked)">
+                <span class="sf-switch-track"></span>
+            </label>`;
+    }
+    if (option.kind === 'segment') {
+        return `
+            <div class="espa-opt-row" role="radiogroup" aria-label="${escapeHtml(option.title)}">
+                ${text(`<span class="espa-opt-title">${escapeHtml(option.title)}</span>`)}
+                <span class="espa-opt-segment">${option.choices.map(([choice, label]) => `<label><input type="radio" class="sr-only" name="${id}" value="${escapeHtml(choice)}" ${choice === value ? 'checked' : ''} onchange="setModuleOption('${code}', '${option.key}', this.value)"><span>${escapeHtml(label)}</span></label>`).join('')}</span>
+            </div>`;
+    }
+    return `
+        <div class="espa-opt-row">
+            ${text(`<label for="${id}" class="espa-opt-title">${escapeHtml(option.title)}</label>`)}
+            <select id="${id}" class="espa-opt-select" onchange="setModuleOption('${code}', '${option.key}', this.value)">${option.choices.map(([choice, label]) => `<option value="${escapeHtml(choice)}" ${choice === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select>
+        </div>`;
+}
+
+/** The line under the Modules header while a selected module has options: which, and how many differ from the defaults. */
+function syncOptionsLine() {
+    const line = document.getElementById('modules-options-line');
+    const summary = document.getElementById('modules-options-summary');
+    if (!line || !summary) return;
+    const selected = Array.from(document.querySelectorAll('#modulesGrid input.feature-checkbox:checked')).map(input => input.value).filter(code => MODULE_OPTIONS[code]);
+    line.classList.toggle('hidden', !selected.length);
+    const changed = selected.reduce((n, code) => n + MODULE_OPTIONS[code].filter(option => optionValue(code, option) !== option.value).length, 0);
+    const names = selected.map(code => window.INFONITE_FEATURES?.[code]?.name || code).join(' · ');
+    summary.innerHTML = `${escapeHtml(names)} — ${changed ? `<b>${changed} changed</b>` : 'all at their defaults'}`;
+}
+
+window.openOptionsModal = function() {
+    renderModuleOptions();
+    const modal = document.getElementById('espaOptionsModal');
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+};
+
+window.closeOptionsModal = function() {
+    const modal = document.getElementById('espaOptionsModal');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+    syncOptionsLine();
+};
+
+/** Every option back to where it starts. */
+window.resetModuleOptions = function() {
+    Object.keys(moduleOptions).forEach(code => delete moduleOptions[code]);
+    renderModuleOptions();
+    syncOptionsLine();
+};
+
+/** The options of the modules selected now, a group each; what was chosen survives a module going and coming back. */
+function renderModuleOptions() {
+    const box = document.getElementById('espa-module-options');
+    if (!box) return;
+    const selected = Array.from(document.querySelectorAll('#modulesGrid input.feature-checkbox:checked')).map(input => input.value);
+    box.innerHTML = selected.filter(code => MODULE_OPTIONS[code]).map(code => {
+        const feature = window.INFONITE_FEATURES?.[code] || { name: code, icon: 'fa-solid fa-shapes' };
+        return `
+            <div class="espa-opt-group">
+                <span class="espa-opt-module"><i class="${feature.icon}"></i>${escapeHtml(feature.name)}</span>
+                ${MODULE_OPTIONS[code].map(option => optionRow(code, option)).join('')}
+            </div>`;
+    }).join('') || '<p class="espa-opt-empty">The selected modules have nothing to set: each one reads what it reads.</p>';
+}
+
+// --------------------------------------------------------------------------------
+// Administrations: where the person may be asked to sign in, and in which order
+// --------------------------------------------------------------------------------
+
+/**
+ * The administrations a session may sign in to, as the API names them (`settings.allowed_sources`),
+ * with the modules each one returns — the Seguridad Social signed in with Cl@ve brings more than
+ * with an SMS, which is why it serves the CIRBE report and the DGT's products too.
+ */
+const SOURCES = [
+    { code: 'tgss', name: 'Seguridad Social', icon: 'fa-solid fa-briefcase', returns: 'Profile, work life and pensions; signed in with Cl@ve, also the CIRBE report, the driving licence and the vehicles',
+      serves: ['customer_information_read', 'labor_check', 'public_pensions', 'credit_registry_data', 'driver_data', 'vehicles_data'] },
+    { code: 'aeat', name: 'Agencia Tributaria', icon: 'fa-solid fa-file-invoice-dollar', returns: 'Profile and the yearly tax situation',
+      serves: ['customer_information_read', 'yearly_individual_tax'] },
+    { code: 'citizen_folder', name: 'Carpeta Ciudadana', icon: 'fa-solid fa-folder-open', returns: 'Profile, driving licence, vehicles, degrees and properties',
+      serves: ['customer_information_read', 'driver_data', 'vehicles_data', 'academic_data', 'properties_data'] },
+    { code: 'dgt', name: 'DGT', icon: 'fa-solid fa-car', returns: 'Profile, the driving licence with its photograph, and the vehicles',
+      serves: ['customer_information_read', 'driver_data', 'vehicles_data'] },
+    { code: 'bde', name: 'Banco de España', icon: 'fa-solid fa-building-columns', returns: 'The CIRBE report, and nothing else',
+      serves: ['credit_registry_data'] },
+];
+
+/** How the list is chosen: the application's default, or this one — its order, and which are allowed. The API's own default starts it. */
+const sourcesState = { mode: 'default', order: SOURCES.map(source => source.code), on: new Set(['tgss', 'aeat', 'citizen_folder']) };
+
+const sourceName = (code) => SOURCES.find(source => source.code === code)?.name || code;
+const allowedSources = () => sourcesState.order.filter(code => sourcesState.on.has(code));
+
+/** The selected modules no allowed administration returns: the API refuses such a session, so the form says so first. */
+function uncoveredModules() {
+    if (window.ES_PA_PRESET || sourcesState.mode !== 'custom') return [];
+    const allowed = allowedSources();
+    return Array.from(document.querySelectorAll('#modulesGrid input.feature-checkbox:checked')).map(input => input.value)
+        .filter(code => !SOURCES.some(source => allowed.includes(source.code) && source.serves.includes(code)));
+}
+
+/** The modules this demo offers that no administration on the list returns: locked above, and named here. */
+function lockedModules() {
+    if (window.ES_PA_PRESET || sourcesState.mode !== 'custom') return [];
+    const allowed = allowedSources();
+    return ALLOWED_MODULES.filter(code => !window.INFONITE_FEATURES?.[code]?.soon)
+        .filter(code => !SOURCES.some(source => allowed.includes(source.code) && source.serves.includes(code)));
+}
+
+function syncSourcesCoverage() {
+    const note = document.getElementById('espa-sources-coverage');
+    if (!note) return;
+    const locked = lockedModules().map(code => window.INFONITE_FEATURES?.[code]?.name || code);
+    note.classList.toggle('hidden', !locked.length);
+    note.querySelector('span').textContent = locked.length
+        ? `No administration on this list returns ${locked.join(', ')}: ${locked.length === 1 ? 'that module is' : 'those modules are'} locked until one that does is allowed.`
+        : '';
+}
+
+/**
+ * A module no administration on the list returns cannot be asked for — the API would refuse the
+ * session: it is unchecked and locked, and says why, until the list serves it again.
+ */
+function syncModuleAvailability() {
+    if (window.ES_PA_PRESET) return;
+    const locked = lockedModules();
+    document.querySelectorAll('#modulesGrid input.feature-checkbox').forEach(input => {
+        if (window.INFONITE_FEATURES?.[input.value]?.soon) return;
+        const label = input.closest('label');
+        const off = locked.includes(input.value);
+        if (off && input.checked) {
+            input.checked = false;
+            toggleFeatureVisual(input);
+        }
+        input.disabled = off;
+        label?.classList.toggle('is-unavailable', off);
+    });
+    syncSelectedCount();
+    syncOptionsLine();
+}
+
+/** The administrations box: a preset's fixed list, the application's default, or the list in its order. */
+function renderSources() {
+    const choice = document.getElementById('espa-sources-choice');
+    const presetNote = document.getElementById('espa-sources-preset');
+    const summary = document.getElementById('espa-sources-summary');
+    const list = document.getElementById('espa-sources');
+    if (!choice || !list) return;
+    const preset = window.ES_PA_PRESET;
+    if (preset && Array.isArray(preset.sources)) {
+        choice.classList.add('hidden');
+        presetNote.classList.remove('hidden');
+        presetNote.innerHTML = `This product signs in at the ${escapeHtml(preset.sources.map(sourceName).join(' and '))} alone: every session is sent <code class="font-mono text-[9px] text-slate-600">allowed_sources: ${escapeHtml(JSON.stringify(preset.sources))}</code>.`;
+        if (summary) summary.textContent = preset.sources.map(sourceName).join(' · ');
+        return;
+    }
+    const custom = sourcesState.mode === 'custom';
+    const allowed = allowedSources();
+    document.getElementById('espa-sources-default-note')?.classList.toggle('hidden', custom);
+    list.classList.toggle('hidden', !custom);
+    if (summary) summary.textContent = custom ? `${allowed.length} of ${SOURCES.length}` : 'App default';
+    const last = sourcesState.order.length - 1;
+    list.innerHTML = custom ? sourcesState.order.map((code, i) => {
+        const source = SOURCES.find(item => item.code === code);
+        const on = sourcesState.on.has(code);
+        return `
+            <li class="espa-source${on ? '' : ' is-off'}">
+                <span class="espa-source-pos" title="${on ? 'Its place in the order' : 'Not allowed'}">${on ? allowed.indexOf(code) + 1 : '–'}</span>
+                <span class="espa-source-icon"><i class="${source.icon}"></i></span>
+                <span class="espa-source-text"><b>${escapeHtml(source.name)}</b><small>${escapeHtml(source.returns)}</small></span>
+                <span class="espa-source-move">
+                    <button type="button" onclick="moveSource('${code}', -1)" ${i === 0 ? 'disabled' : ''} title="Earlier" aria-label="Move ${escapeHtml(source.name)} earlier"><i class="fa-solid fa-chevron-up"></i></button>
+                    <button type="button" onclick="moveSource('${code}', 1)" ${i === last ? 'disabled' : ''} title="Later" aria-label="Move ${escapeHtml(source.name)} later"><i class="fa-solid fa-chevron-down"></i></button>
+                </span>
+                <label class="espa-source-switch" title="${on ? 'Allowed' : 'Not allowed'}"><input type="checkbox" class="sr-only" ${on ? 'checked' : ''} onchange="toggleSource('${code}', this.checked)" aria-label="Allow ${escapeHtml(source.name)}"><span class="sf-switch-track"></span></label>
+            </li>`;
+    }).join('') : '';
+    syncSourcesCoverage();
+    syncModuleAvailability();
+}
+
+window.setSourcesMode = function(mode) {
+    sourcesState.mode = mode === 'custom' ? 'custom' : 'default';
+    renderSources();
+};
+
+window.moveSource = function(code, step) {
+    const from = sourcesState.order.indexOf(code);
+    const to = from + step;
+    if (from < 0 || to < 0 || to >= sourcesState.order.length) return;
+    sourcesState.order.splice(to, 0, sourcesState.order.splice(from, 1)[0]);
+    renderSources();
+};
+
+window.toggleSource = function(code, on) {
+    if (on) sourcesState.on.add(code);
+    else sourcesState.on.delete(code);
+    renderSources();
+};
 
 // Modules whose request needs the customer's email (the CIRBE request to the Bank of Spain carries it)
 const EMAIL_REQUIRED_BY = ['credit_registry_data'];
@@ -206,6 +504,8 @@ function syncEmailRequirement() {
 function toggleFeatureVisual(input) {
     syncEmailRequirement();
     syncSelectedCount();
+    renderModuleOptions();
+    syncOptionsLine();
     const card = input.closest('label').querySelector('.indicator');
     const icon = card.querySelector('.check-icon');
     if (input.checked) {
@@ -619,6 +919,10 @@ window.openNewLeadModal = function() {
     if (cidField && !cidField.value) {
         cidField.value = `ES-PUBLIC-ADMINISTRATION-${Math.floor(10000000 + Math.random() * 90000000)}`;
     }
+    const birth = document.getElementById('generate-fixed-birth-date');
+    if (birth) birth.max = new Date().toISOString().slice(0, 10);
+    // every new lead starts at the defaults, whatever was clicked for the last one
+    resetLeadChoices();
     syncReach();
     InfoniteSessionEnding.sync();
     clearInterval(reachWatch);
@@ -626,6 +930,22 @@ window.openNewLeadModal = function() {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 };
+
+/**
+ * The options and the administrations back to their defaults. Nothing chosen for one lead is kept
+ * for the next, so a click nobody understood never costs the next demo its data.
+ */
+function resetLeadChoices() {
+    Object.keys(moduleOptions).forEach(code => delete moduleOptions[code]);
+    sourcesState.mode = 'default';
+    sourcesState.order = SOURCES.map(source => source.code);
+    sourcesState.on = new Set(['tgss', 'aeat', 'citizen_folder']);
+    const radio = document.querySelector('input[name="espa-sources-mode"][value="default"]');
+    if (radio) radio.checked = true;
+    renderSources();
+    renderModuleOptions();
+    syncOptionsLine();
+}
 
 /** Shows one of the dialog's three faces: the form, the created session or the failure. */
 function showLeadView(view) {
@@ -709,7 +1029,7 @@ function buildLeadPayload() {
 
     const features = Array.from(document.querySelectorAll('#modulesGrid input.feature-checkbox:checked')).map(cb => ({
         code: cb.value,
-        configurations: window.INFONITE_FEATURES[cb.value]?.defaultConfig || {}
+        configurations: configurationsOf(cb.value)
     }));
     if (features.length === 0) throw new Error("Select at least one module: a session must read something.");
 
@@ -722,8 +1042,16 @@ function buildLeadPayload() {
     if (!settings.sandbox && !InfoniteCapabilities.productionAllowed('product:es_public_administration')) {
         throw new Error("This application runs Spain Public Administration in sandbox only: turn Sandbox on.");
     }
-    // A product preset decides which administrations its sessions sign in to
-    if (window.ES_PA_PRESET && Array.isArray(window.ES_PA_PRESET.sources)) settings.allowed_sources = window.ES_PA_PRESET.sources;
+    // A product preset decides which administrations its sessions sign in to; otherwise the list chosen, when one was
+    if (window.ES_PA_PRESET && Array.isArray(window.ES_PA_PRESET.sources)) {
+        settings.allowed_sources = window.ES_PA_PRESET.sources;
+    } else if (sourcesState.mode === 'custom') {
+        const allowed = allowedSources();
+        if (!allowed.length) throw new Error("Allow at least one administration, or leave the application's default.");
+        const missing = uncoveredModules().map(code => window.INFONITE_FEATURES[code]?.name || code);
+        if (missing.length) throw new Error(`No allowed administration returns ${missing.join(', ')}: allow one that does, or leave the module out.`);
+        settings.allowed_sources = allowed;
+    }
 
     const aesKey = value('generate-aes-key');
     if (aesKey) {
@@ -748,6 +1076,12 @@ function buildLeadPayload() {
     if (userEmail) {
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) throw new Error("The User Email is not a valid email address.");
         payload.fixed_parameters = { ...(payload.fixed_parameters || {}), user_email: userEmail };
+    }
+
+    const birthDate = value('generate-fixed-birth-date');
+    if (birthDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || birthDate >= new Date().toISOString().slice(0, 10)) throw new Error("The Date of Birth must be a date in the past.");
+        payload.fixed_parameters = { ...(payload.fixed_parameters || {}), birth_date: birthDate };
     }
 
     const hours = Number(value('generate-date-limit'));
