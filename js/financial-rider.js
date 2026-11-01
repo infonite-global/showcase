@@ -284,7 +284,7 @@ window.renderEnginePicker = function() {
     const fallback = String(FR_CATALOGUE.source || '').startsWith('fallback:');
     notice.classList.toggle('hidden', !fallback);
     if (fallback) {
-        notice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>The catalogue could not be read from <code>${FR_CATALOGUE.source.slice('fallback:'.length)}</code>, so this is the demo's own list: references only.</span>`;
+        notice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>The catalogue could not be read from <code>${escapeHtml(FR_CATALOGUE.source.slice('fallback:'.length))}</code>: select an application of this environment to list its engines.</span>`;
     }
     document.getElementById('engine-picker-count').textContent =
         query ? `${engines.length} of ${FR_CATALOGUE.engines.length}` : `${engines.length} engines`;
@@ -633,7 +633,7 @@ function renderSelectionCatalogue() {
     const notice = document.getElementById('sel-catalogue-notice');
     const fallback = String(FR_SEL.source || '').startsWith('fallback:');
     notice.classList.toggle('hidden', !fallback);
-    if (fallback) notice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>The catalogue could not be read from <code>${escapeHtml(FR_SEL.source.slice('fallback:'.length))}</code>, so this is the demo's own list: codes only.</span>`;
+    if (fallback) notice.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>The catalogue could not be read from <code>${escapeHtml(FR_SEL.source.slice('fallback:'.length))}</code>: select an application of this environment to list its engines.</span>`;
 
     const list = document.getElementById('sel-catalogue');
     if (FR_SEL.loading && !FR_SEL.entries.length) {

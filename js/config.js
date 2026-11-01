@@ -1,4 +1,4 @@
-const INFONITE_VERSION = "2026.10.2600";
+const INFONITE_VERSION = "2026.11.200";
 
 const DEFAULT_CONFIG_ITEM = {
     id: "default",
@@ -1026,7 +1026,7 @@ function purgeEnvironmentData(config, wasActive) {
     keys.forEach((key) => localStorage.removeItem(key));
     if (wasActive) {
         // the live-session tokens belong to the environment in use
-        ['active_session_es-public-administration', 'active_session_financial-rider', 'active_session_bank_reader'].forEach((key) => localStorage.removeItem(key));
+        ['active_session_es-public-administration', 'active_session_financial-rider'].forEach((key) => localStorage.removeItem(key));
     }
     return keys.length;
 }

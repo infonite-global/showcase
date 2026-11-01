@@ -30,14 +30,7 @@ function clientsApiUrl(widgetUrl) {
     return String(widgetUrl || '').replace('widgets', 'clients').replace(':2283', ':2282').replace(/\/$/, '');
 }
 
-/** The demo's own list, for when the catalogue cannot be read: references only, no names. */
-function fallbackEngines() {
-    return (window.INFONITE_ALL_BANKS_ENGINES || []).map(reference => ({
-        reference, engine_code: reference.split('-')[0], name: null, markets: [], sub_categories: [], keywords: []
-    }));
-}
-
-/** The financial engines of an environment, from `GET /config/engines/list` — or the demo's own list when it cannot be read. */
+/** The financial engines of an environment, from `GET /config/engines/list` — or none, with where it failed, when it cannot be read. */
 async function fetchEngineList(environment) {
     const config = window.InfoniteConfigManager ? window.InfoniteConfigManager.getConfig() : null;
     const base = clientsApiUrl(config?.widgetUrl);
@@ -51,7 +44,7 @@ async function fetchEngineList(environment) {
         return { engines: engines.sort((a, b) => (a.name || a.reference).localeCompare(b.name || b.reference)), source: 'api' };
     } catch (e) {
         console.warn('The engine catalogue could not be read:', e);
-        return { engines: fallbackEngines(), source: `fallback:${base || 'no environment'}` };
+        return { engines: [], source: `fallback:${base || 'no environment'}` };
     }
 }
 
