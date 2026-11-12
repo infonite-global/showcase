@@ -784,8 +784,9 @@
             </div>`;
     }
 
-    function movements(list) {
+    function movements(list, family = 'accounts') {
         RK.index('frpTx', list, findable);
+        onTable = { list, family };
         if (!list.length) return emptyState('fa-solid fa-list-ul', 'No movements', 'The bank returned no movement for this product in the window the session asked for.');
         const rows = list.map((tx, index) => {
             const amountValue = Number(tx.amount?.amount);
@@ -794,15 +795,249 @@
             const [first, second] = listOf(tx.descriptions);
             const who = counterpart(tx);
             return `
-                <tr data-i="${index}">
+                <tr data-i="${index}" class="frp-tx-row" tabindex="0" role="button" aria-label="Open the movement's details" onclick="FRP.openMovement(${index})" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); FRP.openMovement(${index}); }">
                     <td class="frp-tx-date"><b>${day(tx.operation_date || tx.value_date)}</b>${tx.operation_date && tx.value_date && tx.value_date !== tx.operation_date ? `<small>Value ${day(tx.value_date)}</small>` : ''}</td>
                     <td class="frp-tx-what"><b title="${esc(first || '')}">${esc(first || '—')}</b>${second ? `<small title="${esc(second)}">${esc(second)}</small>` : ''}${who ? `<small class="frp-tx-who" title="${esc(who)}">${esc(who)}</small>` : ''}<small class="frp-tx-when">${day(tx.operation_date || tx.value_date)}</small></td>
                     <td class="frp-tx-kind">${kind ? `<span class="rk-pill ${direction}">${esc(kind)}</span>` : ''}</td>
                     <td class="frp-tx-amount"><b class="${amountValue > 0 ? 'is-positive' : ''}">${money(tx.amount, { sign: true })}</b>${has(tx.balance) ? `<small>${money(tx.balance)}</small>` : ''}</td>
+                    <td class="frp-tx-open"><i class="fa-solid fa-chevron-right"></i></td>
                 </tr>`;
         }).join('');
-        const none = searchNone('No movement matches the search.', 4);
-        return `<div class="rk-table-card"><table class="rk-table" id="frpTx"><thead><tr><th class="frp-tx-date">Date</th><th>Description</th><th class="frp-tx-kind">Category</th><th class="text-right">Amount</th></tr></thead><tbody>${rows}${none}</tbody></table></div>`;
+        const none = searchNone('No movement matches the search.', 5);
+        return `<div class="rk-table-card"><table class="rk-table" id="frpTx"><thead><tr><th class="frp-tx-date">Date</th><th>Description</th><th class="frp-tx-kind">Category</th><th class="text-right">Amount</th><th class="frp-tx-open"><span class="sr-only">Details</span></th></tr></thead><tbody>${rows}${none}</tbody></table></div>`;
+    }
+
+
+    // ---------------------------------------------------------------- one movement, in full
+
+    /**
+     * The table keeps a movement to a line: a date, two descriptions, a category, an amount. This is
+     * everything else the bank said about it, over the page — every description, both dates, the
+     * balance it left, the category's whole path, who paid and who was paid with their documents,
+     * the merchant, the bank's own id and reference — and the movement exactly as the API returned
+     * it. Nothing is left out: a field this does not know is listed under «Also returned», and the
+     * ones the bank did not return are named, so an empty movement reads as the bank's, not the demo's.
+     */
+
+    /** The movements on screen and whose they are, so a row opens by its place in the list. */
+    let onTable = { list: [], family: 'accounts' };
+    /** The movement the detail shows, and which of its two faces. */
+    let onDetail = { index: -1, face: 'details' };
+
+    /** What a movement of each family may carry, in the API's words: what is missing is said, not hidden. */
+    const MOVEMENT_FIELDS = {
+        accounts: ['category', 'operation_date', 'value_date', 'amount', 'balance', 'descriptions', 'reference', 'provider_id', 'payer', 'payee', 'merchant'],
+        cards: ['value_date', 'amount', 'descriptions', 'provider_id', 'merchant'],
+    };
+    /** The fields the detail draws by name; anything else a movement brings goes under «Also returned». */
+    const MOVEMENT_KNOWN = new Set(['type', 'status', ...MOVEMENT_FIELDS.accounts]);
+
+    const STATUS_TONE = { booked: 'is-ok', pending: 'is-warn', cancelled: 'is-bad', failed: 'is-bad', reversed: 'is-warn' };
+
+    const given = (value) => value !== null && value !== undefined && value !== '' && !(Array.isArray(value) && !value.length) && !(isProduct(value) && !Object.keys(value).length);
+
+    /** A category's path, step by step: `expenses::financial & organizations::credit obligations`. */
+    function categoryPath(category) {
+        const steps = String(category || '').split('::').map(step => step.replace(/_/g, ' ').trim()).filter(Boolean);
+        // the API repeats a step when a level has no name of its own (`income::income::transfers`)
+        return steps.filter((step, at) => at === 0 || step !== steps[at - 1]);
+    }
+
+    /** A value nobody drew a place for, as short as it can be read. */
+    function plainValue(value) {
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return esc(String(value));
+        if (has(value)) return money(value);
+        return `<code class="frp-mv-code">${esc(JSON.stringify(value))}</code>`;
+    }
+
+    const copyButton = (text) => `<button type="button" class="frp-mv-copy" title="Copy" data-copy="${esc(text)}" onclick="FRP.copyValue(this)"><i class="fa-regular fa-copy"></i></button>`;
+
+    /** A line of the detail: its name on the left, what the bank said on the right. */
+    const line = (label, value, { mono = false, copy = '' } = {}) => `
+        <div class="frp-mv-line"><span>${label}</span><b class="${mono ? 'rk-mono' : ''}">${value}${copy ? copyButton(copy) : ''}</b></div>`;
+
+    /** Someone a movement names — who paid, who was paid, the merchant — with all the bank said of them. */
+    function party(role, icon, entity) {
+        if (!isProduct(entity) || !Object.keys(entity).length) return '';
+        const id = isProduct(entity.identifier) ? entity.identifier : null;
+        const more = Object.entries(entity).filter(([key, value]) => !['name', 'code', 'country_code', 'identifier'].includes(key) && given(value));
+        return `
+            <div class="frp-mv-party">
+                <span class="frp-mv-party-icon"><i class="${icon}"></i></span>
+                <div class="min-w-0">
+                    <span class="frp-mv-party-role">${role}</span>
+                    <b>${esc(entity.name || '—')}</b>
+                    <div class="frp-mv-party-facts">${[
+                        id && id.value ? RK.documentChip(id).trim() : '',
+                        given(entity.code) ? `<span class="frp-mv-chip"><em>Code</em><span class="rk-mono">${esc(entity.code)}</span></span>` : '',
+                        given(entity.country_code) ? `<span class="frp-mv-chip"><img src="${RK.flagUrl(entity.country_code)}" alt="" onerror="this.remove()"><span>${esc(entity.country_code)}</span></span>` : '',
+                        ...more.map(([key, value]) => `<span class="frp-mv-chip"><em>${esc(key.replace(/_/g, ' '))}</em><span>${plainValue(value)}</span></span>`),
+                    ].join('')}</div>
+                </div>
+            </div>`;
+    }
+
+    function movementDetails(tx, family) {
+        const descriptions = listOf(tx.descriptions).filter(text => given(text));
+        const path = categoryPath(tx.category);
+        const direction = tx.category?.startsWith('income::') ? 'is-in' : tx.category?.startsWith('expenses::') ? 'is-out' : '';
+        const parties = [party('Payer', 'fa-solid fa-upload', tx.payer), party('Payee', 'fa-solid fa-download', tx.payee), party('Merchant', 'fa-solid fa-store', tx.merchant)].filter(Boolean).join('');
+        const extra = Object.entries(tx).filter(([key, value]) => !MOVEMENT_KNOWN.has(key) && given(value));
+        const missing = (MOVEMENT_FIELDS[family] || MOVEMENT_FIELDS.accounts).filter(key => !given(tx[key]) || (['amount', 'balance'].includes(key) && !has(tx[key])));
+        // on a wide screen, two columns: what happened on the left, who and the bank's own on the right
+        const left = `
+            ${descriptions.length ? `
+            <div class="frp-mv-section">
+                <span class="rk-section-label">Descriptions<em>${descriptions.length}</em></span>
+                <ol class="frp-mv-descriptions">${descriptions.map(text => `<li>${esc(text)}</li>`).join('')}</ol>
+            </div>` : ''}
+            <div class="frp-mv-section">
+                <span class="rk-section-label">Dates and amounts</span>
+                <div class="frp-mv-lines">
+                    ${tx.operation_date ? line('Operation date', day(tx.operation_date)) : ''}
+                    ${tx.value_date ? line('Value date', day(tx.value_date)) : ''}
+                    ${has(tx.amount) ? line('Amount', money(tx.amount, { sign: true })) : ''}
+                    ${has(tx.balance) ? line('Balance after it', money(tx.balance)) : ''}
+                </div>
+            </div>
+            ${path.length ? `
+            <div class="frp-mv-section">
+                <span class="rk-section-label">Category</span>
+                <div class="frp-mv-path">${path.map((step, at) => `<span class="rk-pill ${at === path.length - 1 ? direction : ''}">${esc(step)}</span>`).join('<i class="fa-solid fa-chevron-right"></i>')}</div>
+            </div>` : ''}`;
+        const right = `
+            ${parties ? `
+            <div class="frp-mv-section">
+                <span class="rk-section-label">Who is in it</span>
+                <div class="frp-mv-parties">${parties}</div>
+            </div>` : ''}
+            ${given(tx.reference) || given(tx.provider_id) ? `
+            <div class="frp-mv-section">
+                <span class="rk-section-label">The bank's own</span>
+                <div class="frp-mv-lines">
+                    ${given(tx.reference) ? line('Reference', esc(tx.reference), { mono: true, copy: tx.reference }) : ''}
+                    ${given(tx.provider_id) ? line('Provider id', esc(tx.provider_id), { mono: true, copy: tx.provider_id }) : ''}
+                </div>
+            </div>` : ''}
+            ${extra.length ? `
+            <div class="frp-mv-section">
+                <span class="rk-section-label">Also returned</span>
+                <div class="frp-mv-lines">${extra.map(([key, value]) => line(esc(key), plainValue(value))).join('')}</div>
+            </div>` : ''}`;
+        return `
+            <div class="frp-mv-columns${right.trim() ? '' : ' is-one'}"><div class="frp-mv-column">${left}</div>${right.trim() ? `<div class="frp-mv-column">${right}</div>` : ''}</div>
+            ${missing.length ? `<p class="frp-mv-missing"><i class="fa-solid fa-circle-info"></i><span>Not returned by the bank for this movement: ${missing.map(key => `<code>${key}</code>`).join(' ')}</span></p>` : ''}`;
+    }
+
+    /** The rows a movement can step to: the ones the search has left on screen, in their order. */
+    function steps() {
+        const rows = [...document.querySelectorAll('#frpTx tr[data-i]:not([hidden])')].map(row => Number(row.dataset.i));
+        return rows.length ? rows : onTable.list.map((_, at) => at);
+    }
+
+    /** Draws the movement on screen; only opening it animates, so stepping and changing face do not flicker. */
+    function drawMovement({ opening = false } = {}) {
+        const modal = document.getElementById('frpMovement');
+        const tx = onTable.list[onDetail.index];
+        if (!modal || !isProduct(tx)) return;
+        const order = steps();
+        const place = order.indexOf(onDetail.index);
+        const amountValue = Number(tx.amount?.amount);
+        const way = !has(tx.amount) || amountValue === 0 ? '' : amountValue > 0 ? 'is-in' : 'is-out';
+        const [first] = listOf(tx.descriptions);
+        const when = tx.operation_date || tx.value_date;
+        let body;
+        if (onDetail.face === 'json') {
+            body = `<pre class="frp-mv-json"><code>${RK.highlightJson(tx)}</code></pre>`;
+        } else {
+            try {
+                body = movementDetails(tx, onTable.family);
+            } catch (error) {
+                console.warn('Financial Rider position: a movement could not be drawn', error);
+                body = `<p class="frp-mv-missing"><i class="fa-solid fa-triangle-exclamation"></i><span>This movement came in a shape this demo does not draw. JSON shows it as it was returned.</span></p>`;
+            }
+        }
+        modal.innerHTML = `
+            <div class="rk-modal-panel frp-mv${opening ? '' : ' is-still'}" role="dialog" aria-modal="true" aria-label="Movement details">
+                <button type="button" class="rk-modal-close" onclick="FRP.closeMovement()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                <div class="frp-mv-head">
+                    <span class="frp-mv-way ${way}"><i class="fa-solid ${way === 'is-in' ? 'fa-arrow-down' : way === 'is-out' ? 'fa-arrow-up' : 'fa-right-left'}"></i></span>
+                    <div class="min-w-0">
+                        <span class="frp-mv-amount ${way === 'is-in' ? 'is-positive' : ''}">${has(tx.amount) ? money(tx.amount, { sign: true }) : '—'}</span>
+                        <h3>${esc(first || 'Movement')}</h3>
+                        <div class="frp-mv-tags">
+                            ${when ? `<span class="frp-mv-when">${day(when)}</span>` : ''}
+                            ${given(tx.status) ? `<span class="rk-pill ${STATUS_TONE[tx.status] || ''}">${esc(String(tx.status).replace(/_/g, ' '))}</span>` : ''}
+                            ${given(tx.type) && tx.type !== 'default' && tx.type !== 'unknown' ? `<span class="rk-pill">${esc(String(tx.type).replace(/_/g, ' '))}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="frp-mv-bar">
+                    <div class="frp-mv-faces" role="tablist">
+                        <button type="button" role="tab" aria-selected="${onDetail.face === 'details'}" class="${onDetail.face === 'details' ? 'is-active' : ''}" onclick="FRP.movementFace('details')"><i class="fa-solid fa-list-ul"></i> Details</button>
+                        <button type="button" role="tab" aria-selected="${onDetail.face === 'json'}" class="${onDetail.face === 'json' ? 'is-active' : ''}" onclick="FRP.movementFace('json')"><i class="fa-solid fa-code"></i> JSON</button>
+                    </div>
+                    ${onDetail.face === 'json' ? `<button type="button" class="frp-mv-copy-all" data-copy="${esc(JSON.stringify(tx, null, 4))}" onclick="FRP.copyValue(this)"><i class="fa-regular fa-copy"></i><span>Copy</span></button>` : ''}
+                    <div class="frp-mv-steps">
+                        <button type="button" title="Previous movement (←)" ${place <= 0 ? 'disabled' : ''} onclick="FRP.stepMovement(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span>${place + 1} of ${order.length}</span>
+                        <button type="button" title="Next movement (→)" ${place < 0 || place >= order.length - 1 ? 'disabled' : ''} onclick="FRP.stepMovement(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="frp-mv-body">${body}</div>
+            </div>`;
+    }
+
+    /** Opens a movement of the table on screen, by its place in the list. */
+    function openMovement(index) {
+        if (!isProduct(onTable.list[index])) return;
+        let modal = document.getElementById('frpMovement');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'frpMovement';
+            modal.className = 'rk-modal';
+            modal.addEventListener('click', (event) => { if (event.target === modal) closeMovement(); });
+            document.addEventListener('keydown', (event) => {
+                if (!modal.classList.contains('is-open')) return;
+                if (event.key === 'Escape') closeMovement();
+                else if (event.key === 'ArrowLeft') stepMovement(-1);
+                else if (event.key === 'ArrowRight') stepMovement(1);
+            });
+            document.body.appendChild(modal);
+        }
+        onDetail = { index, face: onDetail.face };
+        drawMovement({ opening: true });
+        modal.classList.add('is-open');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeMovement() {
+        document.getElementById('frpMovement')?.classList.remove('is-open');
+        document.body.classList.remove('overflow-hidden');
+        document.querySelector(`#frpTx tr[data-i="${onDetail.index}"]`)?.focus({ preventScroll: true });
+    }
+
+    /** The movement before or after the one on screen, among those the search has left. */
+    function stepMovement(by) {
+        const order = steps();
+        const at = order.indexOf(onDetail.index);
+        const next = order[at + by];
+        if (at < 0 || next === undefined) return;
+        onDetail.index = next;
+        drawMovement();
+    }
+
+    function movementFace(face) {
+        onDetail.face = face === 'json' ? 'json' : 'details';
+        drawMovement();
+    }
+
+    /** Copies what a button carries, and says so on the button for a moment. */
+    function copyValue(button) {
+        navigator.clipboard?.writeText(button.dataset.copy || '').then(() => {
+            button.classList.add('is-copied');
+            setTimeout(() => button.classList.remove('is-copied'), 1400);
+        }).catch(() => { /* the value stays on screen to be selected by hand */ });
     }
 
     function find(familyKey, id) {
@@ -835,7 +1070,7 @@
                 </section>
                 ${holders ? `<div class="rk-section-head"><span class="rk-section-label"><i class="fa-solid fa-user-group"></i> Holders<em>${p.holders.length}</em></span></div><div class="frp-holders">${holders}</div>` : ''}
                 ${movementsHead(listOf(p.transactions))}
-                ${movements(listOf(p.transactions))}
+                ${movements(listOf(p.transactions), 'accounts')}
             </div>`;
     }
 
@@ -948,7 +1183,7 @@
                     </div>
                 </section>
                 ${movementsHead(listOf(p.transactions))}
-                ${movements(listOf(p.transactions))}
+                ${movements(listOf(p.transactions), 'cards')}
             </div>`;
     }
 
@@ -1022,6 +1257,11 @@
         markNav,
         showAccount: (id) => showDetail('accounts', id, renderAccount),
         showCard: (id) => showDetail('cards', id, renderCard),
+        openMovement,
+        closeMovement,
+        stepMovement,
+        movementFace,
+        copyValue,
         toggleCharges,
         openReceipt,
         checkLogo,

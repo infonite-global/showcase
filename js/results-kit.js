@@ -833,7 +833,7 @@
         // documents
         openDocument, documentOf, showDocument, closeDocument, saveDocument,
         // the session and its raw JSON
-        messages, audit, showJson, closeJson, copyJson, isSessionGone, sessionGone,
+        messages, audit, highlightJson, showJson, closeJson, copyJson, isSessionGone, sessionGone,
         // the person
         initials, identityBanner, personChip, showPhoto, addressLine, documentChip, openProfile, closeProfile, crumbs,
     };
